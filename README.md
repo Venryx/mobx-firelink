@@ -1,2 +1,9 @@
 # mobx-firelink
-Integrate Firebase data into MobX stores with "declarative" path requests.
+
+Integrate Firebase data into MobX and React with declarative path requests.
+
+### Installation
+
+```
+npm install mobx-firelink
+```

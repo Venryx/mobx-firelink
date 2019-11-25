@@ -1,0 +1,31 @@
+{
+  "name": "mobx-firelink",
+  "description": "Integrate Firebase data into MobX and React with declarative path requests.",
+  "version": "0.0.1",
+  "main": "Dist/index.js",
+  "typings": "Dist/index.d.ts",
+  "license": "MIT",
+  "author": {
+    "name": "Stephen Wicklund",
+    "email": "venryx@gmail.com"
+  },
+  "keywords": [
+    "mobx",
+    "react",
+    "firebase",
+    "firestore",
+    "database"
+  ],
+  "scripts": {
+    "dev": "tsc --watch",
+    "dist": "tsc"
+  },
+  "engines": {
+    "node": ">=4"
+  },
+  "devDependencies": {
+    "@types/node": "^12.12.7",
+    "typescript": "^3.7.2"
+  },
+  "dependencies": {}
+}
