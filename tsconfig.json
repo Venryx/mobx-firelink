@@ -1,12 +1,12 @@
 {
 	"compilerOptions": {
-		"lib": ["es2017"],
+		//"lib": ["es2017"],
 		"rootDir": "Source",
 		"sourceMap": true,
 		"watch": true,
 		"module": "commonjs",
 		"moduleResolution": "node",
-		"target": "es2015",
+		"target": "es2017",
 		//"allowJs": true,
 		"jsx": "react",
 		"noImplicitAny": false,

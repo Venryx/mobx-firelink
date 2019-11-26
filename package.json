@@ -27,5 +27,9 @@
     "@types/node": "^12.12.7",
     "typescript": "^3.7.2"
   },
-  "dependencies": {}
+  "dependencies": {
+    "js-vextensions": "0.0.16",
+    "mobx": "^5.15.0",
+    "updeep": "^1.2.0"
+  }
 }
