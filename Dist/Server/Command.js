@@ -4,9 +4,8 @@ const updeep_1 = require("updeep");
 const js_vextensions_1 = require("js-vextensions");
 const DatabaseHelpers_1 = require("../Utils/DatabaseHelpers");
 const General_1 = require("../Utils/General");
-class CommandUserInfo {
-}
-exports.CommandUserInfo = CommandUserInfo;
+const Firelink_1 = require("../Firelink");
+const PathHelpers_1 = require("../Utils/PathHelpers");
 exports.commandsWaitingToComplete = [];
 let currentCommandRun_listeners = null;
 async function WaitTillCurrentCommandFinishes() {
@@ -32,11 +31,15 @@ class Command {
             [payload] = args;
         else
             [opt, payload] = args;
-        //this.userInfo = {id: manager.GetUserID()}; // temp
+        opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
+        //this.userInfo = {id: opt.fire.userID}; // temp
+        //this.userInfo = opt.fire.userInfo; // temp (needs rework to be server-compatible in future)
         this.type = this.constructor.name;
         this.options = opt;
         this.payload = js_vextensions_1.E(this.constructor["defaultPayload"], payload);
     }
+    //userInfo: FireUserInfo;
+    get userInfo() { return this.options.fire.userInfo; }
     MarkAsSubcommand() {
         this.asSubcommand = true;
         this.Validate_Early();
@@ -70,7 +73,7 @@ class Command {
             }
             // FixDBUpdates(dbUpdates);
             // await store.firebase.helpers.DBRef().update(dbUpdates);
-            await DatabaseHelpers_1.ApplyDBUpdates(DatabaseHelpers_1.DBPath(this.options), dbUpdates);
+            await DatabaseHelpers_1.ApplyDBUpdates(this.options, PathHelpers_1.DBPath(this.options), dbUpdates);
             // MaybeLog(a=>a.commands, ()=>`Finishing command. @type:${this.constructor.name} @payload(${ToJSON(this.payload)}) @dbUpdates(${ToJSON(dbUpdates)})`);
             General_1.MaybeLog_Base(a => a.commands, l => l("Finishing command. @type:", this.constructor.name, " @command(", this, ") @dbUpdates(", dbUpdates, ")"));
         }

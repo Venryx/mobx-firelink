@@ -4,31 +4,12 @@ const js_vextensions_1 = require("js-vextensions");
 const updeep_1 = require("updeep");
 const General_1 = require("./General");
 const Firelink_1 = require("../Firelink");
+const firebase_1 = require("firebase");
+const PathHelpers_1 = require("./PathHelpers");
 function IsAuthValid(auth) {
     return auth && !auth.isEmpty;
 }
 exports.IsAuthValid = IsAuthValid;
-function DBPath(opt, path = "", inVersionRoot = true) {
-    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
-    js_vextensions_1.Assert(path != null, "Path cannot be null.");
-    js_vextensions_1.Assert(typeof path == "string", "Path must be a string.");
-    /*let versionPrefix = path.match(/^v[0-9]+/);
-    if (versionPrefix == null) // if no version prefix already, add one (referencing the current version)*/
-    if (inVersionRoot) {
-        path = `${opt.fire.versionPath}${path ? `/${path}` : ""}`;
-    }
-    return path;
-}
-exports.DBPath = DBPath;
-function DBPathSegments(opt, pathSegments, inVersionRoot = true) {
-    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
-    let result = pathSegments;
-    if (inVersionRoot) {
-        result = this.rootPathSegments.concat(result);
-    }
-    return result;
-}
-exports.DBPathSegments = DBPathSegments;
 /* Object.prototype._AddFunction_Inline = function DBRef(path = "", inVersionRoot = true) {
     const finalPath = DBPath(path, inVersionRoot);
     return this.ref(finalPath);
@@ -132,7 +113,8 @@ function ConvertDataToValidDBUpdates(versionPath, versionData, dbUpdatesRelative
     throw new Error("Not yet implemented.");
 }
 exports.ConvertDataToValidDBUpdates = ConvertDataToValidDBUpdates;
-async function ApplyDBUpdates(versionPath, dbUpdates) {
+async function ApplyDBUpdates(opt, versionPath, dbUpdates) {
+    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
     dbUpdates = js_vextensions_1.Clone(dbUpdates);
     if (versionPath != null) {
         //for (const {key: localPath, value} of ObjectCE.Pairs(dbUpdates)) {
@@ -145,12 +127,12 @@ async function ApplyDBUpdates(versionPath, dbUpdates) {
     const updateEntries = Object.entries(dbUpdates);
     if (updateEntries.length == 1) {
         let [path, value] = updateEntries[0];
-        const [docPath, fieldPathInDoc] = GetPathParts(path, true);
+        const [docPath, fieldPathInDoc] = PathHelpers_1.GetPathParts(path, true);
         value = js_vextensions_1.Clone(value); // picky firestore library demands "simple JSON objects"
         // [fieldPathInDoc, value] = FixSettingPrimitiveValueDirectly(fieldPathInDoc, value);
-        const docRef = manager.firestoreDB.doc(docPath);
+        const docRef = opt.fire.subs.firestoreDB.doc(docPath);
         if (fieldPathInDoc) {
-            value = value != null ? value : firebaseApp.firestore.FieldValue.delete();
+            value = value != null ? value : firebase_1.default.firestore.FieldValue.delete();
             // await docRef.update({ [fieldPathInDoc]: value });
             // set works even if the document doesn't exist yet, so use set instead of update
             const nestedSetHelper = {};
@@ -168,14 +150,14 @@ async function ApplyDBUpdates(versionPath, dbUpdates) {
     }
     else {
         // await firestoreDB.runTransaction(async batch=> {
-        const batch = manager.firestoreDB.batch();
+        const batch = opt.fire.subs.firestoreDB.batch();
         for (let [path, value] of updateEntries) {
-            const [docPath, fieldPathInDoc] = GetPathParts(path, true);
+            const [docPath, fieldPathInDoc] = PathHelpers_1.GetPathParts(path, true);
             value = js_vextensions_1.Clone(value); // picky firestore library demands "simple JSON objects"
             // [fieldPathInDoc, value] = FixSettingPrimitiveValueDirectly(fieldPathInDoc, value);
-            const docRef = manager.firestoreDB.doc(docPath);
+            const docRef = opt.fire.subs.firestoreDB.doc(docPath);
             if (fieldPathInDoc) {
-                value = value != null ? value : firebaseApp.firestore.FieldValue.delete();
+                value = value != null ? value : firebase_1.default.firestore.FieldValue.delete();
                 // batch.update(docRef, { [fieldPathInDoc]: value });
                 // set works even if the document doesn't exist yet, so use set instead of update
                 const nestedSetHelper = {};
@@ -200,7 +182,8 @@ async function ApplyDBUpdates(versionPath, dbUpdates) {
 }
 exports.ApplyDBUpdates = ApplyDBUpdates;
 exports.maxDBUpdatesPerBatch = 500;
-async function ApplyDBUpdates_InChunks(rootPath, dbUpdates, updatesPerChunk = exports.maxDBUpdatesPerBatch) {
+async function ApplyDBUpdates_InChunks(opt, rootPath, dbUpdates, updatesPerChunk = exports.maxDBUpdatesPerBatch) {
+    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
     const dbUpdates_pairs = js_vextensions_1.ObjectCE(dbUpdates).Pairs();
     const dbUpdates_pairs_chunks = [];
     for (let offset = 0; offset < dbUpdates_pairs.length; offset += updatesPerChunk) {
@@ -212,7 +195,7 @@ async function ApplyDBUpdates_InChunks(rootPath, dbUpdates, updatesPerChunk = ex
         if (dbUpdates_pairs_chunks.length > 1) {
             General_1.MaybeLog_Base(a => a.commands, l => l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
         }
-        await ApplyDBUpdates(rootPath, dbUpdates_chunk);
+        await ApplyDBUpdates(opt, rootPath, dbUpdates_chunk);
     }
 }
 exports.ApplyDBUpdates_InChunks = ApplyDBUpdates_InChunks;
