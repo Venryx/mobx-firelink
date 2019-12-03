@@ -2,12 +2,8 @@ import u from "updeep";
 import {Clone, Assert, DeepGet, E, ObjectCE, ArrayCE, CE} from "js-vextensions";
 import {maxDBUpdatesPerBatch, ApplyDBUpdates, ApplyDBUpdates_Local} from "../Utils/DatabaseHelpers";
 import {MaybeLog_Base} from "../Utils/General";
-import {FireOptions, defaultFireOptions} from "../Firelink";
+import {FireOptions, defaultFireOptions, FireUserInfo} from "../Firelink";
 import {DBPath} from "../Utils/PathHelpers";
-
-export class CommandUserInfo {
-	id: string;
-}
 
 export const commandsWaitingToComplete = [];
 
@@ -35,12 +31,14 @@ export abstract class Command<Payload, ReturnData = void> {
 		else [opt, payload] = args;
 		opt = E(defaultFireOptions, opt);
 
-		//this.userInfo = {id: manager.GetUserID()}; // temp
+		//this.userInfo = {id: opt.fire.userID}; // temp
+		//this.userInfo = opt.fire.userInfo; // temp (needs rework to be server-compatible in future)
 		this.type = this.constructor.name;
 		this.options = opt;
 		this.payload = E(this.constructor["defaultPayload"], payload);
 	}
-	//userInfo: CommandUserInfo;
+	//userInfo: FireUserInfo;
+	get userInfo() { return this.options.fire.userInfo; }
 	type: string;
 	options: FireOptions;
 	payload: Payload;
