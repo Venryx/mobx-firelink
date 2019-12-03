@@ -1,5 +1,10 @@
-import {DeepSet, IsNumberString, Assert, StringCE, Clone, ObjectCE, ObjectCEClass, ArrayCE, GetTreeNodesInObjTree} from "js-vextensions";
+import {DeepSet, IsNumberString, Assert, StringCE, Clone, ObjectCE, ObjectCEClass, ArrayCE, GetTreeNodesInObjTree, E} from "js-vextensions";
 import u from "updeep";
+import {MaybeLog_Base} from "./General";
+import {FireOptions} from "..";
+import {defaultFireOptions} from "../Firelink";
+import firebase from "firebase";
+import {GetPathParts} from "./PathHelpers";
 
 export function IsAuthValid(auth) {
 	return auth && !auth.isEmpty;
@@ -93,8 +98,8 @@ export function AssertValidatePath(path: string) {
 	Assert(!path.includes("//"), "Path cannot contain a double-slash. (This may mean a path parameter is missing)");
 }
 
-export function ConvertDataToValidDBUpdates(rootPath: string, rootData: any, dbUpdatesRelativeToRootPath = true) {
-	const result = {};
+export function ConvertDataToValidDBUpdates(versionPath: string, versionData: any, dbUpdatesRelativeToRootPath = true) {
+	/*const result = {};
 	for (const {key: pathFromRoot, value: data} of rootData.Pairs()) {
 		const fullPath = `${rootPath}/${pathFromRoot}`;
 		const pathForDBUpdates = dbUpdatesRelativeToRootPath ? pathFromRoot : fullPath;
@@ -108,15 +113,17 @@ export function ConvertDataToValidDBUpdates(rootPath: string, rootData: any, dbU
 			result[pathForDBUpdates] = data;
 		}
 	}
-	return result;
+	return result;*/
+	throw new Error("Not yet implemented.");
 }
 
-export async function ApplyDBUpdates(rootPath: string, dbUpdates: Object) {
+export async function ApplyDBUpdates(opt: FireOptions, versionPath: string, dbUpdates: Object) {
+	opt = E(defaultFireOptions, opt);
 	dbUpdates = Clone(dbUpdates);
-	if (rootPath != null) {
+	if (versionPath != null) {
 		//for (const {key: localPath, value} of ObjectCE.Pairs(dbUpdates)) {
 		for (const {key: localPath, value} of ObjectCE(dbUpdates).Pairs()) {
-			dbUpdates[`${rootPath}/${localPath}`] = value;
+			dbUpdates[`${versionPath}/${localPath}`] = value;
 			delete dbUpdates[localPath];
 		}
 	}
@@ -130,9 +137,9 @@ export async function ApplyDBUpdates(rootPath: string, dbUpdates: Object) {
 
 		// [fieldPathInDoc, value] = FixSettingPrimitiveValueDirectly(fieldPathInDoc, value);
 
-		const docRef = manager.firestoreDB.doc(docPath);
+		const docRef = opt.fire.subs.firestoreDB.doc(docPath);
 		if (fieldPathInDoc) {
-			value = value != null ? value : firebaseApp.firestore.FieldValue.delete();
+			value = value != null ? value : firebase.firestore.FieldValue.delete();
 
 			// await docRef.update({ [fieldPathInDoc]: value });
 			// set works even if the document doesn't exist yet, so use set instead of update
@@ -148,16 +155,16 @@ export async function ApplyDBUpdates(rootPath: string, dbUpdates: Object) {
 		}
 	} else {
 		// await firestoreDB.runTransaction(async batch=> {
-		const batch = manager.firestoreDB.batch();
+		const batch = opt.fire.subs.firestoreDB.batch();
 		for (let [path, value] of updateEntries) {
 			const [docPath, fieldPathInDoc] = GetPathParts(path, true);
 			value = Clone(value); // picky firestore library demands "simple JSON objects"
 
 			// [fieldPathInDoc, value] = FixSettingPrimitiveValueDirectly(fieldPathInDoc, value);
 
-			const docRef = manager.firestoreDB.doc(docPath);
+			const docRef = opt.fire.subs.firestoreDB.doc(docPath);
 			if (fieldPathInDoc) {
-				value = value != null ? value : firebaseApp.firestore.FieldValue.delete();
+				value = value != null ? value : firebase.firestore.FieldValue.delete();
 
 				// batch.update(docRef, { [fieldPathInDoc]: value });
 				// set works even if the document doesn't exist yet, so use set instead of update
@@ -181,7 +188,8 @@ export async function ApplyDBUpdates(rootPath: string, dbUpdates: Object) {
 }
 
 export const maxDBUpdatesPerBatch = 500;
-export async function ApplyDBUpdates_InChunks(rootPath: string, dbUpdates: Object, updatesPerChunk = maxDBUpdatesPerBatch) {
+export async function ApplyDBUpdates_InChunks(opt: FireOptions, rootPath: string, dbUpdates: Object, updatesPerChunk = maxDBUpdatesPerBatch) {
+	opt = E(defaultFireOptions, opt);
 	const dbUpdates_pairs = ObjectCE(dbUpdates).Pairs();
 
 	const dbUpdates_pairs_chunks = [];
@@ -195,7 +203,7 @@ export async function ApplyDBUpdates_InChunks(rootPath: string, dbUpdates: Objec
 		if (dbUpdates_pairs_chunks.length > 1) {
 			MaybeLog_Base(a=>a.commands, l=>l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
 		}
-		await ApplyDBUpdates(rootPath, dbUpdates_chunk);
+		await ApplyDBUpdates(opt, rootPath, dbUpdates_chunk);
 	}
 }
 

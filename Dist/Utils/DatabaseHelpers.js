@@ -2,10 +2,33 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const js_vextensions_1 = require("js-vextensions");
 const updeep_1 = require("updeep");
+const General_1 = require("./General");
+const Firelink_1 = require("../Firelink");
 function IsAuthValid(auth) {
     return auth && !auth.isEmpty;
 }
 exports.IsAuthValid = IsAuthValid;
+function DBPath(opt, path = "", inVersionRoot = true) {
+    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
+    js_vextensions_1.Assert(path != null, "Path cannot be null.");
+    js_vextensions_1.Assert(typeof path == "string", "Path must be a string.");
+    /*let versionPrefix = path.match(/^v[0-9]+/);
+    if (versionPrefix == null) // if no version prefix already, add one (referencing the current version)*/
+    if (inVersionRoot) {
+        path = `${opt.fire.versionPath}${path ? `/${path}` : ""}`;
+    }
+    return path;
+}
+exports.DBPath = DBPath;
+function DBPathSegments(opt, pathSegments, inVersionRoot = true) {
+    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
+    let result = pathSegments;
+    if (inVersionRoot) {
+        result = this.rootPathSegments.concat(result);
+    }
+    return result;
+}
+exports.DBPathSegments = DBPathSegments;
 /* Object.prototype._AddFunction_Inline = function DBRef(path = "", inVersionRoot = true) {
     const finalPath = DBPath(path, inVersionRoot);
     return this.ref(finalPath);
@@ -90,30 +113,31 @@ function AssertValidatePath(path) {
     js_vextensions_1.Assert(!path.includes("//"), "Path cannot contain a double-slash. (This may mean a path parameter is missing)");
 }
 exports.AssertValidatePath = AssertValidatePath;
-function ConvertDataToValidDBUpdates(rootPath, rootData, dbUpdatesRelativeToRootPath = true) {
-    const result = {};
-    for (const { key: pathFromRoot, value: data } of rootData.Pairs()) {
+function ConvertDataToValidDBUpdates(versionPath, versionData, dbUpdatesRelativeToRootPath = true) {
+    /*const result = {};
+    for (const {key: pathFromRoot, value: data} of rootData.Pairs()) {
         const fullPath = `${rootPath}/${pathFromRoot}`;
         const pathForDBUpdates = dbUpdatesRelativeToRootPath ? pathFromRoot : fullPath;
+
         // if entry`s "path" has odd number of segments (ie. points to collection), extract the children data into separate set-doc updates
         if (SplitStringBySlash_Cached(fullPath).length % 2 !== 0) {
-            for (const { key, value } of data.Pairs()) {
+            for (const {key, value} of data.Pairs()) {
                 result[`${pathForDBUpdates}/${key}`] = value;
             }
-        }
-        else {
+        } else {
             result[pathForDBUpdates] = data;
         }
     }
-    return result;
+    return result;*/
+    throw new Error("Not yet implemented.");
 }
 exports.ConvertDataToValidDBUpdates = ConvertDataToValidDBUpdates;
-async function ApplyDBUpdates(rootPath, dbUpdates) {
+async function ApplyDBUpdates(versionPath, dbUpdates) {
     dbUpdates = js_vextensions_1.Clone(dbUpdates);
-    if (rootPath != null) {
+    if (versionPath != null) {
         //for (const {key: localPath, value} of ObjectCE.Pairs(dbUpdates)) {
         for (const { key: localPath, value } of js_vextensions_1.ObjectCE(dbUpdates).Pairs()) {
-            dbUpdates[`${rootPath}/${localPath}`] = value;
+            dbUpdates[`${versionPath}/${localPath}`] = value;
             delete dbUpdates[localPath];
         }
     }
@@ -186,7 +210,7 @@ async function ApplyDBUpdates_InChunks(rootPath, dbUpdates, updatesPerChunk = ex
     for (const [index, dbUpdates_pairs_chunk] of dbUpdates_pairs_chunks.entries()) {
         const dbUpdates_chunk = dbUpdates_pairs_chunk.ToMap(a => a.key, a => a.value);
         if (dbUpdates_pairs_chunks.length > 1) {
-            MaybeLog_Base(a => a.commands, l => l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
+            General_1.MaybeLog_Base(a => a.commands, l => l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
         }
         await ApplyDBUpdates(rootPath, dbUpdates_chunk);
     }

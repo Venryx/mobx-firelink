@@ -18,15 +18,15 @@
 		"declaration": true,
 		"declarationDir": "Dist"
 	},
-	"files": ["Source/index.ts"],
+	//"files": ["Source/index.ts"],
 	"include": [
 		"Typings/**/*.d.ts",
 		"Source/**/*.ts",
 		"Source/**/*.tsx"
 	],
-	"exclude": [
+	/*"exclude": [
 		"Dist",
 		"node_modules"
-	],
+	],*/
 	"compileOnSave": true
 }

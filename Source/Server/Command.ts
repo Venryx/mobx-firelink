@@ -1,6 +1,9 @@
 import u from "updeep";
-import {Clone, Assert, DeepGet, E, ObjectCE, ArrayCE} from "js-vextensions";
+import {Clone, Assert, DeepGet, E, ObjectCE, ArrayCE, CE} from "js-vextensions";
 import {maxDBUpdatesPerBatch, ApplyDBUpdates, ApplyDBUpdates_Local} from "../Utils/DatabaseHelpers";
+import {MaybeLog_Base} from "../Utils/General";
+import {FireOptions, defaultFireOptions} from "../Firelink";
+import {DBPath} from "../Utils/PathHelpers";
 
 export class CommandUserInfo {
 	id: string;
@@ -24,13 +27,22 @@ function NotifyListenersThatCurrentCommandFinished() {
 
 export abstract class Command<Payload, ReturnData = void> {
 	static defaultPayload = {};
-	constructor(payload: Payload) {
-		this.userInfo = {id: manager.GetUserID()}; // temp
+	constructor(payload: Payload);
+	constructor(opt: FireOptions, payload: Payload);
+	constructor(...args) {
+		let opt: FireOptions, payload: Payload;
+		if (args.length == 1) [payload] = args;
+		else [opt, payload] = args;
+		opt = E(defaultFireOptions, opt);
+
+		//this.userInfo = {id: manager.GetUserID()}; // temp
 		this.type = this.constructor.name;
+		this.options = opt;
 		this.payload = E(this.constructor["defaultPayload"], payload);
 	}
-	userInfo: CommandUserInfo;
+	//userInfo: CommandUserInfo;
 	type: string;
+	options: FireOptions;
 	payload: Payload;
 
 	//prepareStartTime: number;
@@ -83,12 +95,12 @@ export abstract class Command<Payload, ReturnData = void> {
 			await this.PreRun();
 
 			const dbUpdates = this.GetDBUpdates();
-			if (manager.ValidateDBData) {
+			if (this.options.fire.ValidateDBData) {
 				await this.Validate_LateHeavy(dbUpdates);
 			}
 			// FixDBUpdates(dbUpdates);
 			// await store.firebase.helpers.DBRef().update(dbUpdates);
-			await ApplyDBUpdates(DBPath(), dbUpdates);
+			await ApplyDBUpdates(this.options, DBPath(this.options), dbUpdates);
 
 			// MaybeLog(a=>a.commands, ()=>`Finishing command. @type:${this.constructor.name} @payload(${ToJSON(this.payload)}) @dbUpdates(${ToJSON(dbUpdates)})`);
 			MaybeLog_Base(a=>a.commands, l=>l("Finishing command. @type:", this.constructor.name, " @command(", this, ") @dbUpdates(", dbUpdates, ")"));
@@ -123,9 +135,9 @@ export abstract class Command<Payload, ReturnData = void> {
 		} */
 
 		// locally-apply db-updates, then validate the result (for now, only works for already-loaded data paths)
-		const oldData = WithoutHelpers(DeepGet(manager.store, `firestore/data/${DBPath()}`));
+		const oldData = Clone(this.options.fire.versionData);
 		const newData = ApplyDBUpdates_Local(oldData, dbUpdates);
-		manager.ValidateDBData(newData);
+		this.options.fire.ValidateDBData(newData);
 	}
 }
 
@@ -155,7 +167,7 @@ export function MergeDBUpdates(baseUpdatesMap: Object, updatesToMergeMap: Object
 		if (update.data == null) {
 			for (const update2 of baseUpdates.slice()) { // make copy, since Remove() seems to break iteration otherwise
 				if (update2.path.startsWith(update.path)) {
-					ArrayCE(baseUpdates).Remove(update2);
+					CE(baseUpdates).Remove(update2);
 				}
 			}
 		}
@@ -176,7 +188,7 @@ export function MergeDBUpdates(baseUpdatesMap: Object, updatesToMergeMap: Object
 			} */
 
 			// remove from updates-to-merge list (since we just merged it)
-			ArrayCE(updatesToMerge).Remove(updateToMerge);
+			CE(updatesToMerge).Remove(updateToMerge);
 		}
 
 		finalUpdates.push(update);

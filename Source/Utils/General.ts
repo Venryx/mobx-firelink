@@ -5,7 +5,7 @@ export function Assert(condition, messageOrMessageFunc?: string | Function): con
 
 	var message = (messageOrMessageFunc as any) instanceof Function ? (messageOrMessageFunc as any)() : messageOrMessageFunc;
 
-	JSVE.logFunc(`Assert failed) ${message}\n\nStackTrace) ${GetStackTraceStr()}`);
+	//JSVE.logFunc(`Assert failed) ${message}\n\nStackTrace) ${GetStackTraceStr()}`);
 	console.error("Assert failed) " + message);
 
 	let skipError = false; // add flag which you can use to skip the error, when paused in debugger
@@ -44,4 +44,27 @@ export function GetStackTraceStr(...args) {
 	}
 
 	return stackTrace.substr(StringCE(stackTrace).IndexOf_X("\n", 1)); // remove "Error" line and first stack-frame (that of this method)
+}
+
+export function Log(...args) {
+	return console.log(...args);
+}
+
+// maybe temp
+export class LogTypes_Base {
+	// from vwebapp-framework
+	dbRequests = false;
+	dbRequests_onlyFirst = false;
+	cacheUpdates = false;
+	commands = false;
+}
+export function ShouldLog_Base<LogTypes extends LogTypes_Base>(shouldLogFunc: (logTypes: LogTypes)=>boolean) {
+	return shouldLogFunc(window["logTypes"] || {});
+}
+export function MaybeLog_Base<LogTypes extends LogTypes_Base>(shouldLogFunc: (logTypes: LogTypes)=>boolean, loggerFunc: (()=>string) | ((Log: Function)=>any)) {
+	if (!ShouldLog_Base(shouldLogFunc)) return;
+	// let loggerFuncReturnsString = loggerFunc.arguments.length == 0;
+	const loggerFuncIsSimpleGetter = loggerFunc.toString().replace(/ /g, "").includes("function()");
+	if (loggerFuncIsSimpleGetter) Log((loggerFunc as ()=>string)());
+	else loggerFunc(Log);
 }

@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const updeep_1 = require("updeep");
 const js_vextensions_1 = require("js-vextensions");
 const DatabaseHelpers_1 = require("../Utils/DatabaseHelpers");
+const General_1 = require("../Utils/General");
 class CommandUserInfo {
 }
 exports.CommandUserInfo = CommandUserInfo;
@@ -21,13 +22,19 @@ function NotifyListenersThatCurrentCommandFinished() {
     }
 }
 class Command {
-    constructor(payload) {
+    constructor(...args) {
         // these methods are executed on the server (well, will be later)
         // ==========
         // parent commands should call MarkAsSubcommand() immediately after setting a subcommand's payload
         this.asSubcommand = false;
-        this.userInfo = { id: manager.GetUserID() }; // temp
+        let opt, payload;
+        if (args.length == 1)
+            [payload] = args;
+        else
+            [opt, payload] = args;
+        //this.userInfo = {id: manager.GetUserID()}; // temp
         this.type = this.constructor.name;
+        this.options = opt;
         this.payload = js_vextensions_1.E(this.constructor["defaultPayload"], payload);
     }
     MarkAsSubcommand() {
@@ -46,26 +53,26 @@ class Command {
     /** [async] Validates the data, prepares it, and executes it -- thus applying it into the database. */
     async Run(maxUpdatesPerChunk = DatabaseHelpers_1.maxDBUpdatesPerBatch) {
         if (exports.commandsWaitingToComplete.length > 0) {
-            MaybeLog_Base(a => a.commands, l => l(`Queing command, since ${exports.commandsWaitingToComplete.length} ${exports.commandsWaitingToComplete.length == 1 ? "is" : "are"} already waiting for completion.${""}@type:`, this.constructor.name, " @payload(", this.payload, ")"));
+            General_1.MaybeLog_Base(a => a.commands, l => l(`Queing command, since ${exports.commandsWaitingToComplete.length} ${exports.commandsWaitingToComplete.length == 1 ? "is" : "are"} already waiting for completion.${""}@type:`, this.constructor.name, " @payload(", this.payload, ")"));
         }
         exports.commandsWaitingToComplete.push(this);
         while (currentCommandRun_listeners) {
             await WaitTillCurrentCommandFinishes();
         }
         currentCommandRun_listeners = [];
-        MaybeLog_Base(a => a.commands, l => l("Running command. @type:", this.constructor.name, " @payload(", this.payload, ")"));
+        General_1.MaybeLog_Base(a => a.commands, l => l("Running command. @type:", this.constructor.name, " @payload(", this.payload, ")"));
         try {
             //this.runStartTime = Date.now();
             await this.PreRun();
             const dbUpdates = this.GetDBUpdates();
-            if (manager.ValidateDBData) {
+            if (this.options.fire.ValidateDBData) {
                 await this.Validate_LateHeavy(dbUpdates);
             }
             // FixDBUpdates(dbUpdates);
             // await store.firebase.helpers.DBRef().update(dbUpdates);
-            await DatabaseHelpers_1.ApplyDBUpdates(DBPath(), dbUpdates);
+            await DatabaseHelpers_1.ApplyDBUpdates(DatabaseHelpers_1.DBPath(this.options), dbUpdates);
             // MaybeLog(a=>a.commands, ()=>`Finishing command. @type:${this.constructor.name} @payload(${ToJSON(this.payload)}) @dbUpdates(${ToJSON(dbUpdates)})`);
-            MaybeLog_Base(a => a.commands, l => l("Finishing command. @type:", this.constructor.name, " @command(", this, ") @dbUpdates(", dbUpdates, ")"));
+            General_1.MaybeLog_Base(a => a.commands, l => l("Finishing command. @type:", this.constructor.name, " @command(", this, ") @dbUpdates(", dbUpdates, ")"));
         }
         finally {
             //const areOtherCommandsBuffered = currentCommandRun_listeners.length > 0;
@@ -95,9 +102,9 @@ class Command {
             }
         } */
         // locally-apply db-updates, then validate the result (for now, only works for already-loaded data paths)
-        const oldData = WithoutHelpers(js_vextensions_1.DeepGet(manager.store, `firestore/data/${DBPath()}`));
+        const oldData = js_vextensions_1.Clone(this.options.fire.versionData);
         const newData = DatabaseHelpers_1.ApplyDBUpdates_Local(oldData, dbUpdates);
-        manager.ValidateDBData(newData);
+        this.options.fire.ValidateDBData(newData);
     }
 }
 exports.Command = Command;
@@ -111,7 +118,7 @@ function MergeDBUpdates(baseUpdatesMap, updatesToMergeMap) {
         if (update.data == null) {
             for (const update2 of baseUpdates.slice()) { // make copy, since Remove() seems to break iteration otherwise
                 if (update2.path.startsWith(update.path)) {
-                    js_vextensions_1.ArrayCE(baseUpdates).Remove(update2);
+                    js_vextensions_1.CE(baseUpdates).Remove(update2);
                 }
             }
         }
@@ -129,7 +136,7 @@ function MergeDBUpdates(baseUpdatesMap, updatesToMergeMap) {
                 update.data = null;
             } */
             // remove from updates-to-merge list (since we just merged it)
-            js_vextensions_1.ArrayCE(updatesToMerge).Remove(updateToMerge);
+            js_vextensions_1.CE(updatesToMerge).Remove(updateToMerge);
         }
         finalUpdates.push(update);
     }

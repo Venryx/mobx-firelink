@@ -23,12 +23,16 @@
   "engines": {
     "node": ">=4"
   },
+  "peerDependencies": {
+    "firebase": "^7.5.0"
+  },
   "devDependencies": {
     "@types/node": "^12.12.7",
+    "firebase": "^7.5.0",
     "typescript": "^3.7.2"
   },
   "dependencies": {
-    "js-vextensions": "0.0.16",
+    "js-vextensions": "0.0.29",
     "mobx": "^5.15.0",
     "updeep": "^1.2.0"
   }
