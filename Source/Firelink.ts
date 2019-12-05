@@ -1,11 +1,10 @@
-import {ObservableMap} from "mobx";
+import {ObservableMap, observable} from "mobx";
 import {Filter} from "./Filters";
-import {Assert} from "js-vextensions";
+import {Assert, E, DeepSet, CE} from "js-vextensions";
 import {UserInfo} from "os";
-
-// should be extended by user project
-export interface DBState {
-}
+import firebase from "firebase/app";
+import {TreeNode, PathSubscription} from "./Tree/TreeNode";
+import {SplitStringBySlash_Cached} from "./Utils/StringSplitCache";
 
 export let defaultFireOptions: FireOptions;
 export function SetDefaultFireOptions(opt: FireOptions) {
@@ -19,22 +18,25 @@ export class FireUserInfo {
 	id: string;
 }
 
-export class Firelink<DBState> {
+export class Firelink<DBShape> {
 	constructor(dbVersion: number, dbEnv_short: string) {
 		this.versionPathSegments = ["versions", `v${dbVersion}-${dbEnv_short}`];
 		this.versionPath = `versions/v${dbVersion}-${dbEnv_short}`;
+		this.subs.firestoreDB.collection
 	}
 
 	subs: {
-		firestoreDB: any;
+		firestoreDB: firebase.firestore.Firestore;
 	};
 
 	userInfo: FireUserInfo;
 
-	rootData: any;
+	tree: TreeNode<DBShape>;
+	//pathSubscriptions: Map<string, PathSubscription>;
+
 	versionPathSegments: string[];
 	versionPath: string;
-	versionData: DBState;
+	//versionData: DBShape;
 
-	ValidateDBData: (dbData: DBState)=>void;
+	ValidateDBData: (dbData: DBShape)=>void;
 }

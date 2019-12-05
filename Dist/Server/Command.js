@@ -105,7 +105,7 @@ class Command {
             }
         } */
         // locally-apply db-updates, then validate the result (for now, only works for already-loaded data paths)
-        const oldData = js_vextensions_1.Clone(this.options.fire.versionData);
+        const oldData = js_vextensions_1.Clone(this.options.fire.tree.AsRawData());
         const newData = DatabaseHelpers_1.ApplyDBUpdates_Local(oldData, dbUpdates);
         this.options.fire.ValidateDBData(newData);
     }

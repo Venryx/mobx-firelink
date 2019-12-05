@@ -133,7 +133,7 @@ export abstract class Command<Payload, ReturnData = void> {
 		} */
 
 		// locally-apply db-updates, then validate the result (for now, only works for already-loaded data paths)
-		const oldData = Clone(this.options.fire.versionData);
+		const oldData = Clone(this.options.fire.tree.AsRawData());
 		const newData = ApplyDBUpdates_Local(oldData, dbUpdates);
 		this.options.fire.ValidateDBData(newData);
 	}

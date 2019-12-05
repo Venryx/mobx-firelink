@@ -1,6 +1,7 @@
-import {Assert, IsString, E, CE} from "js-vextensions";
+import {Assert, IsString, E, CE, IsArray, IsFunction} from "js-vextensions";
 import {defaultFireOptions, FireOptions} from "../Firelink";
 import {SplitStringBySlash_Cached} from "./StringSplitCache";
+import {DBShape} from "../DBShape";
 
 export function VPathToFBPath(vPath: string) {
 	return vPath != null ? vPath.replace(/\/\./g, ".") : null;
@@ -59,4 +60,37 @@ export function SlicePath(path: string, removeFromEndCount: number, ...itemsToAd
 	parts.splice(parts.length - removeFromEndCount, removeFromEndCount, ...itemsToAdd);
 	if (parts.length == 0) return null;
 	return parts.join("/");
+}
+
+export function PathOrPathGetterToPath(pathOrPathSegmentsOrPathGetter: string | string[] | ((placeholder: any)=>any)) {
+	if (IsString(pathOrPathSegmentsOrPathGetter)) return pathOrPathSegmentsOrPathGetter;
+	if (IsArray(pathOrPathSegmentsOrPathGetter)) return (pathOrPathSegmentsOrPathGetter as Array<any>).join("/");
+	if (IsFunction(pathOrPathSegmentsOrPathGetter)) return MobXPathGetterToPath(pathOrPathSegmentsOrPathGetter);
+}
+export function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter: string | string[] | ((placeholder: any)=>any)) {
+	if (IsString(pathOrPathSegmentsOrPathGetter)) return pathOrPathSegmentsOrPathGetter.split("/");
+	if (IsArray(pathOrPathSegmentsOrPathGetter)) return pathOrPathSegmentsOrPathGetter as Array<any>;
+	if (IsFunction(pathOrPathSegmentsOrPathGetter)) return MobXPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter);
+}
+
+export function MobXPathGetterToPath(pathGetterFunc: (dbRoot: DBShape)=>any) {
+	return MobXPathGetterToPathSegments(pathGetterFunc).join("/");
+}
+export function MobXPathGetterToPathSegments(pathGetterFunc: (dbRoot: DBShape)=>any) {
+	let pathSegments = [] as string[];
+	let proxy = new Proxy({}, {
+		get: (target, key)=> {
+			if (key == "get") {
+				return (realKey: string)=>{
+					pathSegments.push(realKey);
+					return proxy;
+				}
+			}
+
+			pathSegments.push(key as string);
+			return proxy;
+		},
+	});
+	pathGetterFunc(proxy);
+	return pathSegments;
 }

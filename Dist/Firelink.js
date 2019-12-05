@@ -11,6 +11,7 @@ class Firelink {
     constructor(dbVersion, dbEnv_short) {
         this.versionPathSegments = ["versions", `v${dbVersion}-${dbEnv_short}`];
         this.versionPath = `versions/v${dbVersion}-${dbEnv_short}`;
+        this.subs.firestoreDB.collection;
     }
 }
 exports.Firelink = Firelink;

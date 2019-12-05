@@ -66,4 +66,44 @@ function SlicePath(path, removeFromEndCount, ...itemsToAdd) {
     return parts.join("/");
 }
 exports.SlicePath = SlicePath;
+function PathOrPathGetterToPath(pathOrPathSegmentsOrPathGetter) {
+    if (js_vextensions_1.IsString(pathOrPathSegmentsOrPathGetter))
+        return pathOrPathSegmentsOrPathGetter;
+    if (js_vextensions_1.IsArray(pathOrPathSegmentsOrPathGetter))
+        return pathOrPathSegmentsOrPathGetter.join("/");
+    if (js_vextensions_1.IsFunction(pathOrPathSegmentsOrPathGetter))
+        return MobXPathGetterToPath(pathOrPathSegmentsOrPathGetter);
+}
+exports.PathOrPathGetterToPath = PathOrPathGetterToPath;
+function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter) {
+    if (js_vextensions_1.IsString(pathOrPathSegmentsOrPathGetter))
+        return pathOrPathSegmentsOrPathGetter.split("/");
+    if (js_vextensions_1.IsArray(pathOrPathSegmentsOrPathGetter))
+        return pathOrPathSegmentsOrPathGetter;
+    if (js_vextensions_1.IsFunction(pathOrPathSegmentsOrPathGetter))
+        return MobXPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter);
+}
+exports.PathOrPathGetterToPathSegments = PathOrPathGetterToPathSegments;
+function MobXPathGetterToPath(pathGetterFunc) {
+    return MobXPathGetterToPathSegments(pathGetterFunc).join("/");
+}
+exports.MobXPathGetterToPath = MobXPathGetterToPath;
+function MobXPathGetterToPathSegments(pathGetterFunc) {
+    let pathSegments = [];
+    let proxy = new Proxy({}, {
+        get: (target, key) => {
+            if (key == "get") {
+                return (realKey) => {
+                    pathSegments.push(realKey);
+                    return proxy;
+                };
+            }
+            pathSegments.push(key);
+            return proxy;
+        },
+    });
+    pathGetterFunc(proxy);
+    return pathSegments;
+}
+exports.MobXPathGetterToPathSegments = MobXPathGetterToPathSegments;
 //# sourceMappingURL=PathHelpers.js.map

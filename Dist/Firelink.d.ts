@@ -1,5 +1,5 @@
-export interface DBState {
-}
+import firebase from "firebase/app";
+import { TreeNode } from "./Tree/TreeNode";
 export declare let defaultFireOptions: FireOptions;
 export declare function SetDefaultFireOptions(opt: FireOptions): void;
 export interface FireOptions {
@@ -8,15 +8,14 @@ export interface FireOptions {
 export declare class FireUserInfo {
     id: string;
 }
-export declare class Firelink<DBState> {
+export declare class Firelink<DBShape> {
     constructor(dbVersion: number, dbEnv_short: string);
     subs: {
-        firestoreDB: any;
+        firestoreDB: firebase.firestore.Firestore;
     };
     userInfo: FireUserInfo;
-    rootData: any;
+    tree: TreeNode<DBShape>;
     versionPathSegments: string[];
     versionPath: string;
-    versionData: DBState;
-    ValidateDBData: (dbData: DBState) => void;
+    ValidateDBData: (dbData: DBShape) => void;
 }
