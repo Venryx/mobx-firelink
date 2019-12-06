@@ -81,7 +81,4 @@ async function GetAsync(dataGetterFunc, opt) {
     return lastResult;
 }
 exports.GetAsync = GetAsync;
-/*export function WithStore<T>(store: DBShape, accessorFunc: ()=>T): T {
-    // todo
-}*/ 
 //# sourceMappingURL=Accessors.js.map

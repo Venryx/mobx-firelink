@@ -82,7 +82,3 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, opt?: FireOptions & Get
 
 	return lastResult;
 }
-
-/*export function WithStore<T>(store: DBShape, accessorFunc: ()=>T): T {
-	// todo
-}*/
