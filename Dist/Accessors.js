@@ -13,8 +13,9 @@ class GetDocs_Options {
     }
 }
 exports.GetDocs_Options = GetDocs_Options;
+GetDocs_Options.default = new GetDocs_Options();
 function GetDocs(opt, collectionPathOrGetterFunc) {
-    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
+    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, GetDocs_Options.default, opt);
     let subpath = PathHelpers_1.PathOrPathGetterToPath(collectionPathOrGetterFunc);
     let path = opt.inVersionRoot ? `${opt.fire.versionPath}/${subpath}` : subpath;
     let treeNode = opt.fire.tree.Get(path, opt.filters ? new TreeNode_1.QueryRequest({ filters: opt.filters }) : null);
@@ -36,8 +37,9 @@ class GetDoc_Options {
     }
 }
 exports.GetDoc_Options = GetDoc_Options;
+GetDoc_Options.default = new GetDoc_Options();
 function GetDoc(opt, docPathOrGetterFunc) {
-    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
+    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, GetDoc_Options.default, opt);
     let subpath = PathHelpers_1.PathOrPathGetterToPath(docPathOrGetterFunc);
     let path = opt.inVersionRoot ? `${opt.fire.versionPath}/${subpath}` : subpath;
     let treeNode = opt.fire.tree.Get(path);
@@ -79,8 +81,7 @@ async function GetAsync(dataGetterFunc, opt) {
     return lastResult;
 }
 exports.GetAsync = GetAsync;
-function WithStore(store, accessorFunc) {
+/*export function WithStore<T>(store: DBShape, accessorFunc: ()=>T): T {
     // todo
-}
-exports.WithStore = WithStore;
+}*/ 
 //# sourceMappingURL=Accessors.js.map

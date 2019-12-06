@@ -8,12 +8,13 @@ import {PathOrPathGetterToPath} from "./Utils/PathHelpers";
 import {TreeRequestWatcher} from "./Tree/TreeRequestWatcher";
 
 export class GetDocs_Options {
+	static default = new GetDocs_Options();
 	inVersionRoot? = true;
 	filters?: Filter[];
 	useUndefinedForInProgress? = false;
 }
 export function GetDocs<DocT>(opt: FireOptions & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>ObservableMap<any, DocT>)): DocT[] {
-	opt = E(defaultFireOptions, opt);
+	opt = E(defaultFireOptions, GetDocs_Options.default, opt);
 	let subpath = PathOrPathGetterToPath(collectionPathOrGetterFunc);
 	let path = opt.inVersionRoot ? `${opt.fire.versionPath}/${subpath}` : subpath;
 	let treeNode = opt.fire.tree.Get(path, opt.filters ? new QueryRequest({filters: opt.filters}) : null);
@@ -30,11 +31,12 @@ export function GetDocs<DocT>(opt: FireOptions & GetDocs_Options, collectionPath
 }*/
 
 export class GetDoc_Options {
+	static default = new GetDoc_Options();
 	inVersionRoot? = true;
 	useUndefinedForInProgress? = false;
 }
 export function GetDoc<DocT>(opt: FireOptions & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>DocT)): DocT {
-	opt = E(defaultFireOptions, opt);
+	opt = E(defaultFireOptions, GetDoc_Options.default, opt);
 	let subpath = PathOrPathGetterToPath(docPathOrGetterFunc);
 	let path = opt.inVersionRoot ? `${opt.fire.versionPath}/${subpath}` : subpath;
 	let treeNode = opt.fire.tree.Get(path);
@@ -81,6 +83,6 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, opt?: FireOptions & Get
 	return lastResult;
 }
 
-export function WithStore<T>(store: DBShape, accessorFunc: ()=>T): T {
+/*export function WithStore<T>(store: DBShape, accessorFunc: ()=>T): T {
 	// todo
-}
+}*/
