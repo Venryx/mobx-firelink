@@ -73,6 +73,7 @@ function PathOrPathGetterToPath(pathOrPathSegmentsOrPathGetter) {
         return pathOrPathSegmentsOrPathGetter.join("/");
     if (js_vextensions_1.IsFunction(pathOrPathSegmentsOrPathGetter))
         return MobXPathGetterToPath(pathOrPathSegmentsOrPathGetter);
+    return null;
 }
 exports.PathOrPathGetterToPath = PathOrPathGetterToPath;
 function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter) {
@@ -82,6 +83,7 @@ function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter) {
         return pathOrPathSegmentsOrPathGetter;
     if (js_vextensions_1.IsFunction(pathOrPathSegmentsOrPathGetter))
         return MobXPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter);
+    return [];
 }
 exports.PathOrPathGetterToPathSegments = PathOrPathGetterToPathSegments;
 function MobXPathGetterToPath(pathGetterFunc) {

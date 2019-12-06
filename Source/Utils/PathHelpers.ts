@@ -66,11 +66,13 @@ export function PathOrPathGetterToPath(pathOrPathSegmentsOrPathGetter: string | 
 	if (IsString(pathOrPathSegmentsOrPathGetter)) return pathOrPathSegmentsOrPathGetter;
 	if (IsArray(pathOrPathSegmentsOrPathGetter)) return (pathOrPathSegmentsOrPathGetter as Array<any>).join("/");
 	if (IsFunction(pathOrPathSegmentsOrPathGetter)) return MobXPathGetterToPath(pathOrPathSegmentsOrPathGetter);
+	return null;
 }
 export function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter: string | string[] | ((placeholder: any)=>any)) {
 	if (IsString(pathOrPathSegmentsOrPathGetter)) return pathOrPathSegmentsOrPathGetter.split("/");
 	if (IsArray(pathOrPathSegmentsOrPathGetter)) return pathOrPathSegmentsOrPathGetter as Array<any>;
 	if (IsFunction(pathOrPathSegmentsOrPathGetter)) return MobXPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter);
+	return [];
 }
 
 export function MobXPathGetterToPath(pathGetterFunc: (dbRoot: DBShape)=>any) {

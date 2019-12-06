@@ -17,20 +17,33 @@ export interface FireOptions {
 
 export class FireUserInfo {
 	id: string;
+	displayName: string;
 }
 
 export class Firelink<DBShape> {
 	constructor(dbVersion: number, dbEnv_short: string) {
 		this.versionPathSegments = ["versions", `v${dbVersion}-${dbEnv_short}`];
 		this.versionPath = `versions/v${dbVersion}-${dbEnv_short}`;
-		this.subs.firestoreDB.collection
+		this.subs.firestoreDB = firebase.firestore();
+		this.tree = new TreeNode(this, null);
 	}
 
-	subs: {
+	subs = {} as {
 		firestoreDB: firebase.firestore.Firestore;
 	};
 
+	userInfo_raw: firebase.auth.UserCredential;
 	userInfo: FireUserInfo;
+	async LogIn(opt: {provider: "google" | "facebook" | "twitter" | "github", type: "popup"}) {
+		if (opt.type == "popup") {
+			this.userInfo_raw = await firebase.auth().signInWithPopup({providerId: opt.provider});
+			this.userInfo.id = this.userInfo_raw.user.uid;
+			this.userInfo.displayName = this.userInfo_raw.user.displayName;
+		}
+	}
+	LogOut() {
+		// todo
+	}
 
 	tree: TreeNode<DBShape>;
 	treeRequestWatchers = new Set<TreeRequestWatcher>();

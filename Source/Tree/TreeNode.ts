@@ -106,13 +106,13 @@ export class TreeNode<DataShape> {
 	}*/
 
 	// for doc (and root) nodes
-	collectionNodes: ObservableMap<string, TreeNode<any>>;
+	collectionNodes = observable.map<string, TreeNode<any>>();
 	data: DataShape;
 
 	// for collection (and collection-query) nodes
-	queryNodes: ObservableMap<string, TreeNode<any>>; // for collection nodes
+	queryNodes = observable.map<string, TreeNode<any>>(); // for collection nodes
 	query: QueryRequest// for collection-query nodes
-	docNodes: ObservableMap<string, TreeNode<any>>;
+	docNodes = observable.map<string, TreeNode<any>>();
 
 	Get(subpathOrGetterFunc: string | string[] | ((data: DataShape)=>any), query?: QueryRequest, createTreeNodesIfMissing = true) {
 		let subpathSegments = PathOrPathGetterToPathSegments(subpathOrGetterFunc);

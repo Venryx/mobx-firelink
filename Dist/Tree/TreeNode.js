@@ -41,6 +41,15 @@ exports.QueryRequest = QueryRequest;
 class TreeNode {
     constructor(fire, pathOrSegments) {
         this.status = DataStatus.Initial;
+        /*get childNodes() {
+            if (this.type == TreeNodeType.Collection || this.type == TreeNodeType.CollectionQuery) return this.docNodes;
+            return this.collectionNodes;
+        }*/
+        // for doc (and root) nodes
+        this.collectionNodes = mobx_1.observable.map();
+        // for collection (and collection-query) nodes
+        this.queryNodes = mobx_1.observable.map(); // for collection nodes
+        this.docNodes = mobx_1.observable.map();
         this.fire = fire;
         this.path = PathHelpers_1.PathOrPathGetterToPath(pathOrSegments);
         this.pathSegments = PathHelpers_1.PathOrPathGetterToPathSegments(pathOrSegments);
