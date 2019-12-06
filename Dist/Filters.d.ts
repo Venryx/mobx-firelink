@@ -1,9 +1,11 @@
-export declare class Filter {
+export declare abstract class Filter {
+    abstract Apply(collection: firebase.firestore.CollectionReference): any;
 }
 export declare class WhereFilter extends Filter {
-    constructor(propPath: string, comparison: string, value: string);
-    propPath: string;
-    comparison: string;
+    constructor(propPath: string, comparison: firebase.firestore.WhereFilterOp, value: string);
+    fieldPath: string;
+    comparison: firebase.firestore.WhereFilterOp;
     value: string;
+    Apply(collection: firebase.firestore.CollectionReference): import("firebase").firestore.Query;
 }
-export declare const Where: (propPath: string, comparison: string, value: string) => WhereFilter;
+export declare const Where: (propPath: string, comparison: import("firebase").firestore.WhereFilterOp, value: string) => WhereFilter;

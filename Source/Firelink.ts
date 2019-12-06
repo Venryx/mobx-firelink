@@ -5,6 +5,7 @@ import {UserInfo} from "os";
 import firebase from "firebase/app";
 import {TreeNode, PathSubscription} from "./Tree/TreeNode";
 import {SplitStringBySlash_Cached} from "./Utils/StringSplitCache";
+import {TreeRequestWatcher} from "./Tree/TreeRequestWatcher";
 
 export let defaultFireOptions: FireOptions;
 export function SetDefaultFireOptions(opt: FireOptions) {
@@ -32,7 +33,11 @@ export class Firelink<DBShape> {
 	userInfo: FireUserInfo;
 
 	tree: TreeNode<DBShape>;
+	treeRequestWatchers = new Set<TreeRequestWatcher>();
 	//pathSubscriptions: Map<string, PathSubscription>;
+	UnsubscribeAll() {
+		this.tree.UnsubscribeAll();
+	}
 
 	versionPathSegments: string[];
 	versionPath: string;

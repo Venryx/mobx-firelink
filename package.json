@@ -32,7 +32,7 @@
     "typescript": "^3.7.2"
   },
   "dependencies": {
-    "js-vextensions": "0.0.29",
+    "js-vextensions": "0.0.31",
     "mobx": "^5.15.0",
     "updeep": "^1.2.0"
   }

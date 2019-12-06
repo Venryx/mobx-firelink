@@ -3,72 +3,115 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const js_vextensions_1 = require("js-vextensions");
 const mobx_1 = require("mobx");
 const PathHelpers_1 = require("../Utils/PathHelpers");
-const StringSplitCache_1 = require("../Utils/StringSplitCache");
-const Firelink_1 = require("../Firelink");
 var TreeNodeType;
 (function (TreeNodeType) {
     TreeNodeType[TreeNodeType["Root"] = 0] = "Root";
     TreeNodeType[TreeNodeType["Collection"] = 1] = "Collection";
-    TreeNodeType[TreeNodeType["Document"] = 2] = "Document";
+    TreeNodeType[TreeNodeType["CollectionQuery"] = 2] = "CollectionQuery";
+    TreeNodeType[TreeNodeType["Document"] = 3] = "Document";
 })(TreeNodeType = exports.TreeNodeType || (exports.TreeNodeType = {}));
+var DataStatus;
+(function (DataStatus) {
+    DataStatus[DataStatus["Initial"] = 0] = "Initial";
+    DataStatus[DataStatus["Waiting"] = 1] = "Waiting";
+    DataStatus[DataStatus["Received"] = 2] = "Received";
+})(DataStatus = exports.DataStatus || (exports.DataStatus = {}));
 class PathSubscription {
-    constructor(initialData) {
-        js_vextensions_1.CE(this).Extend(initialData);
+    constructor(unsubscribe) {
+        this.unsubscribe = unsubscribe;
     }
 }
 exports.PathSubscription = PathSubscription;
-class TreeNode {
-    constructor(fire, path) {
-        this.subscriptions = [];
-        this.fire = fire;
-        this.path = path;
+class QueryRequest {
+    constructor(initialData) {
+        js_vextensions_1.CE(this).Extend(initialData);
     }
-    get type() {
-        if (this.path == null)
-            return TreeNodeType.Root;
-        let segments = StringSplitCache_1.SplitStringBySlash_Cached(this.path);
-        //if (segments.length % 2 == 1) return TreeNodeType.Collection;
-        if (IsPathForCollection(this.path))
-            return TreeNodeType.Collection;
-        return TreeNodeType.Document;
+    Apply(collection) {
+        let result = collection;
+        for (let filter of this.filters) {
+            result = filter.Apply(result);
+        }
+        return result;
+    }
+    toString() {
+        return js_vextensions_1.ToJSON(this.filters);
+    }
+}
+exports.QueryRequest = QueryRequest;
+class TreeNode {
+    constructor(fire, pathOrSegments) {
+        this.status = DataStatus.Initial;
+        this.fire = fire;
+        this.path = PathHelpers_1.PathOrPathGetterToPath(pathOrSegments);
+        this.pathSegments = PathHelpers_1.PathOrPathGetterToPathSegments(pathOrSegments);
+        this.type = GetTreeNodeTypeForPath(this.pathSegments);
+    }
+    Request() {
+        this.fire.treeRequestWatchers.forEach(a => a.nodesRequested.add(this));
+        if (!this.subscription) {
+            this.Subscribe();
+        }
     }
     Subscribe() {
-        if (this.subscriptions.length)
-            return;
-        if (IsPathForCollection(this.path)) {
-            let unsubscribe = this.fire.subs.firestoreDB.collection(this.path).onSnapshot(function (snapshot) {
+        js_vextensions_1.Assert(this.subscription == null, "Cannot subscribe more than once!");
+        this.status = DataStatus.Waiting;
+        if (this.type == TreeNodeType.Root || this.type == TreeNodeType.Document) {
+            let docRef = this.fire.subs.firestoreDB.doc(this.path);
+            this.subscription = new PathSubscription(docRef.onSnapshot(function (snapshot) {
+                this.data = mobx_1.observable(snapshot.data());
+                this.status = DataStatus.Received;
+            }));
+        }
+        else {
+            let collectionRef = this.fire.subs.firestoreDB.collection(this.path);
+            if (this.query) {
+                collectionRef = this.query.Apply(collectionRef);
+            }
+            this.subscription = new PathSubscription(collectionRef.onSnapshot(function (snapshot) {
                 let newData = {};
                 for (let doc of snapshot.docs) {
                     newData[doc.id] = doc.data();
                 }
                 this.data = mobx_1.observable(newData);
-            });
-            this.subscriptions.push(new PathSubscription({ unsubscribe }));
-        }
-        else {
-            let unsubscribe = this.fire.subs.firestoreDB.doc(this.path).onSnapshot(function (snapshot) {
-                this.data = mobx_1.observable(snapshot.data());
-            });
-            this.subscriptions.push(new PathSubscription({ unsubscribe }));
+                this.status = DataStatus.Received;
+            }));
         }
     }
-    Get(subpathOrGetterFunc, createTreeNodesIfMissing = true) {
+    Unsubscribe() {
+        if (this.subscription == null)
+            return null;
+        let subscription = this.subscription;
+        this.subscription.unsubscribe();
+        this.subscription = null;
+        return subscription;
+    }
+    UnsubscribeAll() {
+        this.Unsubscribe();
+        this.collectionNodes.forEach(a => a.UnsubscribeAll());
+        this.queryNodes.forEach(a => a.UnsubscribeAll());
+        this.docNodes.forEach(a => a.UnsubscribeAll());
+    }
+    Get(subpathOrGetterFunc, query, createTreeNodesIfMissing = true) {
         let subpathSegments = PathHelpers_1.PathOrPathGetterToPathSegments(subpathOrGetterFunc);
-        let result = this;
+        let currentNode = this;
         for (let [index, segment] of subpathSegments.entries()) {
-            if (result[segment] == null) {
-                if (createTreeNodesIfMissing) {
-                    let pathToSegment = subpathSegments.slice(0, index).join("/");
-                    result[segment] = new TreeNode(this.fire, pathToSegment);
-                }
-                else {
-                    result = null;
-                    break;
-                }
+            let subpathSegmentsToHere = subpathSegments.slice(0, index);
+            let childNodesMap = currentNode[currentNode.type == TreeNodeType.Collection ? "docNodes" : "collectionNodes"];
+            if (!childNodesMap.has(segment) && createTreeNodesIfMissing) {
+                //let pathToSegment = subpathSegments.slice(0, index).join("/");
+                childNodesMap.set(segment, new TreeNode(this.fire, this.pathSegments.concat(subpathSegmentsToHere)));
             }
-            result = result[segment];
+            currentNode = childNodesMap.get(segment);
+            if (currentNode == null)
+                break;
         }
-        return result;
+        if (query) {
+            if (!currentNode.queryNodes.has(query.toString()) && createTreeNodesIfMissing) {
+                currentNode.queryNodes.set(query.toString(), new TreeNode(this.fire, this.pathSegments.concat(subpathSegments).concat("@query:")));
+            }
+            currentNode = currentNode.queryNodes.get(query.toString());
+        }
+        return currentNode;
     }
     AsRawData() {
         return TreeNodeToRawData(this);
@@ -78,28 +121,30 @@ class TreeNode {
     }
 }
 exports.TreeNode = TreeNode;
-function IsPathForCollection(path) {
-    return path.split("/").length % 2 == 1;
+function GetTreeNodeTypeForPath(pathOrSegments) {
+    let pathSegments = PathHelpers_1.PathOrPathGetterToPathSegments(pathOrSegments);
+    if (pathSegments == null || pathSegments.length == 0)
+        return TreeNodeType.Root;
+    if (js_vextensions_1.CE(pathSegments).Last().startsWith("@query:"))
+        return TreeNodeType.CollectionQuery;
+    return pathSegments.length % 2 == 1 ? TreeNodeType.Collection : TreeNodeType.Document;
 }
-exports.IsPathForCollection = IsPathForCollection;
-function EnsurePathWatched(opt, path) {
-    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
+exports.GetTreeNodeTypeForPath = GetTreeNodeTypeForPath;
+/*export function EnsurePathWatched(opt: FireOptions, path: string, filters?: Filter[]) {
+    opt = E(defaultFireOptions, opt);
     let treeNode = opt.fire.tree.Get(path);
-    if (treeNode.subscriptions.length)
-        return;
-    treeNode.Subscribe();
-}
-exports.EnsurePathWatched = EnsurePathWatched;
+    if (treeNode.subscriptions.length) return;
+    treeNode.Subscribe(filters ? new QueryRequest({filters}) : null);
+}*/
 function TreeNodeToRawData(treeNode) {
     let result = {};
     if (treeNode.data) {
         js_vextensions_1.CE(result).Extend(treeNode.data);
     }
     js_vextensions_1.CE(result)._AddItem("_path", treeNode.path);
-    if (treeNode.subs) {
-        let subNodes = Array.from(treeNode.subs.values());
-        let subsAsRawData = subNodes.map(subNode => TreeNodeToRawData(subNode));
-        js_vextensions_1.CE(result)._AddItem("_subs", subsAsRawData);
+    if (treeNode.docNodes) {
+        let docsAsRawData = Array.from(treeNode.docNodes.values()).map(docNode => TreeNodeToRawData(docNode));
+        js_vextensions_1.CE(result)._AddItem("_subs", docsAsRawData);
     }
     return result;
 }

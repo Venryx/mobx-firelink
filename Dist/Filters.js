@@ -6,9 +6,12 @@ exports.Filter = Filter;
 class WhereFilter extends Filter {
     constructor(propPath, comparison, value) {
         super();
-        this.propPath = propPath;
+        this.fieldPath = propPath;
         this.comparison = comparison;
         this.value = value;
+    }
+    Apply(collection) {
+        return collection.where(this.fieldPath, this.comparison, this.value);
     }
 }
 exports.WhereFilter = WhereFilter;

@@ -1,27 +1,47 @@
 import { ObservableMap } from "mobx";
-import { FireOptions, Firelink } from "../Firelink";
+import { Filter } from "../Filters";
+import { Firelink } from "../Firelink";
 export declare enum TreeNodeType {
     Root = 0,
     Collection = 1,
-    Document = 2
+    CollectionQuery = 2,
+    Document = 3
+}
+export declare enum DataStatus {
+    Initial = 0,
+    Waiting = 1,
+    Received = 2
 }
 export declare class PathSubscription {
-    constructor(initialData: Partial<PathSubscription>);
+    constructor(unsubscribe: () => void);
     unsubscribe: () => void;
 }
+export declare class QueryRequest {
+    constructor(initialData?: Partial<QueryRequest>);
+    filters: Filter[];
+    Apply(collection: firebase.firestore.CollectionReference): import("firebase").firestore.CollectionReference;
+    toString(): string;
+}
 export declare class TreeNode<DataShape> {
-    constructor(fire: Firelink<any>, path: string);
+    constructor(fire: Firelink<any>, pathOrSegments: string | string[]);
     fire: Firelink<any>;
     path: string;
-    get type(): TreeNodeType;
-    subscriptions: PathSubscription[];
+    pathSegments: string[];
+    type: TreeNodeType;
+    Request(): void;
     Subscribe(): void;
-    subs: ObservableMap<string, TreeNode<any>>;
+    Unsubscribe(): PathSubscription;
+    UnsubscribeAll(): void;
+    status: DataStatus;
+    subscription: PathSubscription;
+    collectionNodes: ObservableMap<string, TreeNode<any>>;
     data: DataShape;
-    Get(subpathOrGetterFunc: string | ((data: DataShape) => any), createTreeNodesIfMissing?: boolean): this;
+    queryNodes: ObservableMap<string, TreeNode<any>>;
+    query: QueryRequest;
+    docNodes: ObservableMap<string, TreeNode<any>>;
+    Get(subpathOrGetterFunc: string | string[] | ((data: DataShape) => any), query?: QueryRequest, createTreeNodesIfMissing?: boolean): TreeNode<any>;
     AsRawData(): DataShape;
     UploadRawData(rawData: DataShape): void;
 }
-export declare function IsPathForCollection(path: string): boolean;
-export declare function EnsurePathWatched(opt: FireOptions, path: string): void;
+export declare function GetTreeNodeTypeForPath(pathOrSegments: string | string[]): TreeNodeType;
 export declare function TreeNodeToRawData<DataShape>(treeNode: TreeNode<DataShape>): DataShape;

@@ -13,5 +13,5 @@ export declare class GetDoc_Options {
     useUndefinedForInProgress?: boolean;
 }
 export declare function GetDoc<DocT>(opt: FireOptions & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DBShape) => DocT)): DocT;
-export declare function GetAsync<T>(dataGetterFunc: () => T): Promise<T>;
+export declare function GetAsync<T>(dataGetterFunc: () => T, opt?: FireOptions & GetDoc_Options): Promise<T>;
 export declare function WithStore<T>(store: DBShape, accessorFunc: () => T): T;

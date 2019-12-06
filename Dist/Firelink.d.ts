@@ -1,5 +1,6 @@
 import firebase from "firebase/app";
 import { TreeNode } from "./Tree/TreeNode";
+import { TreeRequestWatcher } from "./Tree/TreeRequestWatcher";
 export declare let defaultFireOptions: FireOptions;
 export declare function SetDefaultFireOptions(opt: FireOptions): void;
 export interface FireOptions {
@@ -15,6 +16,8 @@ export declare class Firelink<DBShape> {
     };
     userInfo: FireUserInfo;
     tree: TreeNode<DBShape>;
+    treeRequestWatchers: Set<TreeRequestWatcher>;
+    UnsubscribeAll(): void;
     versionPathSegments: string[];
     versionPath: string;
     ValidateDBData: (dbData: DBShape) => void;
