@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const js_vextensions_1 = require("js-vextensions");
 const Firelink_1 = require("./Firelink");
-const PathHelpers_1 = require("./Utils/PathHelpers");
 const TreeNode_1 = require("./Tree/TreeNode");
+const PathHelpers_1 = require("./Utils/PathHelpers");
 class GetDocs_Options {
     constructor() {
         this.inVersionRoot = true;
@@ -25,11 +25,10 @@ function GetDocs(opt, collectionPathOrGetterFunc) {
     return docDatas;
 }
 exports.GetDocs = GetDocs;
-async function GetDocs_Async(opt, collectionPathOrGetterFunc) {
-    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
-    // todo
-}
-exports.GetDocs_Async = GetDocs_Async;
+/*export async function GetDocs_Async<DocT>(opt: FireOptions & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>ObservableMap<any, DocT>)): Promise<DocT[]> {
+    opt = E(defaultFireOptions, opt);
+    return GetAsync(()=>GetDocs_Async(opt, collectionPathOrGetterFunc));
+}*/
 class GetDoc_Options {
     constructor() {
         this.inVersionRoot = true;
@@ -48,11 +47,10 @@ function GetDoc(opt, docPathOrGetterFunc) {
     return opt.fire.tree.Get(path).data;
 }
 exports.GetDoc = GetDoc;
-async function GetDoc_Async(opt, docPathOrGetterFunc) {
-    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
-    // todo
-}
-exports.GetDoc_Async = GetDoc_Async;
+/*export async function GetDoc_Async<DocT>(opt: FireOptions & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>DocT)): Promise<DocT> {
+    opt = E(defaultFireOptions, opt);
+    return GetAsync(()=>GetDoc_Async(opt, docPathOrGetterFunc));
+}*/
 /* GetDocField<DocT, FieldT>(docGetterFunc: (dbRoot: DBShape)=>DocT, fieldGetterFunc: (doc: DocT)=>FieldT, suboptions?: GetDocs_Options): FieldT {
 }
 export async GetDocField_Async<DocT, FieldT>(docGetterFunc: (dbRoot: DBShape)=>DocT, fieldGetterFunc: (doc: DocT)=>FieldT, suboptions?: GetDocs_Options): Promise<FieldT> {
@@ -63,7 +61,7 @@ async function GetAsync(dataGetterFunc) {
 exports.GetAsync = GetAsync;
 /*async WaitTillPathDataIsReceived() {
 }*/
-function WithStore(store, func) {
+function WithStore(store, accessorFunc) {
     // todo
 }
 exports.WithStore = WithStore;

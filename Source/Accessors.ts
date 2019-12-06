@@ -1,11 +1,10 @@
-import {E, ConvertPathGetterFuncToPropChain, IsString, DeepGet} from "js-vextensions";
+import {E} from "js-vextensions";
 import {ObservableMap} from "mobx";
-import {Filter} from "./Filters";
-import {FireOptions, defaultFireOptions} from "./Firelink";
-import {SplitStringBySlash_Cached} from "./Utils/StringSplitCache";
-import {MobXPathGetterToPath, PathOrPathGetterToPath} from "./Utils/PathHelpers";
 import {DBShape} from "./DBShape";
-import {TreeNode, EnsurePathWatched} from "./Tree/TreeNode";
+import {Filter} from "./Filters";
+import {defaultFireOptions, FireOptions} from "./Firelink";
+import {EnsurePathWatched, TreeNode} from "./Tree/TreeNode";
+import {PathOrPathGetterToPath} from "./Utils/PathHelpers";
 
 export class GetDocs_Options {
 	inVersionRoot? = true;
@@ -27,10 +26,10 @@ export function GetDocs<DocT>(opt: FireOptions & GetDocs_Options, collectionPath
 	let docDatas = docNodes.map(docNode=>docNode.data);
 	return docDatas;
 }
-export async function GetDocs_Async<DocT>(opt: FireOptions & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>ObservableMap<any, DocT>)): Promise<DocT[]> {
+/*export async function GetDocs_Async<DocT>(opt: FireOptions & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>ObservableMap<any, DocT>)): Promise<DocT[]> {
 	opt = E(defaultFireOptions, opt);
-	// todo
-}
+	return GetAsync(()=>GetDocs_Async(opt, collectionPathOrGetterFunc));
+}*/
 
 export class GetDoc_Options {
 	inVersionRoot? = true;
@@ -48,10 +47,10 @@ export function GetDoc<DocT>(opt: FireOptions & GetDoc_Options, docPathOrGetterF
 	//return DeepGet(opt.fire.versionData, subpath);
 	return opt.fire.tree.Get(path).data;
 }
-export async function GetDoc_Async<DocT>(opt: FireOptions & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>DocT)): Promise<DocT> {
+/*export async function GetDoc_Async<DocT>(opt: FireOptions & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>DocT)): Promise<DocT> {
 	opt = E(defaultFireOptions, opt);
-	// todo
-}
+	return GetAsync(()=>GetDoc_Async(opt, docPathOrGetterFunc));
+}*/
 /* GetDocField<DocT, FieldT>(docGetterFunc: (dbRoot: DBShape)=>DocT, fieldGetterFunc: (doc: DocT)=>FieldT, suboptions?: GetDocs_Options): FieldT {
 }
 export async GetDocField_Async<DocT, FieldT>(docGetterFunc: (dbRoot: DBShape)=>DocT, fieldGetterFunc: (doc: DocT)=>FieldT, suboptions?: GetDocs_Options): Promise<FieldT> {
@@ -64,6 +63,6 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T): Promise<T> {
 /*async WaitTillPathDataIsReceived() {
 }*/
 
-export function WithStore<T>(store: DBShape, func: ()=>T): T {
+export function WithStore<T>(store: DBShape, accessorFunc: ()=>T): T {
 	// todo
 }
