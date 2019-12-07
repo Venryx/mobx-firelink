@@ -1,10 +1,5 @@
-import {ObservableMap, observable} from "mobx";
-import {Filter} from "./Filters";
-import {Assert, E, DeepSet, CE} from "js-vextensions";
-import {UserInfo} from "os";
 import firebase from "firebase/app";
-import {TreeNode, PathSubscription} from "./Tree/TreeNode";
-import {SplitStringBySlash_Cached} from "./Utils/StringSplitCache";
+import {TreeNode} from "./Tree/TreeNode";
 import {TreeRequestWatcher} from "./Tree/TreeRequestWatcher";
 
 export let defaultFireOptions: FireOptions;
