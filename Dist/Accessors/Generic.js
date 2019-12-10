@@ -13,7 +13,7 @@ Why use explicit GetDocs, GetDoc, etc. calls instead of just Proxy's?
 */
 class GetDocs_Options {
     constructor() {
-        this.inVersionRoot = true;
+        this.inLinkRoot = true;
         this.useUndefinedForInProgress = false;
     }
 }
@@ -22,7 +22,7 @@ GetDocs_Options.default = new GetDocs_Options();
 function GetDocs(opt, collectionPathOrGetterFunc) {
     opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, GetDocs_Options.default, opt);
     let subpath = PathHelpers_1.PathOrPathGetterToPath(collectionPathOrGetterFunc);
-    let path = opt.inVersionRoot ? `${opt.fire.versionPath}/${subpath}` : subpath;
+    let path = opt.inLinkRoot ? `${opt.fire.rootPath}/${subpath}` : subpath;
     let treeNode = opt.fire.tree.Get(path, opt.filters ? new TreeNode_1.QueryRequest({ filters: opt.filters }) : null);
     treeNode.Request();
     // todo: handle opt.useUndefinedForInProgress
@@ -37,7 +37,7 @@ exports.GetDocs = GetDocs;
 }*/
 class GetDoc_Options {
     constructor() {
-        this.inVersionRoot = true;
+        this.inLinkRoot = true;
         this.useUndefinedForInProgress = false;
     }
 }
@@ -46,7 +46,7 @@ GetDoc_Options.default = new GetDoc_Options();
 function GetDoc(opt, docPathOrGetterFunc) {
     opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, GetDoc_Options.default, opt);
     let subpath = PathHelpers_1.PathOrPathGetterToPath(docPathOrGetterFunc);
-    let path = opt.inVersionRoot ? `${opt.fire.versionPath}/${subpath}` : subpath;
+    let path = opt.inLinkRoot ? `${opt.fire.rootPath}/${subpath}` : subpath;
     let treeNode = opt.fire.tree.Get(path);
     treeNode.Request();
     // todo: handle opt.useUndefinedForInProgress

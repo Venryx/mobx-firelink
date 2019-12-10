@@ -36,23 +36,23 @@ function GetPathParts(path, asFBPath = false) {
     return [colOrDocPath, fieldPathInDoc];
 }
 exports.GetPathParts = GetPathParts;
-function DBPath(opt, path = "", inVersionRoot = true) {
+function DBPath(opt, path = "", inLinkRoot = true) {
     opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
     js_vextensions_1.Assert(path != null, "Path cannot be null.");
     js_vextensions_1.Assert(typeof path == "string", "Path must be a string.");
     /*let versionPrefix = path.match(/^v[0-9]+/);
     if (versionPrefix == null) // if no version prefix already, add one (referencing the current version)*/
-    if (inVersionRoot) {
-        path = `${opt.fire.versionPath}${path ? `/${path}` : ""}`;
+    if (inLinkRoot) {
+        path = `${opt.fire.rootPath}${path ? `/${path}` : ""}`;
     }
     return path;
 }
 exports.DBPath = DBPath;
-function DBPathSegments(opt, pathSegments, inVersionRoot = true) {
+function DBPathSegments(opt, pathSegments, inLinkRoot = true) {
     opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
     let result = pathSegments;
-    if (inVersionRoot) {
-        result = opt.fire.versionPathSegments.concat(result);
+    if (inLinkRoot) {
+        result = opt.fire.rootPathSegments.concat(result);
     }
     return result;
 }

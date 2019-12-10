@@ -34,22 +34,22 @@ export function GetPathParts(path: string, asFBPath = false): [string, string] {
 	return [colOrDocPath, fieldPathInDoc];
 }
 
-export function DBPath(opt: FireOptions, path = "", inVersionRoot = true) {
+export function DBPath(opt: FireOptions, path = "", inLinkRoot = true) {
 	opt = E(defaultFireOptions, opt);
 	Assert(path != null, "Path cannot be null.");
 	Assert(typeof path == "string", "Path must be a string.");
 	/*let versionPrefix = path.match(/^v[0-9]+/);
 	if (versionPrefix == null) // if no version prefix already, add one (referencing the current version)*/
-	if (inVersionRoot) {
-		path = `${opt.fire.versionPath}${path ? `/${path}` : ""}`;
+	if (inLinkRoot) {
+		path = `${opt.fire.rootPath}${path ? `/${path}` : ""}`;
 	}
 	return path;
 }
-export function DBPathSegments(opt: FireOptions, pathSegments: (string | number)[], inVersionRoot = true) {
+export function DBPathSegments(opt: FireOptions, pathSegments: (string | number)[], inLinkRoot = true) {
 	opt = E(defaultFireOptions, opt);
 	let result = pathSegments;
-	if (inVersionRoot) {
-		result = opt.fire.versionPathSegments.concat(result as any);
+	if (inLinkRoot) {
+		result = opt.fire.rootPathSegments.concat(result as any);
 	}
 	return result;
 }

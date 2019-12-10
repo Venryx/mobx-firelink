@@ -1,5 +1,5 @@
 import {computedFn} from "mobx-utils";
-import {CE, ObjectCE, E} from "js-vextensions";
+import {CE, ObjectCE, E, Assert} from "js-vextensions";
 import {FireOptions, defaultFireOptions} from "../Firelink";
 import {RootStoreShape} from "../UserTypes";
 
@@ -88,7 +88,7 @@ export const StoreAccessor: StoreAccessorFunc<RootStoreShape> = (...args)=>{
 	opt = E(StoreAccessorOptions.default, opt);
 
 	let defaultFireOptionsAtInit = defaultFireOptions;
-	let fire = E(defaultFireOptions, opt.fire);
+	let fireOpt = E(defaultFireOptions, CE(opt).Including("fire"));
 
 	//let addProfiling = manager.devEnv; // manager isn't populated yet
 	const addProfiling = window["DEV"];
@@ -98,7 +98,7 @@ export const StoreAccessor: StoreAccessorFunc<RootStoreShape> = (...args)=>{
 	const wrapperAccessor = (...callArgs)=>{
 		// if defaultFireOptions is only now set, re-apply it to our "fire" variable (it's usually not set when StoreAccessor() is first called)
 		if (defaultFireOptions != null && defaultFireOptionsAtInit == null) {
-			fire = E(defaultFireOptions, opt.fire);
+			fireOpt = E(defaultFireOptions, fireOpt);
 		}
 
 		if (addProfiling) {
@@ -109,10 +109,11 @@ export const StoreAccessor: StoreAccessorFunc<RootStoreShape> = (...args)=>{
 		}
 
 		let accessor;
-		const usingMainStore = storeOverridesStack.length == 0;
+		const usingMainStore = storeOverridesStack.length == 0; // || storeOverridesStack[storeOverridesStack.length - 1] == fire.rootStore;
 		if (usingMainStore) {
 			if (accessor_forMainStore == null) {
-				accessor_forMainStore = accessorGetter(fire.rootStore);
+				Assert(fireOpt.fire.rootStore != null, "A store-accessor cannot be called before its associated Firelink instance has been set.");
+				accessor_forMainStore = accessorGetter(fireOpt.fire.rootStore);
 			}
 			accessor = accessor_forMainStore;
 		} else {

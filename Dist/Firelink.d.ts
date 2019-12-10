@@ -3,18 +3,20 @@ import { TreeNode } from "./Tree/TreeNode";
 import { TreeRequestWatcher } from "./Tree/TreeRequestWatcher";
 export declare let defaultFireOptions: FireOptions;
 export declare function SetDefaultFireOptions(opt: FireOptions): void;
-export interface FireOptions {
-    fire?: Firelink<any, any>;
+export interface FireOptions<RootStoreShape = any, DBShape = any> {
+    fire?: Firelink<RootStoreShape, DBShape>;
 }
 export declare class FireUserInfo {
     id: string;
     displayName: string;
 }
 export declare class Firelink<RootStoreShape, DBShape> {
-    constructor(dbVersion: number, dbEnv_short: string, rootStore: RootStoreShape);
-    versionPathSegments: string[];
-    versionPath: string;
+    static instances: Firelink<any, any>[];
+    constructor(rootPathInDB: string | string[], rootStore: RootStoreShape, initSubs?: boolean);
+    rootPathSegments: string[];
+    rootPath: string;
     rootStore: RootStoreShape;
+    InitSubs(): void;
     subs: {
         firestoreDB: firebase.firestore.Firestore;
     };

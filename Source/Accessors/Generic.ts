@@ -15,14 +15,14 @@ Why use explicit GetDocs, GetDoc, etc. calls instead of just Proxy's?
 
 export class GetDocs_Options {
 	static default = new GetDocs_Options();
-	inVersionRoot? = true;
+	inLinkRoot? = true;
 	filters?: Filter[];
 	useUndefinedForInProgress? = false;
 }
-export function GetDocs<DocT>(opt: FireOptions & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>ObservableMap<any, DocT>)): DocT[] {
+export function GetDocs<DB = DBShape, DocT = any>(opt: FireOptions<any, DB> & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>ObservableMap<any, DocT>)): DocT[] {
 	opt = E(defaultFireOptions, GetDocs_Options.default, opt);
 	let subpath = PathOrPathGetterToPath(collectionPathOrGetterFunc);
-	let path = opt.inVersionRoot ? `${opt.fire.versionPath}/${subpath}` : subpath;
+	let path = opt.inLinkRoot ? `${opt.fire.rootPath}/${subpath}` : subpath;
 	let treeNode = opt.fire.tree.Get(path, opt.filters ? new QueryRequest({filters: opt.filters}) : null);
 	treeNode.Request();
 	
@@ -38,13 +38,13 @@ export function GetDocs<DocT>(opt: FireOptions & GetDocs_Options, collectionPath
 
 export class GetDoc_Options {
 	static default = new GetDoc_Options();
-	inVersionRoot? = true;
+	inLinkRoot? = true;
 	useUndefinedForInProgress? = false;
 }
-export function GetDoc<DocT>(opt: FireOptions & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>DocT)): DocT {
+export function GetDoc<DB = DBShape, DocT = any>(opt: FireOptions<any, DB> & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>DocT)): DocT {
 	opt = E(defaultFireOptions, GetDoc_Options.default, opt);
 	let subpath = PathOrPathGetterToPath(docPathOrGetterFunc);
-	let path = opt.inVersionRoot ? `${opt.fire.versionPath}/${subpath}` : subpath;
+	let path = opt.inLinkRoot ? `${opt.fire.rootPath}/${subpath}` : subpath;
 	let treeNode = opt.fire.tree.Get(path);
 	treeNode.Request();
 

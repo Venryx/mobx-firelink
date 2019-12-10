@@ -66,7 +66,8 @@ export class TreeNode<DataShape> {
 		if (this.type == TreeNodeType.Root || this.type == TreeNodeType.Document) {
 			let docRef = this.fire.subs.firestoreDB.doc(this.path);
 			this.subscription = new PathSubscription(docRef.onSnapshot(function(snapshot) {
-				this.data = observable(snapshot.data());
+				let data_raw = snapshot.data();
+				this.data = data_raw ? observable(data_raw) : null;
 				this.status = DataStatus.Received;
 			}));
 		} else {

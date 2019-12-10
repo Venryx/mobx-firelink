@@ -80,6 +80,7 @@ export function ProcessDBData(data, standardizeForm: boolean, addHelpers: boolea
 	return treeNodes[0].Value; // get possibly-modified wrapper.data
 }
 
+// these shouldn't be needed anymore, since _key and _id are stored as non-enumerable props now
 /* const helperProps = ["_key", "_id"];
 /** Note: this mutates the original object. *#/
 export function RemoveHelpers(data) {
@@ -117,13 +118,14 @@ export function ConvertDataToValidDBUpdates(versionPath: string, versionData: an
 	throw new Error("Not yet implemented.");
 }
 
-export async function ApplyDBUpdates(opt: FireOptions, versionPath: string, dbUpdates: Object) {
+export async function ApplyDBUpdates(opt: FireOptions, rootPath: string, dbUpdates: Object) {
 	opt = E(defaultFireOptions, opt);
+	//dbUpdates = WithoutHelpers(Clone(dbUpdates));
 	dbUpdates = Clone(dbUpdates);
-	if (versionPath != null) {
+	if (rootPath != null) {
 		//for (const {key: localPath, value} of ObjectCE.Pairs(dbUpdates)) {
 		for (const {key: localPath, value} of ObjectCE(dbUpdates).Pairs()) {
-			dbUpdates[`${versionPath}/${localPath}`] = value;
+			dbUpdates[`${rootPath}/${localPath}`] = value;
 			delete dbUpdates[localPath];
 		}
 	}

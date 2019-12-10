@@ -74,7 +74,7 @@ exports.StoreAccessor = (...args) => {
         [name, opt, accessorGetter] = args;
     opt = js_vextensions_1.E(StoreAccessorOptions.default, opt);
     let defaultFireOptionsAtInit = Firelink_1.defaultFireOptions;
-    let fire = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt.fire);
+    let fireOpt = js_vextensions_1.E(Firelink_1.defaultFireOptions, js_vextensions_1.CE(opt).Including("fire"));
     //let addProfiling = manager.devEnv; // manager isn't populated yet
     const addProfiling = window["DEV"];
     //const needsWrapper = addProfiling || options.cache;
@@ -82,7 +82,7 @@ exports.StoreAccessor = (...args) => {
     const wrapperAccessor = (...callArgs) => {
         // if defaultFireOptions is only now set, re-apply it to our "fire" variable (it's usually not set when StoreAccessor() is first called)
         if (Firelink_1.defaultFireOptions != null && defaultFireOptionsAtInit == null) {
-            fire = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt.fire);
+            fireOpt = js_vextensions_1.E(Firelink_1.defaultFireOptions, fireOpt);
         }
         if (addProfiling) {
             exports.accessorStack.push(name);
@@ -90,10 +90,11 @@ exports.StoreAccessor = (...args) => {
             //return accessor.apply(this, callArgs);
         }
         let accessor;
-        const usingMainStore = exports.storeOverridesStack.length == 0;
+        const usingMainStore = exports.storeOverridesStack.length == 0; // || storeOverridesStack[storeOverridesStack.length - 1] == fire.rootStore;
         if (usingMainStore) {
             if (accessor_forMainStore == null) {
-                accessor_forMainStore = accessorGetter(fire.rootStore);
+                js_vextensions_1.Assert(fireOpt.fire.rootStore != null, "A store-accessor cannot be called before its associated Firelink instance has been set.");
+                accessor_forMainStore = accessorGetter(fireOpt.fire.rootStore);
             }
             accessor = accessor_forMainStore;
         }

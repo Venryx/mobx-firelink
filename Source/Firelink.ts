@@ -1,13 +1,14 @@
 import firebase from "firebase/app";
 import {TreeNode} from "./Tree/TreeNode";
 import {TreeRequestWatcher} from "./Tree/TreeRequestWatcher";
+import {PathOrPathGetterToPath, PathOrPathGetterToPathSegments} from "./Utils/PathHelpers";
 
 export let defaultFireOptions: FireOptions;
 export function SetDefaultFireOptions(opt: FireOptions) {
 	defaultFireOptions = opt;
 }
-export interface FireOptions {
-	fire?: Firelink<any, any>;
+export interface FireOptions<RootStoreShape = any, DBShape = any> {
+	fire?: Firelink<RootStoreShape, DBShape>;
 }
 
 export class FireUserInfo {
@@ -16,19 +17,31 @@ export class FireUserInfo {
 }
 
 export class Firelink<RootStoreShape, DBShape> {
-	constructor(dbVersion: number, dbEnv_short: string, rootStore: RootStoreShape) {
-		this.versionPathSegments = ["versions", `v${dbVersion}-${dbEnv_short}`];
-		this.versionPath = `versions/v${dbVersion}-${dbEnv_short}`;
+	static instances = [] as Firelink<any, any>[];
+
+	constructor(rootPathInDB: string | string[], rootStore: RootStoreShape, initSubs = true) {
+		Firelink.instances.push(this);
+		/*this.versionPathSegments = ["versions", `v${dbVersion}-${dbEnv_short}`];
+		this.versionPath = `versions/v${dbVersion}-${dbEnv_short}`;*/
+		this.rootPathSegments = PathOrPathGetterToPathSegments(rootPathInDB);
+		this.rootPath = PathOrPathGetterToPath(rootPathInDB);
 		this.rootStore = rootStore;
-		this.subs.firestoreDB = firebase.firestore();
+		if (initSubs) {
+			this.InitSubs();
+		}
 		this.tree = new TreeNode(this, null);
 	}
 
-	versionPathSegments: string[];
-	versionPath: string;
+	rootPathSegments: string[];
+	rootPath: string;
+	/*versionPathSegments: string[];
+	versionPath: string;*/
 	//versionData: DBShape;
 	rootStore: RootStoreShape;
 
+	InitSubs() {
+		this.subs.firestoreDB = firebase.firestore();
+	}
 	subs = {} as {
 		firestoreDB: firebase.firestore.Firestore;
 	};

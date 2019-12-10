@@ -67,7 +67,8 @@ class TreeNode {
         if (this.type == TreeNodeType.Root || this.type == TreeNodeType.Document) {
             let docRef = this.fire.subs.firestoreDB.doc(this.path);
             this.subscription = new PathSubscription(docRef.onSnapshot(function (snapshot) {
-                this.data = mobx_1.observable(snapshot.data());
+                let data_raw = snapshot.data();
+                this.data = data_raw ? mobx_1.observable(data_raw) : null;
                 this.status = DataStatus.Received;
             }));
         }
