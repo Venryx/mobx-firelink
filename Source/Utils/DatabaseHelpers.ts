@@ -1,4 +1,4 @@
-import {DeepSet, IsNumberString, Assert, StringCE, Clone, ObjectCE, ObjectCEClass, ArrayCE, GetTreeNodesInObjTree, E} from "js-vextensions";
+import {DeepSet, IsNumberString, Assert, StringCE, Clone, ObjectCE, ArrayCE, GetTreeNodesInObjTree, E} from "js-vextensions";
 import u from "updeep";
 import {MaybeLog_Base} from "./General";
 import {FireOptions} from "..";

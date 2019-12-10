@@ -23,8 +23,8 @@ export declare class QueryRequest {
     toString(): string;
 }
 export declare class TreeNode<DataShape> {
-    constructor(fire: Firelink<any>, pathOrSegments: string | string[]);
-    fire: Firelink<any>;
+    constructor(fire: Firelink<any, any>, pathOrSegments: string | string[]);
+    fire: Firelink<any, any>;
     path: string;
     pathSegments: string[];
     type: TreeNodeType;

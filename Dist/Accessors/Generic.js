@@ -2,10 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const js_vextensions_1 = require("js-vextensions");
 const mobx_1 = require("mobx");
-const Firelink_1 = require("./Firelink");
-const TreeNode_1 = require("./Tree/TreeNode");
-const PathHelpers_1 = require("./Utils/PathHelpers");
-const TreeRequestWatcher_1 = require("./Tree/TreeRequestWatcher");
+const Firelink_1 = require("../Firelink");
+const TreeNode_1 = require("../Tree/TreeNode");
+const PathHelpers_1 = require("../Utils/PathHelpers");
+const TreeRequestWatcher_1 = require("../Tree/TreeRequestWatcher");
+/*
+Why use explicit GetDocs, GetDoc, etc. calls instead of just Proxy's?
+1) It lets you add options (like filters) in a consistent way. (consistent among sync db-accesses, and, old: consistent with async db-accesses, eg. GetDocAsync)
+2) It makes it visually clear where a db-access is taking place, as opposed to a mere store access.
+*/
 class GetDocs_Options {
     constructor() {
         this.inVersionRoot = true;
@@ -81,4 +86,4 @@ async function GetAsync(dataGetterFunc, opt) {
     return lastResult;
 }
 exports.GetAsync = GetAsync;
-//# sourceMappingURL=Accessors.js.map
+//# sourceMappingURL=Generic.js.map

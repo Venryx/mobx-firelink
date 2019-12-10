@@ -2,10 +2,10 @@ import {Firelink, FireOptions} from "../Firelink";
 import {TreeNode} from "./TreeNode";
 
 export class TreeRequestWatcher {
-	constructor(fire: Firelink<any>) {
+	constructor(fire: Firelink<any ,any>) {
 		this.fire = fire;
 	}
-	fire: Firelink<any>;
+	fire: Firelink<any ,any>;
 	Start() {
 		this.nodesRequested.clear();
 		this.fire.treeRequestWatchers.add(this);

@@ -1,5 +1,5 @@
 import { FireOptions } from "../Firelink";
-import { DBShape } from "../DBShape";
+import { DBShape } from "../UserTypes";
 export declare function VPathToFBPath(vPath: string): string;
 export declare function FBPathToVPath(fbPath: string): string;
 export declare function VFieldPathToFBFieldPath(vFieldPath: string): string;

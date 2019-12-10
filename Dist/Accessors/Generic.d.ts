@@ -1,7 +1,7 @@
 import { ObservableMap } from "mobx";
-import { DBShape } from "./DBShape";
-import { Filter } from "./Filters";
-import { FireOptions } from "./Firelink";
+import { DBShape } from "../UserTypes";
+import { Filter } from "../Filters";
+import { FireOptions } from "../Firelink";
 export declare class GetDocs_Options {
     static default: GetDocs_Options;
     inVersionRoot?: boolean;

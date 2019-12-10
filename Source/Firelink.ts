@@ -7,7 +7,7 @@ export function SetDefaultFireOptions(opt: FireOptions) {
 	defaultFireOptions = opt;
 }
 export interface FireOptions {
-	fire?: Firelink<any>;
+	fire?: Firelink<any, any>;
 }
 
 export class FireUserInfo {
@@ -15,13 +15,19 @@ export class FireUserInfo {
 	displayName: string;
 }
 
-export class Firelink<DBShape> {
-	constructor(dbVersion: number, dbEnv_short: string) {
+export class Firelink<RootStoreShape, DBShape> {
+	constructor(dbVersion: number, dbEnv_short: string, rootStore: RootStoreShape) {
 		this.versionPathSegments = ["versions", `v${dbVersion}-${dbEnv_short}`];
 		this.versionPath = `versions/v${dbVersion}-${dbEnv_short}`;
+		this.rootStore = rootStore;
 		this.subs.firestoreDB = firebase.firestore();
 		this.tree = new TreeNode(this, null);
 	}
+
+	versionPathSegments: string[];
+	versionPath: string;
+	//versionData: DBShape;
+	rootStore: RootStoreShape;
 
 	subs = {} as {
 		firestoreDB: firebase.firestore.Firestore;
@@ -47,9 +53,7 @@ export class Firelink<DBShape> {
 		this.tree.UnsubscribeAll();
 	}
 
-	versionPathSegments: string[];
-	versionPath: string;
-	//versionData: DBShape;
+	
 
 	ValidateDBData: (dbData: DBShape)=>void;
 }

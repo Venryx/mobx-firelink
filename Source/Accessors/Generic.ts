@@ -1,11 +1,17 @@
 import {E, ShallowChanged} from "js-vextensions";
 import {ObservableMap, autorun, when} from "mobx";
-import {DBShape} from "./DBShape";
-import {Filter} from "./Filters";
-import {defaultFireOptions, FireOptions} from "./Firelink";
-import {TreeNode, DataStatus, QueryRequest} from "./Tree/TreeNode";
-import {PathOrPathGetterToPath} from "./Utils/PathHelpers";
-import {TreeRequestWatcher} from "./Tree/TreeRequestWatcher";
+import {DBShape} from "../UserTypes";
+import {Filter} from "../Filters";
+import {defaultFireOptions, FireOptions} from "../Firelink";
+import {TreeNode, DataStatus, QueryRequest} from "../Tree/TreeNode";
+import {PathOrPathGetterToPath} from "../Utils/PathHelpers";
+import {TreeRequestWatcher} from "../Tree/TreeRequestWatcher";
+
+/*
+Why use explicit GetDocs, GetDoc, etc. calls instead of just Proxy's?
+1) It lets you add options (like filters) in a consistent way. (consistent among sync db-accesses, and, old: consistent with async db-accesses, eg. GetDocAsync)
+2) It makes it visually clear where a db-access is taking place, as opposed to a mere store access.
+*/ 
 
 export class GetDocs_Options {
 	static default = new GetDocs_Options();

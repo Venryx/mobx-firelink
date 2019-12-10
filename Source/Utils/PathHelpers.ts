@@ -1,7 +1,7 @@
 import {Assert, IsString, E, CE, IsArray, IsFunction} from "js-vextensions";
 import {defaultFireOptions, FireOptions} from "../Firelink";
 import {SplitStringBySlash_Cached} from "./StringSplitCache";
-import {DBShape} from "../DBShape";
+import {DBShape} from "../UserTypes";
 
 export function VPathToFBPath(vPath: string) {
 	return vPath != null ? vPath.replace(/\/\./g, ".") : null;

@@ -34,7 +34,8 @@
     "typescript": "^3.7.2"
   },
   "dependencies": {
-    "js-vextensions": "0.0.33",
+    "js-vextensions": "0.0.44",
+    "mobx-utils": "^5.5.2",
     "updeep": "^1.2.0"
   }
 }

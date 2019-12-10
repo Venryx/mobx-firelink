@@ -10,11 +10,12 @@ class FireUserInfo {
 }
 exports.FireUserInfo = FireUserInfo;
 class Firelink {
-    constructor(dbVersion, dbEnv_short) {
+    constructor(dbVersion, dbEnv_short, rootStore) {
         this.subs = {};
         this.treeRequestWatchers = new Set();
         this.versionPathSegments = ["versions", `v${dbVersion}-${dbEnv_short}`];
         this.versionPath = `versions/v${dbVersion}-${dbEnv_short}`;
+        this.rootStore = rootStore;
         this.subs.firestoreDB = app_1.default.firestore();
         this.tree = new TreeNode_1.TreeNode(this, null);
     }

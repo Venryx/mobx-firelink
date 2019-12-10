@@ -4,14 +4,17 @@ import { TreeRequestWatcher } from "./Tree/TreeRequestWatcher";
 export declare let defaultFireOptions: FireOptions;
 export declare function SetDefaultFireOptions(opt: FireOptions): void;
 export interface FireOptions {
-    fire?: Firelink<any>;
+    fire?: Firelink<any, any>;
 }
 export declare class FireUserInfo {
     id: string;
     displayName: string;
 }
-export declare class Firelink<DBShape> {
-    constructor(dbVersion: number, dbEnv_short: string);
+export declare class Firelink<RootStoreShape, DBShape> {
+    constructor(dbVersion: number, dbEnv_short: string, rootStore: RootStoreShape);
+    versionPathSegments: string[];
+    versionPath: string;
+    rootStore: RootStoreShape;
     subs: {
         firestoreDB: firebase.firestore.Firestore;
     };
@@ -25,7 +28,5 @@ export declare class Firelink<DBShape> {
     tree: TreeNode<DBShape>;
     treeRequestWatchers: Set<TreeRequestWatcher>;
     UnsubscribeAll(): void;
-    versionPathSegments: string[];
-    versionPath: string;
     ValidateDBData: (dbData: DBShape) => void;
 }

@@ -43,13 +43,13 @@ export class QueryRequest {
 }
 
 export class TreeNode<DataShape> {
-	constructor(fire: Firelink<any>, pathOrSegments: string | string[]) {
+	constructor(fire: Firelink<any ,any>, pathOrSegments: string | string[]) {
 		this.fire = fire;
 		this.path = PathOrPathGetterToPath(pathOrSegments);
 		this.pathSegments = PathOrPathGetterToPathSegments(pathOrSegments);
 		this.type = GetTreeNodeTypeForPath(this.pathSegments);
 	}
-	fire: Firelink<any>;
+	fire: Firelink<any, any>;
 	path: string;
 	pathSegments: string[];
 	type: TreeNodeType;
