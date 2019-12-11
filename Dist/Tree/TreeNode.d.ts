@@ -36,12 +36,14 @@ export declare class TreeNode<DataShape> {
     subscription: PathSubscription;
     collectionNodes: ObservableMap<string, TreeNode<any>>;
     data: DataShape;
+    SetData(data: DataShape): void;
     queryNodes: ObservableMap<string, TreeNode<any>>;
     query: QueryRequest;
     docNodes: ObservableMap<string, TreeNode<any>>;
+    get docDatas(): any[];
     Get(subpathOrGetterFunc: string | string[] | ((data: DataShape) => any), query?: QueryRequest, createTreeNodesIfMissing?: boolean): TreeNode<any>;
-    AsRawData(): DataShape;
+    AsRawData(addTreeLink?: boolean): DataShape;
     UploadRawData(rawData: DataShape): void;
 }
 export declare function GetTreeNodeTypeForPath(pathOrSegments: string | string[]): TreeNodeType;
-export declare function TreeNodeToRawData<DataShape>(treeNode: TreeNode<DataShape>): DataShape;
+export declare function TreeNodeToRawData<DataShape>(treeNode: TreeNode<DataShape>, addTreeLink?: boolean): DataShape;

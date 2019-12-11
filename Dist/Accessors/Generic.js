@@ -21,14 +21,17 @@ exports.GetDocs_Options = GetDocs_Options;
 GetDocs_Options.default = new GetDocs_Options();
 function GetDocs(opt, collectionPathOrGetterFunc) {
     opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, GetDocs_Options.default, opt);
-    let subpath = PathHelpers_1.PathOrPathGetterToPath(collectionPathOrGetterFunc);
-    let path = opt.inLinkRoot ? `${opt.fire.rootPath}/${subpath}` : subpath;
-    let treeNode = opt.fire.tree.Get(path, opt.filters ? new TreeNode_1.QueryRequest({ filters: opt.filters }) : null);
+    let subpathSegments = PathHelpers_1.PathOrPathGetterToPathSegments(collectionPathOrGetterFunc);
+    let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
+    if (js_vextensions_1.CE(pathSegments).Any(a => a == null))
+        return js_vextensions_1.emptyArray;
+    let treeNode = opt.fire.tree.Get(pathSegments, opt.filters ? new TreeNode_1.QueryRequest({ filters: opt.filters }) : null);
     treeNode.Request();
     // todo: handle opt.useUndefinedForInProgress
-    let docNodes = Array.from(treeNode.docNodes.values());
-    let docDatas = docNodes.map(docNode => docNode.data);
-    return docDatas;
+    /*let docNodes = Array.from(treeNode.docNodes.values());
+    let docDatas = docNodes.map(docNode=>docNode.data);
+    return docDatas;*/
+    return treeNode.docDatas;
 }
 exports.GetDocs = GetDocs;
 /*export async function GetDocs_Async<DocT>(opt: FireOptions & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>ObservableMap<any, DocT>)): Promise<DocT[]> {
@@ -45,9 +48,11 @@ exports.GetDoc_Options = GetDoc_Options;
 GetDoc_Options.default = new GetDoc_Options();
 function GetDoc(opt, docPathOrGetterFunc) {
     opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, GetDoc_Options.default, opt);
-    let subpath = PathHelpers_1.PathOrPathGetterToPath(docPathOrGetterFunc);
-    let path = opt.inLinkRoot ? `${opt.fire.rootPath}/${subpath}` : subpath;
-    let treeNode = opt.fire.tree.Get(path);
+    let subpathSegments = PathHelpers_1.PathOrPathGetterToPathSegments(docPathOrGetterFunc);
+    let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
+    if (js_vextensions_1.CE(pathSegments).Any(a => a == null))
+        return null;
+    let treeNode = opt.fire.tree.Get(pathSegments);
     treeNode.Request();
     // todo: handle opt.useUndefinedForInProgress
     //return DeepGet(opt.fire.versionData, subpath);

@@ -68,7 +68,7 @@ export function ProcessDBData(data, standardizeForm: boolean, addHelpers: boolea
 				//treeNode.Value._id = parseInt(key);
 				//treeNode.Value._Set("_id", parseInt(key));
 				Object.defineProperty(treeNode.Value, "_id", {enumerable: false, value: parseInt(key)});
-		}
+			}
 
 			// actually, always set "_key" (in case it's a "_key" that also happens to look like an "_id"/integer)
 			//else {

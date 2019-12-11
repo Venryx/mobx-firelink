@@ -1,10 +1,10 @@
-import {E, ShallowChanged} from "js-vextensions";
+import {E, ShallowChanged, emptyArray, CE} from "js-vextensions";
 import {ObservableMap, autorun, when} from "mobx";
 import {DBShape} from "../UserTypes";
 import {Filter} from "../Filters";
 import {defaultFireOptions, FireOptions} from "../Firelink";
 import {TreeNode, DataStatus, QueryRequest} from "../Tree/TreeNode";
-import {PathOrPathGetterToPath} from "../Utils/PathHelpers";
+import {PathOrPathGetterToPath, PathOrPathGetterToPathSegments} from "../Utils/PathHelpers";
 import {TreeRequestWatcher} from "../Tree/TreeRequestWatcher";
 
 /*
@@ -21,15 +21,18 @@ export class GetDocs_Options {
 }
 export function GetDocs<DB = DBShape, DocT = any>(opt: FireOptions<any, DB> & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>ObservableMap<any, DocT>)): DocT[] {
 	opt = E(defaultFireOptions, GetDocs_Options.default, opt);
-	let subpath = PathOrPathGetterToPath(collectionPathOrGetterFunc);
-	let path = opt.inLinkRoot ? `${opt.fire.rootPath}/${subpath}` : subpath;
-	let treeNode = opt.fire.tree.Get(path, opt.filters ? new QueryRequest({filters: opt.filters}) : null);
+	let subpathSegments = PathOrPathGetterToPathSegments(collectionPathOrGetterFunc);
+	let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
+	if (CE(pathSegments).Any(a=>a == null)) return emptyArray;
+
+	let treeNode = opt.fire.tree.Get(pathSegments, opt.filters ? new QueryRequest({filters: opt.filters}) : null);
 	treeNode.Request();
 	
 	// todo: handle opt.useUndefinedForInProgress
-	let docNodes = Array.from(treeNode.docNodes.values());
+	/*let docNodes = Array.from(treeNode.docNodes.values());
 	let docDatas = docNodes.map(docNode=>docNode.data);
-	return docDatas;
+	return docDatas;*/
+	return treeNode.docDatas;
 }
 /*export async function GetDocs_Async<DocT>(opt: FireOptions & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>ObservableMap<any, DocT>)): Promise<DocT[]> {
 	opt = E(defaultFireOptions, opt);
@@ -43,9 +46,11 @@ export class GetDoc_Options {
 }
 export function GetDoc<DB = DBShape, DocT = any>(opt: FireOptions<any, DB> & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>DocT)): DocT {
 	opt = E(defaultFireOptions, GetDoc_Options.default, opt);
-	let subpath = PathOrPathGetterToPath(docPathOrGetterFunc);
-	let path = opt.inLinkRoot ? `${opt.fire.rootPath}/${subpath}` : subpath;
-	let treeNode = opt.fire.tree.Get(path);
+	let subpathSegments = PathOrPathGetterToPathSegments(docPathOrGetterFunc);
+	let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
+	if (CE(pathSegments).Any(a=>a == null)) return null;
+
+	let treeNode = opt.fire.tree.Get(pathSegments);
 	treeNode.Request();
 
 	// todo: handle opt.useUndefinedForInProgress

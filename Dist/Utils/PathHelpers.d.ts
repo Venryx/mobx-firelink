@@ -10,7 +10,7 @@ export declare function FBFieldPathToVFieldPath(vFieldPath: string): string;
  * */
 export declare function GetPathParts(path: string, asFBPath?: boolean): [string, string];
 export declare function DBPath(opt: FireOptions, path?: string, inLinkRoot?: boolean): string;
-export declare function DBPathSegments(opt: FireOptions, pathSegments: (string | number)[], inLinkRoot?: boolean): import("updeep/types/types").PathPart[];
+export declare function DBPathSegments(opt: FireOptions, pathSegments: (string | number)[], inLinkRoot?: boolean): (string | number)[];
 export declare function SlicePath(path: string, removeFromEndCount: number, ...itemsToAdd: string[]): string;
 export declare function PathOrPathGetterToPath(pathOrPathSegmentsOrPathGetter: string | string[] | ((placeholder: any) => any)): string;
 export declare function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter: string | string[] | ((placeholder: any) => any)): any[];

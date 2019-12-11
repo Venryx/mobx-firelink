@@ -1,8 +1,9 @@
 import {Assert, CE, ToJSON} from "js-vextensions";
-import {observable, ObservableMap} from "mobx";
+import {observable, ObservableMap, runInAction} from "mobx";
 import {Filter} from "../Filters";
 import {Firelink} from "../Firelink";
 import {PathOrPathGetterToPath, PathOrPathGetterToPathSegments} from "../Utils/PathHelpers";
+import {ProcessDBData} from "../Utils/DatabaseHelpers";
 
 export enum TreeNodeType {
 	Root,
@@ -47,6 +48,7 @@ export class TreeNode<DataShape> {
 		this.fire = fire;
 		this.path = PathOrPathGetterToPath(pathOrSegments);
 		this.pathSegments = PathOrPathGetterToPathSegments(pathOrSegments);
+		Assert(this.pathSegments.find(a=>a == null || a.trim().length == 0) == null, `Path segments cannot be null/empty. @pathSegments(${this.pathSegments})`);
 		this.type = GetTreeNodeTypeForPath(this.pathSegments);
 	}
 	fire: Firelink<any, any>;
@@ -65,23 +67,31 @@ export class TreeNode<DataShape> {
 		this.status = DataStatus.Waiting;
 		if (this.type == TreeNodeType.Root || this.type == TreeNodeType.Document) {
 			let docRef = this.fire.subs.firestoreDB.doc(this.path);
-			this.subscription = new PathSubscription(docRef.onSnapshot(function(snapshot) {
-				let data_raw = snapshot.data();
-				this.data = data_raw ? observable(data_raw) : null;
-				this.status = DataStatus.Received;
+			this.subscription = new PathSubscription(docRef.onSnapshot((snapshot)=> {
+				runInAction("TreeNode.Subscribe.onSnapshot_doc", ()=> {
+					this.SetData(snapshot.data() as any);
+				});
 			}));
 		} else {
 			let collectionRef = this.fire.subs.firestoreDB.collection(this.path);
 			if (this.query) {
 				collectionRef = this.query.Apply(collectionRef);
 			}
-			this.subscription = new PathSubscription(collectionRef.onSnapshot(function(snapshot) {
-				let newData = {};
+			this.subscription = new PathSubscription(collectionRef.onSnapshot((snapshot)=> {
+				/*let newData = {};
 				for (let doc of snapshot.docs) {
 					newData[doc.id] = doc.data();
 				}
-				this.data = observable(newData);
-				this.status = DataStatus.Received;
+				this.data = observable(newData) as any;*/
+				runInAction("TreeNode.Subscribe.onSnapshot_collection", ()=> {
+					for (let doc of snapshot.docs) {
+						if (!this.docNodes.has(doc.id)) {
+							this.docNodes.set(doc.id, new TreeNode(this.fire, this.pathSegments.concat([doc.id])));
+						}
+						this.docNodes.get(doc.id).SetData(doc.data());
+					}
+					this.status = DataStatus.Received;
+				});
 			}));
 		}
 	}
@@ -99,7 +109,7 @@ export class TreeNode<DataShape> {
 		this.docNodes.forEach(a=>a.UnsubscribeAll());
 	}
 
-	status = DataStatus.Initial;
+	@observable status = DataStatus.Initial;
 	subscription: PathSubscription;
 	/*get childNodes() {
 		if (this.type == TreeNodeType.Collection || this.type == TreeNodeType.CollectionQuery) return this.docNodes;
@@ -107,19 +117,35 @@ export class TreeNode<DataShape> {
 	}*/
 
 	// for doc (and root) nodes
-	collectionNodes = observable.map<string, TreeNode<any>>();
-	data: DataShape;
+	@observable collectionNodes = observable.map<string, TreeNode<any>>();
+	//collectionNodes = new Map<string, TreeNode<any>>();
+	@observable.ref data: DataShape;
+	SetData(data: DataShape) {
+		//data = data ? observable(data_raw) as any : null;
+		ProcessDBData(data, true, true, CE(this.pathSegments).Last()); // maybe rework
+		this.data = data;
+		//ProcessDBData(this.data, true, true, CE(this.pathSegments).Last()); // also add to proxy (since the mobx proxy doesn't expose non-enumerable props) // maybe rework
+		this.status = DataStatus.Received;
+	}
 
 	// for collection (and collection-query) nodes
-	queryNodes = observable.map<string, TreeNode<any>>(); // for collection nodes
+	@observable queryNodes = observable.map<string, TreeNode<any>>(); // for collection nodes
+	//queryNodes = new Map<string, TreeNode<any>>(); // for collection nodes
 	query: QueryRequest// for collection-query nodes
-	docNodes = observable.map<string, TreeNode<any>>();
+	@observable docNodes = observable.map<string, TreeNode<any>>();
+	//docNodes = new Map<string, TreeNode<any>>();
+	get docDatas() {
+		let docNodes = Array.from(this.docNodes.values());
+		let docDatas = docNodes.map(docNode=>docNode.data);
+		//let docDatas = observable.array(docNodes.map(docNode=>docNode.data));
+		return docDatas;
+	}
 
 	Get(subpathOrGetterFunc: string | string[] | ((data: DataShape)=>any), query?: QueryRequest, createTreeNodesIfMissing = true) {
 		let subpathSegments = PathOrPathGetterToPathSegments(subpathOrGetterFunc);
 		let currentNode: TreeNode<any> = this;
 		for (let [index, segment] of subpathSegments.entries()) {
-			let subpathSegmentsToHere = subpathSegments.slice(0, index);
+			let subpathSegmentsToHere = subpathSegments.slice(0, index + 1);
 			let childNodesMap = currentNode[currentNode.type == TreeNodeType.Collection ? "docNodes" : "collectionNodes"] as ObservableMap<string, TreeNode<any>>;
 			if (!childNodesMap.has(segment) && createTreeNodesIfMissing) {
 				//let pathToSegment = subpathSegments.slice(0, index).join("/");
@@ -137,8 +163,8 @@ export class TreeNode<DataShape> {
 		return currentNode;
 	}
 
-	AsRawData(): DataShape {
-		return TreeNodeToRawData(this);
+	AsRawData(addTreeLink = true): DataShape {
+		return TreeNodeToRawData(this, addTreeLink);
 	}
 	UploadRawData(rawData: DataShape) {
 		// todo
@@ -158,15 +184,24 @@ export function GetTreeNodeTypeForPath(pathOrSegments: string | string[]) {
 	treeNode.Subscribe(filters ? new QueryRequest({filters}) : null);
 }*/
 
-export function TreeNodeToRawData<DataShape>(treeNode: TreeNode<DataShape>) {
+export function TreeNodeToRawData<DataShape>(treeNode: TreeNode<DataShape>, addTreeLink = true) {
 	let result = {};
+	if (addTreeLink) {
+		CE(result)._AddItem("_node", treeNode);
+	}
+	CE(result)._AddItem("_path", treeNode.path);
 	if (treeNode.data) {
 		CE(result).Extend(treeNode.data);
 	}
-	CE(result)._AddItem("_path", treeNode.path);
-	if (treeNode.docNodes) {
+	for (let [key, collection] of treeNode.collectionNodes) {
+		result[key] = TreeNodeToRawData(collection);
+	}
+	/*if (treeNode.docNodes) {
 		let docsAsRawData = Array.from(treeNode.docNodes.values()).map(docNode=>TreeNodeToRawData(docNode));
 		CE(result)._AddItem("_subs", docsAsRawData);
+	}*/
+	for (let [key, doc] of treeNode.docNodes) {
+		result[key] = TreeNodeToRawData(doc);
 	}
 	return result as DataShape;
 }

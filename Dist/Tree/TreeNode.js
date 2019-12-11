@@ -1,8 +1,15 @@
 "use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const js_vextensions_1 = require("js-vextensions");
 const mobx_1 = require("mobx");
 const PathHelpers_1 = require("../Utils/PathHelpers");
+const DatabaseHelpers_1 = require("../Utils/DatabaseHelpers");
 var TreeNodeType;
 (function (TreeNodeType) {
     TreeNodeType[TreeNodeType["Root"] = 0] = "Root";
@@ -53,6 +60,7 @@ class TreeNode {
         this.fire = fire;
         this.path = PathHelpers_1.PathOrPathGetterToPath(pathOrSegments);
         this.pathSegments = PathHelpers_1.PathOrPathGetterToPathSegments(pathOrSegments);
+        js_vextensions_1.Assert(this.pathSegments.find(a => a == null || a.trim().length == 0) == null, `Path segments cannot be null/empty. @pathSegments(${this.pathSegments})`);
         this.type = GetTreeNodeTypeForPath(this.pathSegments);
     }
     Request() {
@@ -66,10 +74,10 @@ class TreeNode {
         this.status = DataStatus.Waiting;
         if (this.type == TreeNodeType.Root || this.type == TreeNodeType.Document) {
             let docRef = this.fire.subs.firestoreDB.doc(this.path);
-            this.subscription = new PathSubscription(docRef.onSnapshot(function (snapshot) {
-                let data_raw = snapshot.data();
-                this.data = data_raw ? mobx_1.observable(data_raw) : null;
-                this.status = DataStatus.Received;
+            this.subscription = new PathSubscription(docRef.onSnapshot((snapshot) => {
+                mobx_1.runInAction("TreeNode.Subscribe.onSnapshot_doc", () => {
+                    this.SetData(snapshot.data());
+                });
             }));
         }
         else {
@@ -77,13 +85,21 @@ class TreeNode {
             if (this.query) {
                 collectionRef = this.query.Apply(collectionRef);
             }
-            this.subscription = new PathSubscription(collectionRef.onSnapshot(function (snapshot) {
-                let newData = {};
+            this.subscription = new PathSubscription(collectionRef.onSnapshot((snapshot) => {
+                /*let newData = {};
                 for (let doc of snapshot.docs) {
                     newData[doc.id] = doc.data();
                 }
-                this.data = mobx_1.observable(newData);
-                this.status = DataStatus.Received;
+                this.data = observable(newData) as any;*/
+                mobx_1.runInAction("TreeNode.Subscribe.onSnapshot_collection", () => {
+                    for (let doc of snapshot.docs) {
+                        if (!this.docNodes.has(doc.id)) {
+                            this.docNodes.set(doc.id, new TreeNode(this.fire, this.pathSegments.concat([doc.id])));
+                        }
+                        this.docNodes.get(doc.id).SetData(doc.data());
+                    }
+                    this.status = DataStatus.Received;
+                });
             }));
         }
     }
@@ -101,11 +117,25 @@ class TreeNode {
         this.queryNodes.forEach(a => a.UnsubscribeAll());
         this.docNodes.forEach(a => a.UnsubscribeAll());
     }
+    SetData(data) {
+        //data = data ? observable(data_raw) as any : null;
+        DatabaseHelpers_1.ProcessDBData(data, true, true, js_vextensions_1.CE(this.pathSegments).Last()); // maybe rework
+        this.data = data;
+        //ProcessDBData(this.data, true, true, CE(this.pathSegments).Last()); // also add to proxy (since the mobx proxy doesn't expose non-enumerable props) // maybe rework
+        this.status = DataStatus.Received;
+    }
+    //docNodes = new Map<string, TreeNode<any>>();
+    get docDatas() {
+        let docNodes = Array.from(this.docNodes.values());
+        let docDatas = docNodes.map(docNode => docNode.data);
+        //let docDatas = observable.array(docNodes.map(docNode=>docNode.data));
+        return docDatas;
+    }
     Get(subpathOrGetterFunc, query, createTreeNodesIfMissing = true) {
         let subpathSegments = PathHelpers_1.PathOrPathGetterToPathSegments(subpathOrGetterFunc);
         let currentNode = this;
         for (let [index, segment] of subpathSegments.entries()) {
-            let subpathSegmentsToHere = subpathSegments.slice(0, index);
+            let subpathSegmentsToHere = subpathSegments.slice(0, index + 1);
             let childNodesMap = currentNode[currentNode.type == TreeNodeType.Collection ? "docNodes" : "collectionNodes"];
             if (!childNodesMap.has(segment) && createTreeNodesIfMissing) {
                 //let pathToSegment = subpathSegments.slice(0, index).join("/");
@@ -123,13 +153,28 @@ class TreeNode {
         }
         return currentNode;
     }
-    AsRawData() {
-        return TreeNodeToRawData(this);
+    AsRawData(addTreeLink = true) {
+        return TreeNodeToRawData(this, addTreeLink);
     }
     UploadRawData(rawData) {
         // todo
     }
 }
+__decorate([
+    mobx_1.observable
+], TreeNode.prototype, "status", void 0);
+__decorate([
+    mobx_1.observable
+], TreeNode.prototype, "collectionNodes", void 0);
+__decorate([
+    mobx_1.observable.ref
+], TreeNode.prototype, "data", void 0);
+__decorate([
+    mobx_1.observable
+], TreeNode.prototype, "queryNodes", void 0);
+__decorate([
+    mobx_1.observable
+], TreeNode.prototype, "docNodes", void 0);
 exports.TreeNode = TreeNode;
 function GetTreeNodeTypeForPath(pathOrSegments) {
     let pathSegments = PathHelpers_1.PathOrPathGetterToPathSegments(pathOrSegments);
@@ -146,15 +191,24 @@ exports.GetTreeNodeTypeForPath = GetTreeNodeTypeForPath;
     if (treeNode.subscriptions.length) return;
     treeNode.Subscribe(filters ? new QueryRequest({filters}) : null);
 }*/
-function TreeNodeToRawData(treeNode) {
+function TreeNodeToRawData(treeNode, addTreeLink = true) {
     let result = {};
+    if (addTreeLink) {
+        js_vextensions_1.CE(result)._AddItem("_node", treeNode);
+    }
+    js_vextensions_1.CE(result)._AddItem("_path", treeNode.path);
     if (treeNode.data) {
         js_vextensions_1.CE(result).Extend(treeNode.data);
     }
-    js_vextensions_1.CE(result)._AddItem("_path", treeNode.path);
-    if (treeNode.docNodes) {
-        let docsAsRawData = Array.from(treeNode.docNodes.values()).map(docNode => TreeNodeToRawData(docNode));
-        js_vextensions_1.CE(result)._AddItem("_subs", docsAsRawData);
+    for (let [key, collection] of treeNode.collectionNodes) {
+        result[key] = TreeNodeToRawData(collection);
+    }
+    /*if (treeNode.docNodes) {
+        let docsAsRawData = Array.from(treeNode.docNodes.values()).map(docNode=>TreeNodeToRawData(docNode));
+        CE(result)._AddItem("_subs", docsAsRawData);
+    }*/
+    for (let [key, doc] of treeNode.docNodes) {
+        result[key] = TreeNodeToRawData(doc);
     }
     return result;
 }
