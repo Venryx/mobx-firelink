@@ -20,7 +20,7 @@ export declare class QueryRequest {
     constructor(initialData?: Partial<QueryRequest>);
     filters: Filter[];
     Apply(collection: firebase.firestore.CollectionReference): import("firebase").firestore.CollectionReference;
-    toString(): any;
+    toString(): string;
 }
 export declare class TreeNode<DataShape> {
     constructor(fire: Firelink<any, any>, pathOrSegments: string | string[]);
