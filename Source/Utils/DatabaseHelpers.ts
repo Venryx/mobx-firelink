@@ -16,6 +16,7 @@ export function IsAuthValid(auth) {
 }; */
 
 export function ProcessDBData(data, standardizeForm: boolean, addHelpers: boolean, rootKey: string) {
+	if (data == null) return;
 	var treeNodes = GetTreeNodesInObjTree(data, true);
 	for (const treeNode of treeNodes) {
 		if (treeNode.Value == null) continue;

@@ -15,6 +15,8 @@ exports.IsAuthValid = IsAuthValid;
     return this.ref(finalPath);
 }; */
 function ProcessDBData(data, standardizeForm, addHelpers, rootKey) {
+    if (data == null)
+        return;
     var treeNodes = js_vextensions_1.GetTreeNodesInObjTree(data, true);
     for (const treeNode of treeNodes) {
         if (treeNode.Value == null)
