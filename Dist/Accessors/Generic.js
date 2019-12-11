@@ -73,16 +73,18 @@ async function GetAsync(dataGetterFunc, opt) {
     opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
     let lastResult;
     let watcher = new TreeRequestWatcher_1.TreeRequestWatcher(opt.fire);
-    let nodesRequested_obj_last = {};
+    let nodesRequested_obj_last;
+    let nodesRequested_obj;
     do {
+        nodesRequested_obj_last = nodesRequested_obj;
         watcher.Start();
         //let dispose = autorun(()=> {
         lastResult = dataGetterFunc();
         //});
         //dispose();
         watcher.Stop();
-        var nodesRequested_array = Array.from(watcher.nodesRequested);
-        var nodesRequested_obj = nodesRequested_array.reduce((acc, item) => acc[item.path] = true, {});
+        const nodesRequested_array = Array.from(watcher.nodesRequested);
+        nodesRequested_obj = js_vextensions_1.CE(nodesRequested_array).ToMap(a => a.path, a => true);
         // wait till all requested nodes have their data received
         await Promise.all(nodesRequested_array.map(node => {
             return mobx_1.when(() => node.status == TreeNode_1.DataStatus.Received);

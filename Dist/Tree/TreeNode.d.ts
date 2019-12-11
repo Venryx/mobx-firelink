@@ -20,7 +20,7 @@ export declare class QueryRequest {
     constructor(initialData?: Partial<QueryRequest>);
     filters: Filter[];
     Apply(collection: firebase.firestore.CollectionReference): import("firebase").firestore.CollectionReference;
-    toString(): string;
+    toString(): any;
 }
 export declare class TreeNode<DataShape> {
     constructor(fire: Firelink<any, any>, pathOrSegments: string | string[]);
@@ -42,6 +42,7 @@ export declare class TreeNode<DataShape> {
     docNodes: ObservableMap<string, TreeNode<any>>;
     get docDatas(): any[];
     Get(subpathOrGetterFunc: string | string[] | ((data: DataShape) => any), query?: QueryRequest, createTreeNodesIfMissing?: boolean): TreeNode<any>;
+    get raw(): DataShape;
     AsRawData(addTreeLink?: boolean): DataShape;
     UploadRawData(rawData: DataShape): void;
 }

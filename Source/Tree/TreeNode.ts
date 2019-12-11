@@ -163,6 +163,7 @@ export class TreeNode<DataShape> {
 		return currentNode;
 	}
 
+	get raw() { return this.AsRawData(); } // helper for in console
 	AsRawData(addTreeLink = true): DataShape {
 		return TreeNodeToRawData(this, addTreeLink);
 	}

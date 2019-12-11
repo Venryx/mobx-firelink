@@ -153,6 +153,7 @@ class TreeNode {
         }
         return currentNode;
     }
+    get raw() { return this.AsRawData(); } // helper for in console
     AsRawData(addTreeLink = true) {
         return TreeNodeToRawData(this, addTreeLink);
     }

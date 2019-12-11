@@ -73,8 +73,11 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, opt?: FireOptions & Get
 	let lastResult;
 	let watcher = new TreeRequestWatcher(opt.fire);
 
-	let nodesRequested_obj_last = {};
+	let nodesRequested_obj_last;
+	let nodesRequested_obj;
 	do {
+		nodesRequested_obj_last = nodesRequested_obj;
+
 		watcher.Start();
 		//let dispose = autorun(()=> {
 		lastResult = dataGetterFunc();
@@ -82,8 +85,8 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, opt?: FireOptions & Get
 		//dispose();
 		watcher.Stop();
 
-		var nodesRequested_array = Array.from(watcher.nodesRequested);
-		var nodesRequested_obj = nodesRequested_array.reduce((acc, item)=>acc[item.path] = true, {});
+		const nodesRequested_array = Array.from(watcher.nodesRequested);
+		nodesRequested_obj = CE(nodesRequested_array).ToMap(a=>a.path, a=>true);
 
 		// wait till all requested nodes have their data received
 		await Promise.all(nodesRequested_array.map(node=> {
