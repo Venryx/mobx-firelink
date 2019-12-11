@@ -50,7 +50,7 @@ function DBPath(opt, path = "", inLinkRoot = true) {
 exports.DBPath = DBPath;
 function DBPathSegments(opt, pathSegments, inLinkRoot = true) {
     opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
-    let result = pathSegments;
+    let result = pathSegments.map(a => { var _a; return (_a = a) === null || _a === void 0 ? void 0 : _a.toString(); });
     if (inLinkRoot) {
         result = opt.fire.rootPathSegments.concat(result);
     }
@@ -70,7 +70,7 @@ function PathOrPathGetterToPath(pathOrPathSegmentsOrPathGetter) {
     if (js_vextensions_1.IsString(pathOrPathSegmentsOrPathGetter))
         return pathOrPathSegmentsOrPathGetter;
     if (js_vextensions_1.IsArray(pathOrPathSegmentsOrPathGetter))
-        return pathOrPathSegmentsOrPathGetter.join("/");
+        return pathOrPathSegmentsOrPathGetter.map(a => { var _a; return (_a = a) === null || _a === void 0 ? void 0 : _a.toString(); }).join("/");
     if (js_vextensions_1.IsFunction(pathOrPathSegmentsOrPathGetter))
         return MobXPathGetterToPath(pathOrPathSegmentsOrPathGetter);
     return null;
@@ -80,7 +80,7 @@ function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter) {
     if (js_vextensions_1.IsString(pathOrPathSegmentsOrPathGetter))
         return pathOrPathSegmentsOrPathGetter.split("/");
     if (js_vextensions_1.IsArray(pathOrPathSegmentsOrPathGetter))
-        return pathOrPathSegmentsOrPathGetter;
+        return pathOrPathSegmentsOrPathGetter.map(a => { var _a; return (_a = a) === null || _a === void 0 ? void 0 : _a.toString(); });
     if (js_vextensions_1.IsFunction(pathOrPathSegmentsOrPathGetter))
         return MobXPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter);
     return [];
@@ -94,13 +94,14 @@ function MobXPathGetterToPathSegments(pathGetterFunc) {
     let pathSegments = [];
     let proxy = new Proxy({}, {
         get: (target, key) => {
+            var _a;
             if (key == "get") {
                 return (realKey) => {
                     pathSegments.push(realKey);
                     return proxy;
                 };
             }
-            pathSegments.push(key);
+            pathSegments.push((_a = key) === null || _a === void 0 ? void 0 : _a.toString());
             return proxy;
         },
     });

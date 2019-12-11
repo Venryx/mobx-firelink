@@ -47,9 +47,9 @@ export function DBPath(opt: FireOptions, path = "", inLinkRoot = true) {
 }
 export function DBPathSegments(opt: FireOptions, pathSegments: (string | number)[], inLinkRoot = true) {
 	opt = E(defaultFireOptions, opt);
-	let result = pathSegments;
+	let result = pathSegments.map(a=>a?.toString());
 	if (inLinkRoot) {
-		result = opt.fire.rootPathSegments.concat(result as any);
+		result = opt.fire.rootPathSegments.concat(result);
 	}
 	return result;
 }
@@ -62,15 +62,15 @@ export function SlicePath(path: string, removeFromEndCount: number, ...itemsToAd
 	return parts.join("/");
 }
 
-export function PathOrPathGetterToPath(pathOrPathSegmentsOrPathGetter: string | string[] | ((placeholder: any)=>any)) {
+export function PathOrPathGetterToPath(pathOrPathSegmentsOrPathGetter: string | (string | number)[] | ((placeholder: any)=>any)) {
 	if (IsString(pathOrPathSegmentsOrPathGetter)) return pathOrPathSegmentsOrPathGetter;
-	if (IsArray(pathOrPathSegmentsOrPathGetter)) return (pathOrPathSegmentsOrPathGetter as Array<any>).join("/");
+	if (IsArray(pathOrPathSegmentsOrPathGetter)) return pathOrPathSegmentsOrPathGetter.map(a=>a?.toString()).join("/");
 	if (IsFunction(pathOrPathSegmentsOrPathGetter)) return MobXPathGetterToPath(pathOrPathSegmentsOrPathGetter);
 	return null;
 }
-export function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter: string | string[] | ((placeholder: any)=>any)) {
+export function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter: string | (string | number)[] | ((placeholder: any)=>any)) {
 	if (IsString(pathOrPathSegmentsOrPathGetter)) return pathOrPathSegmentsOrPathGetter.split("/");
-	if (IsArray(pathOrPathSegmentsOrPathGetter)) return pathOrPathSegmentsOrPathGetter as Array<any>;
+	if (IsArray(pathOrPathSegmentsOrPathGetter)) return pathOrPathSegmentsOrPathGetter.map(a=>a?.toString());
 	if (IsFunction(pathOrPathSegmentsOrPathGetter)) return MobXPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter);
 	return [];
 }
@@ -89,7 +89,7 @@ export function MobXPathGetterToPathSegments(pathGetterFunc: (dbRoot: DBShape)=>
 				}
 			}
 
-			pathSegments.push(key as string);
+			pathSegments.push(key?.toString());
 			return proxy;
 		},
 	});

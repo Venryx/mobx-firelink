@@ -10,9 +10,9 @@ export declare function FBFieldPathToVFieldPath(vFieldPath: string): string;
  * */
 export declare function GetPathParts(path: string, asFBPath?: boolean): [string, string];
 export declare function DBPath(opt: FireOptions, path?: string, inLinkRoot?: boolean): string;
-export declare function DBPathSegments(opt: FireOptions, pathSegments: (string | number)[], inLinkRoot?: boolean): import("firebase").analytics.Currency[];
+export declare function DBPathSegments(opt: FireOptions, pathSegments: (string | number)[], inLinkRoot?: boolean): string[];
 export declare function SlicePath(path: string, removeFromEndCount: number, ...itemsToAdd: string[]): string;
-export declare function PathOrPathGetterToPath(pathOrPathSegmentsOrPathGetter: string | string[] | ((placeholder: any) => any)): string;
-export declare function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter: string | string[] | ((placeholder: any) => any)): any[];
+export declare function PathOrPathGetterToPath(pathOrPathSegmentsOrPathGetter: string | (string | number)[] | ((placeholder: any) => any)): string;
+export declare function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter: string | (string | number)[] | ((placeholder: any) => any)): string[];
 export declare function MobXPathGetterToPath(pathGetterFunc: (dbRoot: DBShape) => any): string;
 export declare function MobXPathGetterToPathSegments(pathGetterFunc: (dbRoot: DBShape) => any): string[];
