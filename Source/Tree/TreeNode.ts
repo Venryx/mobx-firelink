@@ -111,10 +111,6 @@ export class TreeNode<DataShape> {
 
 	@observable status = DataStatus.Initial;
 	subscription: PathSubscription;
-	/*get childNodes() {
-		if (this.type == TreeNodeType.Collection || this.type == TreeNodeType.CollectionQuery) return this.docNodes;
-		return this.collectionNodes;
-	}*/
 
 	// for doc (and root) nodes
 	@observable collectionNodes = observable.map<string, TreeNode<any>>();

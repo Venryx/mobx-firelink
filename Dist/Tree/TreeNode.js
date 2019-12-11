@@ -48,10 +48,6 @@ exports.QueryRequest = QueryRequest;
 class TreeNode {
     constructor(fire, pathOrSegments) {
         this.status = DataStatus.Initial;
-        /*get childNodes() {
-            if (this.type == TreeNodeType.Collection || this.type == TreeNodeType.CollectionQuery) return this.docNodes;
-            return this.collectionNodes;
-        }*/
         // for doc (and root) nodes
         this.collectionNodes = mobx_1.observable.map();
         // for collection (and collection-query) nodes
