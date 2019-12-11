@@ -1,7 +1,7 @@
 {
   "name": "mobx-firelink",
   "description": "Integrate Firebase data into MobX and React with declarative path requests.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "Dist/index.js",
   "typings": "Dist/index.d.ts",
   "license": "MIT",
