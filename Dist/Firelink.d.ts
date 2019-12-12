@@ -20,13 +20,13 @@ export declare class Firelink<RootStoreShape, DBShape> {
     subs: {
         firestoreDB: firebase.firestore.Firestore;
     };
-    userInfo_raw: firebase.auth.UserCredential;
+    userInfo_raw: firebase.User;
     userInfo: FireUserInfo;
     LogIn(opt: {
         provider: "google" | "facebook" | "twitter" | "github";
         type: "popup";
     }): Promise<void>;
-    LogOut(): void;
+    LogOut(): Promise<void>;
     tree: TreeNode<DBShape>;
     treeRequestWatchers: Set<TreeRequestWatcher>;
     UnsubscribeAll(): void;
