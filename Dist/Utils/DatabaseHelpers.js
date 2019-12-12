@@ -1,30 +1,36 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const js_vextensions_1 = require("js-vextensions");
-const updeep_1 = require("updeep");
-const General_1 = require("./General");
-const Firelink_1 = require("../Firelink");
-const firebase_1 = require("firebase");
-const PathHelpers_1 = require("./PathHelpers");
-function IsAuthValid(auth) {
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+import { DeepSet, IsNumberString, Assert, Clone, ObjectCE, ArrayCE, GetTreeNodesInObjTree, E } from "js-vextensions";
+import u from "updeep";
+import { MaybeLog_Base } from "./General";
+import { defaultFireOptions } from "../Firelink";
+import firebase from "firebase";
+import { GetPathParts } from "./PathHelpers";
+export function IsAuthValid(auth) {
     return auth && !auth.isEmpty;
 }
-exports.IsAuthValid = IsAuthValid;
 /* Object.prototype._AddFunction_Inline = function DBRef(path = "", inVersionRoot = true) {
     const finalPath = DBPath(path, inVersionRoot);
     return this.ref(finalPath);
 }; */
-function ProcessDBData(data, standardizeForm, addHelpers, rootKey) {
+export function ProcessDBData(data, standardizeForm, addHelpers, rootKey) {
     if (data == null)
         return;
-    var treeNodes = js_vextensions_1.GetTreeNodesInObjTree(data, true);
+    var treeNodes = GetTreeNodesInObjTree(data, true);
     for (const treeNode of treeNodes) {
         if (treeNode.Value == null)
             continue;
         // turn the should-not-have-been-array arrays (the ones without a "0" property) into objects
         //if (standardizeForm && treeNode.Value instanceof Array && treeNode.Value[0] === undefined) {
         // turn the should-not-have-been-array arrays (the ones with non-number property) into objects
-        if (standardizeForm && treeNode.Value instanceof Array && js_vextensions_1.ArrayCE(js_vextensions_1.ObjectCE(treeNode.Value).VKeys(true)).Any(a => !js_vextensions_1.IsNumberString(a))) {
+        if (standardizeForm && treeNode.Value instanceof Array && ArrayCE(ObjectCE(treeNode.Value).VKeys(true)).Any(a => !IsNumberString(a))) {
             // if changing root, we have to actually modify the prototype of the passed-in "data" object
             /*if (treeNode.Value == data) {
                 Object.setPrototypeOf(data, Object.getPrototypeOf({}));
@@ -45,7 +51,7 @@ function ProcessDBData(data, standardizeForm, addHelpers, rootKey) {
             if (treeNode.Value == data)
                 treeNode.obj[treeNode.prop] = valueAsObject; // if changing root, we need to modify wrapper.data
             else
-                js_vextensions_1.DeepSet(data, treeNode.PathStr, valueAsObject); // else, we need to use deep-set, because ancestors may have already changed during this transform/processing
+                DeepSet(data, treeNode.PathStr, valueAsObject); // else, we need to use deep-set, because ancestors may have already changed during this transform/processing
         }
         // turn the should-have-been-array objects (the ones with a "0" property) into arrays
         if (standardizeForm && typeof treeNode.Value == "object" && !(treeNode.Value instanceof Array) && treeNode.Value[0] !== undefined) {
@@ -59,12 +65,12 @@ function ProcessDBData(data, standardizeForm, addHelpers, rootKey) {
             if (treeNode.Value == data)
                 treeNode.obj[treeNode.prop] = valueAsArray; // if changing root, we need to modify wrapper.data
             else
-                js_vextensions_1.DeepSet(data, treeNode.PathStr, valueAsArray); // else, we need to use deep-set, because ancestors may have already changed during this transform/processing
+                DeepSet(data, treeNode.PathStr, valueAsArray); // else, we need to use deep-set, because ancestors may have already changed during this transform/processing
         }
         // add special _key or _id prop
         if (addHelpers && typeof treeNode.Value == "object") {
             const key = treeNode.prop == "_root" ? rootKey : treeNode.prop;
-            if (js_vextensions_1.IsNumberString(key)) {
+            if (IsNumberString(key)) {
                 //treeNode.Value._id = parseInt(key);
                 //treeNode.Value._Set("_id", parseInt(key));
                 Object.defineProperty(treeNode.Value, "_id", { enumerable: false, value: parseInt(key) });
@@ -78,7 +84,6 @@ function ProcessDBData(data, standardizeForm, addHelpers, rootKey) {
     }
     return treeNodes[0].Value; // get possibly-modified wrapper.data
 }
-exports.ProcessDBData = ProcessDBData;
 // these shouldn't be needed anymore, since _key and _id are stored as non-enumerable props now
 /* const helperProps = ["_key", "_id"];
 /** Note: this mutates the original object. *#/
@@ -92,12 +97,11 @@ export function RemoveHelpers(data) {
 export function WithoutHelpers(data) {
     return RemoveHelpers(Clone(data));
 } */
-function AssertValidatePath(path) {
-    js_vextensions_1.Assert(!path.endsWith("/"), "Path cannot end with a slash. (This may mean a path parameter is missing)");
-    js_vextensions_1.Assert(!path.includes("//"), "Path cannot contain a double-slash. (This may mean a path parameter is missing)");
+export function AssertValidatePath(path) {
+    Assert(!path.endsWith("/"), "Path cannot end with a slash. (This may mean a path parameter is missing)");
+    Assert(!path.includes("//"), "Path cannot contain a double-slash. (This may mean a path parameter is missing)");
 }
-exports.AssertValidatePath = AssertValidatePath;
-function ConvertDataToValidDBUpdates(versionPath, versionData, dbUpdatesRelativeToRootPath = true) {
+export function ConvertDataToValidDBUpdates(versionPath, versionData, dbUpdatesRelativeToRootPath = true) {
     /*const result = {};
     for (const {key: pathFromRoot, value: data} of rootData.Pairs()) {
         const fullPath = `${rootPath}/${pathFromRoot}`;
@@ -115,106 +119,107 @@ function ConvertDataToValidDBUpdates(versionPath, versionData, dbUpdatesRelative
     return result;*/
     throw new Error("Not yet implemented.");
 }
-exports.ConvertDataToValidDBUpdates = ConvertDataToValidDBUpdates;
-async function ApplyDBUpdates(opt, rootPath, dbUpdates) {
-    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
-    //dbUpdates = WithoutHelpers(Clone(dbUpdates));
-    dbUpdates = js_vextensions_1.Clone(dbUpdates);
-    if (rootPath != null) {
-        //for (const {key: localPath, value} of ObjectCE.Pairs(dbUpdates)) {
-        for (const { key: localPath, value } of js_vextensions_1.ObjectCE(dbUpdates).Pairs()) {
-            dbUpdates[`${rootPath}/${localPath}`] = value;
-            delete dbUpdates[localPath];
-        }
-    }
-    // temp; if only updating one field, just do it directly (for some reason, a batch takes much longer)
-    const updateEntries = Object.entries(dbUpdates);
-    if (updateEntries.length == 1) {
-        let [path, value] = updateEntries[0];
-        const [docPath, fieldPathInDoc] = PathHelpers_1.GetPathParts(path, true);
-        value = js_vextensions_1.Clone(value); // picky firestore library demands "simple JSON objects"
-        // [fieldPathInDoc, value] = FixSettingPrimitiveValueDirectly(fieldPathInDoc, value);
-        const docRef = opt.fire.subs.firestoreDB.doc(docPath);
-        if (fieldPathInDoc) {
-            value = value != null ? value : firebase_1.default.firestore.FieldValue.delete();
-            // await docRef.update({ [fieldPathInDoc]: value });
-            // set works even if the document doesn't exist yet, so use set instead of update
-            const nestedSetHelper = {};
-            js_vextensions_1.DeepSet(nestedSetHelper, fieldPathInDoc, value, ".", true);
-            await docRef.set(nestedSetHelper, { merge: true });
-        }
-        else {
-            if (value) {
-                await docRef.set(value);
-            }
-            else {
-                await docRef.delete();
+export function ApplyDBUpdates(opt, rootPath, dbUpdates) {
+    return __awaiter(this, void 0, void 0, function* () {
+        opt = E(defaultFireOptions, opt);
+        //dbUpdates = WithoutHelpers(Clone(dbUpdates));
+        dbUpdates = Clone(dbUpdates);
+        if (rootPath != null) {
+            //for (const {key: localPath, value} of ObjectCE.Pairs(dbUpdates)) {
+            for (const { key: localPath, value } of ObjectCE(dbUpdates).Pairs()) {
+                dbUpdates[`${rootPath}/${localPath}`] = value;
+                delete dbUpdates[localPath];
             }
         }
-    }
-    else {
-        // await firestoreDB.runTransaction(async batch=> {
-        const batch = opt.fire.subs.firestoreDB.batch();
-        for (let [path, value] of updateEntries) {
-            const [docPath, fieldPathInDoc] = PathHelpers_1.GetPathParts(path, true);
-            value = js_vextensions_1.Clone(value); // picky firestore library demands "simple JSON objects"
+        // temp; if only updating one field, just do it directly (for some reason, a batch takes much longer)
+        const updateEntries = Object.entries(dbUpdates);
+        if (updateEntries.length == 1) {
+            let [path, value] = updateEntries[0];
+            const [docPath, fieldPathInDoc] = GetPathParts(path, true);
+            value = Clone(value); // picky firestore library demands "simple JSON objects"
             // [fieldPathInDoc, value] = FixSettingPrimitiveValueDirectly(fieldPathInDoc, value);
             const docRef = opt.fire.subs.firestoreDB.doc(docPath);
             if (fieldPathInDoc) {
-                value = value != null ? value : firebase_1.default.firestore.FieldValue.delete();
-                // batch.update(docRef, { [fieldPathInDoc]: value });
+                value = value != null ? value : firebase.firestore.FieldValue.delete();
+                // await docRef.update({ [fieldPathInDoc]: value });
                 // set works even if the document doesn't exist yet, so use set instead of update
                 const nestedSetHelper = {};
-                js_vextensions_1.DeepSet(nestedSetHelper, fieldPathInDoc, value, ".", true);
-                batch.set(docRef, nestedSetHelper, { merge: true });
+                DeepSet(nestedSetHelper, fieldPathInDoc, value, ".", true);
+                yield docRef.set(nestedSetHelper, { merge: true });
             }
             else {
                 if (value) {
-                    batch.set(docRef, value);
+                    yield docRef.set(value);
                 }
                 else {
-                    batch.delete(docRef);
+                    yield docRef.delete();
                 }
             }
-            /* let path_final = DBPath(path);
-            let dbRef_parent = firestoreDB.doc(path_final.split("/").slice(0, -1).join("/"));
-            let value_final = Clone(value); // clone value, since update() rejects values with a prototype/type
-            batch.update(dbRef_parent, {[path_final.split("/").Last()]: value_final}); */
-        }
-        await batch.commit();
-    }
-}
-exports.ApplyDBUpdates = ApplyDBUpdates;
-exports.maxDBUpdatesPerBatch = 500;
-async function ApplyDBUpdates_InChunks(opt, rootPath, dbUpdates, updatesPerChunk = exports.maxDBUpdatesPerBatch) {
-    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
-    const dbUpdates_pairs = js_vextensions_1.ObjectCE(dbUpdates).Pairs();
-    const dbUpdates_pairs_chunks = [];
-    for (let offset = 0; offset < dbUpdates_pairs.length; offset += updatesPerChunk) {
-        const chunk = dbUpdates_pairs.slice(offset, offset + updatesPerChunk);
-        dbUpdates_pairs_chunks.push(chunk);
-    }
-    for (const [index, dbUpdates_pairs_chunk] of dbUpdates_pairs_chunks.entries()) {
-        const dbUpdates_chunk = dbUpdates_pairs_chunk.ToMap(a => a.key, a => a.value);
-        if (dbUpdates_pairs_chunks.length > 1) {
-            General_1.MaybeLog_Base(a => a.commands, l => l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
-        }
-        await ApplyDBUpdates(opt, rootPath, dbUpdates_chunk);
-    }
-}
-exports.ApplyDBUpdates_InChunks = ApplyDBUpdates_InChunks;
-function ApplyDBUpdates_Local(dbData, dbUpdates) {
-    let result = dbData;
-    for (const { name: path, value } of js_vextensions_1.Clone(dbUpdates).Props()) {
-        if (value != null) {
-            result = updeep_1.default.updateIn(path.replace(/\//g, "."), updeep_1.default.constant(value), result);
         }
         else {
-            result = updeep_1.default.updateIn(path.split("/").slice(0, -1).join("."), updeep_1.default.omit(path.split("/").slice(-1)), result);
+            // await firestoreDB.runTransaction(async batch=> {
+            const batch = opt.fire.subs.firestoreDB.batch();
+            for (let [path, value] of updateEntries) {
+                const [docPath, fieldPathInDoc] = GetPathParts(path, true);
+                value = Clone(value); // picky firestore library demands "simple JSON objects"
+                // [fieldPathInDoc, value] = FixSettingPrimitiveValueDirectly(fieldPathInDoc, value);
+                const docRef = opt.fire.subs.firestoreDB.doc(docPath);
+                if (fieldPathInDoc) {
+                    value = value != null ? value : firebase.firestore.FieldValue.delete();
+                    // batch.update(docRef, { [fieldPathInDoc]: value });
+                    // set works even if the document doesn't exist yet, so use set instead of update
+                    const nestedSetHelper = {};
+                    DeepSet(nestedSetHelper, fieldPathInDoc, value, ".", true);
+                    batch.set(docRef, nestedSetHelper, { merge: true });
+                }
+                else {
+                    if (value) {
+                        batch.set(docRef, value);
+                    }
+                    else {
+                        batch.delete(docRef);
+                    }
+                }
+                /* let path_final = DBPath(path);
+                let dbRef_parent = firestoreDB.doc(path_final.split("/").slice(0, -1).join("/"));
+                let value_final = Clone(value); // clone value, since update() rejects values with a prototype/type
+                batch.update(dbRef_parent, {[path_final.split("/").Last()]: value_final}); */
+            }
+            yield batch.commit();
+        }
+    });
+}
+export const maxDBUpdatesPerBatch = 500;
+export function ApplyDBUpdates_InChunks(opt, rootPath, dbUpdates, updatesPerChunk = maxDBUpdatesPerBatch) {
+    return __awaiter(this, void 0, void 0, function* () {
+        opt = E(defaultFireOptions, opt);
+        const dbUpdates_pairs = ObjectCE(dbUpdates).Pairs();
+        const dbUpdates_pairs_chunks = [];
+        for (let offset = 0; offset < dbUpdates_pairs.length; offset += updatesPerChunk) {
+            const chunk = dbUpdates_pairs.slice(offset, offset + updatesPerChunk);
+            dbUpdates_pairs_chunks.push(chunk);
+        }
+        for (const [index, dbUpdates_pairs_chunk] of dbUpdates_pairs_chunks.entries()) {
+            const dbUpdates_chunk = dbUpdates_pairs_chunk.ToMap(a => a.key, a => a.value);
+            if (dbUpdates_pairs_chunks.length > 1) {
+                MaybeLog_Base(a => a.commands, l => l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
+            }
+            yield ApplyDBUpdates(opt, rootPath, dbUpdates_chunk);
+        }
+    });
+}
+export function ApplyDBUpdates_Local(dbData, dbUpdates) {
+    let result = dbData;
+    for (const { name: path, value } of Clone(dbUpdates).Props()) {
+        if (value != null) {
+            result = u.updateIn(path.replace(/\//g, "."), u.constant(value), result);
+        }
+        else {
+            result = u.updateIn(path.split("/").slice(0, -1).join("."), u.omit(path.split("/").slice(-1)), result);
         }
     }
     // firebase deletes becoming-empty collections/documents (and we pre-process-delete becoming-empty fields), so we do the same here
-    const nodes = js_vextensions_1.GetTreeNodesInObjTree(result, true);
+    const nodes = GetTreeNodesInObjTree(result, true);
     let emptyNodes;
     do {
         emptyNodes = nodes.filter(a => typeof a.Value === "object" && (a.Value == null || a.Value.VKeys(true).length === 0));
@@ -224,5 +229,4 @@ function ApplyDBUpdates_Local(dbData, dbUpdates) {
     } while (emptyNodes.length);
     return result;
 }
-exports.ApplyDBUpdates_Local = ApplyDBUpdates_Local;
 //# sourceMappingURL=DatabaseHelpers.js.map

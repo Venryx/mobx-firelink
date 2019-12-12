@@ -1,37 +1,34 @@
-"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-const js_vextensions_1 = require("js-vextensions");
-const mobx_1 = require("mobx");
-const PathHelpers_1 = require("../Utils/PathHelpers");
-const DatabaseHelpers_1 = require("../Utils/DatabaseHelpers");
-var TreeNodeType;
+import { Assert, CE, ToJSON } from "js-vextensions";
+import { observable, runInAction } from "mobx";
+import { PathOrPathGetterToPath, PathOrPathGetterToPathSegments } from "../Utils/PathHelpers";
+import { ProcessDBData } from "../Utils/DatabaseHelpers";
+export var TreeNodeType;
 (function (TreeNodeType) {
     TreeNodeType[TreeNodeType["Root"] = 0] = "Root";
     TreeNodeType[TreeNodeType["Collection"] = 1] = "Collection";
     TreeNodeType[TreeNodeType["CollectionQuery"] = 2] = "CollectionQuery";
     TreeNodeType[TreeNodeType["Document"] = 3] = "Document";
-})(TreeNodeType = exports.TreeNodeType || (exports.TreeNodeType = {}));
-var DataStatus;
+})(TreeNodeType || (TreeNodeType = {}));
+export var DataStatus;
 (function (DataStatus) {
     DataStatus[DataStatus["Initial"] = 0] = "Initial";
     DataStatus[DataStatus["Waiting"] = 1] = "Waiting";
     DataStatus[DataStatus["Received"] = 2] = "Received";
-})(DataStatus = exports.DataStatus || (exports.DataStatus = {}));
-class PathSubscription {
+})(DataStatus || (DataStatus = {}));
+export class PathSubscription {
     constructor(unsubscribe) {
         this.unsubscribe = unsubscribe;
     }
 }
-exports.PathSubscription = PathSubscription;
-class QueryRequest {
+export class QueryRequest {
     constructor(initialData) {
-        js_vextensions_1.CE(this).Extend(initialData);
+        CE(this).Extend(initialData);
     }
     Apply(collection) {
         let result = collection;
@@ -41,22 +38,21 @@ class QueryRequest {
         return result;
     }
     toString() {
-        return js_vextensions_1.ToJSON(this.filters);
+        return ToJSON(this.filters);
     }
 }
-exports.QueryRequest = QueryRequest;
-class TreeNode {
+export class TreeNode {
     constructor(fire, pathOrSegments) {
         this.status = DataStatus.Initial;
         // for doc (and root) nodes
-        this.collectionNodes = mobx_1.observable.map();
+        this.collectionNodes = observable.map();
         // for collection (and collection-query) nodes
-        this.queryNodes = mobx_1.observable.map(); // for collection nodes
-        this.docNodes = mobx_1.observable.map();
+        this.queryNodes = observable.map(); // for collection nodes
+        this.docNodes = observable.map();
         this.fire = fire;
-        this.path = PathHelpers_1.PathOrPathGetterToPath(pathOrSegments);
-        this.pathSegments = PathHelpers_1.PathOrPathGetterToPathSegments(pathOrSegments);
-        js_vextensions_1.Assert(this.pathSegments.find(a => a == null || a.trim().length == 0) == null, `Path segments cannot be null/empty. @pathSegments(${this.pathSegments})`);
+        this.path = PathOrPathGetterToPath(pathOrSegments);
+        this.pathSegments = PathOrPathGetterToPathSegments(pathOrSegments);
+        Assert(this.pathSegments.find(a => a == null || a.trim().length == 0) == null, `Path segments cannot be null/empty. @pathSegments(${this.pathSegments})`);
         this.type = GetTreeNodeTypeForPath(this.pathSegments);
     }
     Request() {
@@ -66,12 +62,12 @@ class TreeNode {
         }
     }
     Subscribe() {
-        js_vextensions_1.Assert(this.subscription == null, "Cannot subscribe more than once!");
+        Assert(this.subscription == null, "Cannot subscribe more than once!");
         this.status = DataStatus.Waiting;
         if (this.type == TreeNodeType.Root || this.type == TreeNodeType.Document) {
             let docRef = this.fire.subs.firestoreDB.doc(this.path);
             this.subscription = new PathSubscription(docRef.onSnapshot((snapshot) => {
-                mobx_1.runInAction("TreeNode.Subscribe.onSnapshot_doc", () => {
+                runInAction("TreeNode.Subscribe.onSnapshot_doc", () => {
                     this.SetData(snapshot.data());
                 });
             }));
@@ -87,7 +83,7 @@ class TreeNode {
                     newData[doc.id] = doc.data();
                 }
                 this.data = observable(newData) as any;*/
-                mobx_1.runInAction("TreeNode.Subscribe.onSnapshot_collection", () => {
+                runInAction("TreeNode.Subscribe.onSnapshot_collection", () => {
                     for (let doc of snapshot.docs) {
                         if (!this.docNodes.has(doc.id)) {
                             this.docNodes.set(doc.id, new TreeNode(this.fire, this.pathSegments.concat([doc.id])));
@@ -115,7 +111,7 @@ class TreeNode {
     }
     SetData(data) {
         //data = data ? observable(data_raw) as any : null;
-        DatabaseHelpers_1.ProcessDBData(data, true, true, js_vextensions_1.CE(this.pathSegments).Last()); // maybe rework
+        ProcessDBData(data, true, true, CE(this.pathSegments).Last()); // maybe rework
         this.data = data;
         //ProcessDBData(this.data, true, true, CE(this.pathSegments).Last()); // also add to proxy (since the mobx proxy doesn't expose non-enumerable props) // maybe rework
         this.status = DataStatus.Received;
@@ -128,9 +124,9 @@ class TreeNode {
         return docDatas;
     }
     Get(subpathOrGetterFunc, query, createTreeNodesIfMissing = true) {
-        let subpathSegments = PathHelpers_1.PathOrPathGetterToPathSegments(subpathOrGetterFunc);
+        let subpathSegments = PathOrPathGetterToPathSegments(subpathOrGetterFunc);
         let currentNode;
-        let proceed_inAction = () => mobx_1.runInAction(`TreeNode.Get @path(${this.path})`, () => proceed(true));
+        let proceed_inAction = () => runInAction(`TreeNode.Get @path(${this.path})`, () => proceed(true));
         let proceed = (inAction) => {
             currentNode = this;
             for (let [index, segment] of subpathSegments.entries()) {
@@ -168,44 +164,42 @@ class TreeNode {
     }
 }
 __decorate([
-    mobx_1.observable
+    observable
 ], TreeNode.prototype, "status", void 0);
 __decorate([
-    mobx_1.observable
+    observable
 ], TreeNode.prototype, "collectionNodes", void 0);
 __decorate([
-    mobx_1.observable.ref
+    observable.ref
 ], TreeNode.prototype, "data", void 0);
 __decorate([
-    mobx_1.observable
+    observable
 ], TreeNode.prototype, "queryNodes", void 0);
 __decorate([
-    mobx_1.observable
+    observable
 ], TreeNode.prototype, "docNodes", void 0);
-exports.TreeNode = TreeNode;
-function GetTreeNodeTypeForPath(pathOrSegments) {
-    let pathSegments = PathHelpers_1.PathOrPathGetterToPathSegments(pathOrSegments);
+export function GetTreeNodeTypeForPath(pathOrSegments) {
+    let pathSegments = PathOrPathGetterToPathSegments(pathOrSegments);
     if (pathSegments == null || pathSegments.length == 0)
         return TreeNodeType.Root;
-    if (js_vextensions_1.CE(pathSegments).Last().startsWith("@query:"))
+    if (CE(pathSegments).Last().startsWith("@query:"))
         return TreeNodeType.CollectionQuery;
     return pathSegments.length % 2 == 1 ? TreeNodeType.Collection : TreeNodeType.Document;
 }
-exports.GetTreeNodeTypeForPath = GetTreeNodeTypeForPath;
 /*export function EnsurePathWatched(opt: FireOptions, path: string, filters?: Filter[]) {
     opt = E(defaultFireOptions, opt);
     let treeNode = opt.fire.tree.Get(path);
     if (treeNode.subscriptions.length) return;
     treeNode.Subscribe(filters ? new QueryRequest({filters}) : null);
 }*/
-function TreeNodeToRawData(treeNode, addTreeLink = true) {
+export function TreeNodeToRawData(treeNode, addTreeLink = true) {
     let result = {};
     if (addTreeLink) {
-        js_vextensions_1.CE(result)._AddItem("_node", treeNode);
+        CE(result)._AddItem("_node", treeNode);
     }
-    js_vextensions_1.CE(result)._AddItem("_path", treeNode.path);
+    CE(result)._AddItem("_path", treeNode.path);
     if (treeNode.data) {
-        js_vextensions_1.CE(result).Extend(treeNode.data);
+        CE(result).Extend(treeNode.data);
     }
     for (let [key, collection] of treeNode.collectionNodes) {
         result[key] = TreeNodeToRawData(collection);
@@ -219,5 +213,4 @@ function TreeNodeToRawData(treeNode, addTreeLink = true) {
     }
     return result;
 }
-exports.TreeNodeToRawData = TreeNodeToRawData;
 //# sourceMappingURL=TreeNode.js.map

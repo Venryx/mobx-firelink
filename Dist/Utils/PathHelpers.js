@@ -1,33 +1,27 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const js_vextensions_1 = require("js-vextensions");
-const Firelink_1 = require("../Firelink");
-const StringSplitCache_1 = require("./StringSplitCache");
-function VPathToFBPath(vPath) {
+import { Assert, IsString, E, CE, IsArray, IsFunction } from "js-vextensions";
+import { defaultFireOptions } from "../Firelink";
+import { SplitStringBySlash_Cached } from "./StringSplitCache";
+export function VPathToFBPath(vPath) {
     return vPath != null ? vPath.replace(/\/\./g, ".") : null;
 }
-exports.VPathToFBPath = VPathToFBPath;
-function FBPathToVPath(fbPath) {
+export function FBPathToVPath(fbPath) {
     return fbPath != null ? fbPath.replace(/\./g, "/.") : null;
 }
-exports.FBPathToVPath = FBPathToVPath;
-function VFieldPathToFBFieldPath(vFieldPath) {
+export function VFieldPathToFBFieldPath(vFieldPath) {
     return vFieldPath != null ? vFieldPath.replace(/\//g, ".") : null;
 }
-exports.VFieldPathToFBFieldPath = VFieldPathToFBFieldPath;
-function FBFieldPathToVFieldPath(vFieldPath) {
+export function FBFieldPathToVFieldPath(vFieldPath) {
     return vFieldPath != null ? vFieldPath.replace(/\./g, "/") : null;
 }
-exports.FBFieldPathToVFieldPath = FBFieldPathToVFieldPath;
 /**
  * @param asFBPath If true, returned paths are separated with "."; if false, by "/". Default: false
  * @returns [colOrDocPath, fieldPathInDoc]
  * */
-function GetPathParts(path, asFBPath = false) {
-    let colOrDocPath = path.substr(0, js_vextensions_1.CE(path.indexOf("/.")).IfN1Then(path.length));
+export function GetPathParts(path, asFBPath = false) {
+    let colOrDocPath = path.substr(0, CE(path.indexOf("/.")).IfN1Then(path.length));
     const isDocPath = colOrDocPath.length != path.length; // if length differs, it means field-path is supplied, which means it's a doc-path
     if (isDocPath) {
-        js_vextensions_1.Assert(StringSplitCache_1.SplitStringBySlash_Cached(colOrDocPath).length % 2 == 0, `Segment count in docPath (${colOrDocPath}) must be multiple of 2.`);
+        Assert(SplitStringBySlash_Cached(colOrDocPath).length % 2 == 0, `Segment count in docPath (${colOrDocPath}) must be multiple of 2.`);
     }
     let fieldPathInDoc = colOrDocPath.length < path.length ? path.substr(colOrDocPath.length + 2).replace(/\./g, "") : null;
     if (asFBPath) {
@@ -35,11 +29,10 @@ function GetPathParts(path, asFBPath = false) {
     }
     return [colOrDocPath, fieldPathInDoc];
 }
-exports.GetPathParts = GetPathParts;
-function DBPath(opt, path = "", inLinkRoot = true) {
-    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
-    js_vextensions_1.Assert(path != null, "Path cannot be null.");
-    js_vextensions_1.Assert(typeof path == "string", "Path must be a string.");
+export function DBPath(opt, path = "", inLinkRoot = true) {
+    opt = E(defaultFireOptions, opt);
+    Assert(path != null, "Path cannot be null.");
+    Assert(typeof path == "string", "Path must be a string.");
     /*let versionPrefix = path.match(/^v[0-9]+/);
     if (versionPrefix == null) // if no version prefix already, add one (referencing the current version)*/
     if (inLinkRoot) {
@@ -47,50 +40,44 @@ function DBPath(opt, path = "", inLinkRoot = true) {
     }
     return path;
 }
-exports.DBPath = DBPath;
-function DBPathSegments(opt, pathSegments, inLinkRoot = true) {
-    opt = js_vextensions_1.E(Firelink_1.defaultFireOptions, opt);
+export function DBPathSegments(opt, pathSegments, inLinkRoot = true) {
+    opt = E(defaultFireOptions, opt);
     let result = pathSegments.map(a => { var _a; return (_a = a) === null || _a === void 0 ? void 0 : _a.toString(); });
     if (inLinkRoot) {
         result = opt.fire.rootPathSegments.concat(result);
     }
     return result;
 }
-exports.DBPathSegments = DBPathSegments;
-function SlicePath(path, removeFromEndCount, ...itemsToAdd) {
+export function SlicePath(path, removeFromEndCount, ...itemsToAdd) {
     //let parts = path.split("/");
-    const parts = StringSplitCache_1.SplitStringBySlash_Cached(path).slice();
+    const parts = SplitStringBySlash_Cached(path).slice();
     parts.splice(parts.length - removeFromEndCount, removeFromEndCount, ...itemsToAdd);
     if (parts.length == 0)
         return null;
     return parts.join("/");
 }
-exports.SlicePath = SlicePath;
-function PathOrPathGetterToPath(pathOrPathSegmentsOrPathGetter) {
-    if (js_vextensions_1.IsString(pathOrPathSegmentsOrPathGetter))
+export function PathOrPathGetterToPath(pathOrPathSegmentsOrPathGetter) {
+    if (IsString(pathOrPathSegmentsOrPathGetter))
         return pathOrPathSegmentsOrPathGetter;
-    if (js_vextensions_1.IsArray(pathOrPathSegmentsOrPathGetter))
+    if (IsArray(pathOrPathSegmentsOrPathGetter))
         return pathOrPathSegmentsOrPathGetter.map(a => { var _a; return (_a = a) === null || _a === void 0 ? void 0 : _a.toString(); }).join("/");
-    if (js_vextensions_1.IsFunction(pathOrPathSegmentsOrPathGetter))
+    if (IsFunction(pathOrPathSegmentsOrPathGetter))
         return MobXPathGetterToPath(pathOrPathSegmentsOrPathGetter);
     return null;
 }
-exports.PathOrPathGetterToPath = PathOrPathGetterToPath;
-function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter) {
-    if (js_vextensions_1.IsString(pathOrPathSegmentsOrPathGetter))
+export function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter) {
+    if (IsString(pathOrPathSegmentsOrPathGetter))
         return pathOrPathSegmentsOrPathGetter.split("/");
-    if (js_vextensions_1.IsArray(pathOrPathSegmentsOrPathGetter))
+    if (IsArray(pathOrPathSegmentsOrPathGetter))
         return pathOrPathSegmentsOrPathGetter.map(a => { var _a; return (_a = a) === null || _a === void 0 ? void 0 : _a.toString(); });
-    if (js_vextensions_1.IsFunction(pathOrPathSegmentsOrPathGetter))
+    if (IsFunction(pathOrPathSegmentsOrPathGetter))
         return MobXPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter);
     return [];
 }
-exports.PathOrPathGetterToPathSegments = PathOrPathGetterToPathSegments;
-function MobXPathGetterToPath(pathGetterFunc) {
+export function MobXPathGetterToPath(pathGetterFunc) {
     return MobXPathGetterToPathSegments(pathGetterFunc).join("/");
 }
-exports.MobXPathGetterToPath = MobXPathGetterToPath;
-function MobXPathGetterToPathSegments(pathGetterFunc) {
+export function MobXPathGetterToPathSegments(pathGetterFunc) {
     let pathSegments = [];
     let proxy = new Proxy({}, {
         get: (target, key) => {
@@ -108,5 +95,4 @@ function MobXPathGetterToPathSegments(pathGetterFunc) {
     pathGetterFunc(proxy);
     return pathSegments;
 }
-exports.MobXPathGetterToPathSegments = MobXPathGetterToPathSegments;
 //# sourceMappingURL=PathHelpers.js.map

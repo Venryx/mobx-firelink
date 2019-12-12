@@ -1,8 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const mobx_utils_1 = require("mobx-utils");
-const js_vextensions_1 = require("js-vextensions");
-const Firelink_1 = require("../Firelink");
+import { computedFn } from "mobx-utils";
+import { CE, E, Assert } from "js-vextensions";
+import { defaultFireOptions } from "../Firelink";
 // for profiling
 class StoreAccessorProfileData {
     constructor(name) {
@@ -14,55 +12,51 @@ class StoreAccessorProfileData {
         this.totalRunTime_asRoot = 0;
     }
 }
-exports.storeAccessorProfileData = {};
-function LogStoreAccessorRunTimes() {
-    const accessorRunTimes_ordered = js_vextensions_1.CE(js_vextensions_1.CE(exports.storeAccessorProfileData).VValues()).OrderByDescending(a => a.totalRunTime);
-    console.log(`Store-accessor cumulative run-times: @TotalCalls(${js_vextensions_1.CE(accessorRunTimes_ordered.map(a => a.callCount)).Sum()}) @TotalTimeInRootAccessors(${js_vextensions_1.CE(accessorRunTimes_ordered.map(a => a.totalRunTime_asRoot)).Sum()})`);
+export const storeAccessorProfileData = {};
+export function LogStoreAccessorRunTimes() {
+    const accessorRunTimes_ordered = CE(CE(storeAccessorProfileData).VValues()).OrderByDescending(a => a.totalRunTime);
+    console.log(`Store-accessor cumulative run-times: @TotalCalls(${CE(accessorRunTimes_ordered.map(a => a.callCount)).Sum()}) @TotalTimeInRootAccessors(${CE(accessorRunTimes_ordered.map(a => a.totalRunTime_asRoot)).Sum()})`);
     //Log({}, accessorRunTimes_ordered);
     console.table(accessorRunTimes_ordered);
 }
-exports.LogStoreAccessorRunTimes = LogStoreAccessorRunTimes;
-exports.storeOverridesStack = [];
-function WithStore(store, accessorFunc) {
-    exports.storeOverridesStack.push(store);
+export const storeOverridesStack = [];
+export function WithStore(store, accessorFunc) {
+    storeOverridesStack.push(store);
     try {
         var result = accessorFunc();
     }
     finally {
-        exports.storeOverridesStack.pop();
+        storeOverridesStack.pop();
     }
     return result;
 }
-exports.WithStore = WithStore;
 // for profiling
-exports.accessorStack = [];
-class StoreAccessorOptions {
+export const accessorStack = [];
+export class StoreAccessorOptions {
     constructor() {
         this.cache = true;
         this.cache_keepAlive = false;
         //callArgToDependencyConvertorFunc?: CallArgToDependencyConvertorFunc;
     }
 }
-exports.StoreAccessorOptions = StoreAccessorOptions;
 StoreAccessorOptions.default = new StoreAccessorOptions();
 /**
 Probably temp. Usage:
 export const StoreAccessor_Typed = CreateStoreAccessor_Typed<RootStoreShape>();
 export const GetPerson = StoreAccessor_Typed({}, ...);
 */
-function CreateStoreAccessor_Typed() {
+export function CreateStoreAccessor_Typed() {
     //return State_Base as typeof State_Base<RootStateType, any>;
     //return State_Base as StateFunc_WithWatch<RootState>;
-    return exports.StoreAccessor;
+    return StoreAccessor;
 }
-exports.CreateStoreAccessor_Typed = CreateStoreAccessor_Typed;
 /**
 Wrap a function with StoreAccessor if it's under the "Store/" path, and one of the following:
 1) It accesses the store directly (ie. store.main.page). (thus, "WithStore(testStoreContents, ()=>GetThingFromStore())" works, without hacky overriding of project-wide "store" export)
 2) It involves "heavy" processing, such that it's worth caching that processing. (rather than use computedFn directly, just standardize on StoreAccessor)
 3) It involves a transformation of data into a new wrapper (ie. breaking reference equality), such that it's worth caching the processing. (to not trigger unnecessary child-ui re-renders)
 */
-exports.StoreAccessor = (...args) => {
+export const StoreAccessor = (...args) => {
     let name, opt, accessorGetter;
     if (typeof args[0] == "function" && args.length == 1)
         [accessorGetter] = args;
@@ -72,37 +66,37 @@ exports.StoreAccessor = (...args) => {
         [name, accessorGetter] = args;
     else
         [name, opt, accessorGetter] = args;
-    opt = js_vextensions_1.E(StoreAccessorOptions.default, opt);
-    let defaultFireOptionsAtInit = Firelink_1.defaultFireOptions;
-    let fireOpt = js_vextensions_1.E(Firelink_1.defaultFireOptions, js_vextensions_1.CE(opt).Including("fire"));
+    opt = E(StoreAccessorOptions.default, opt);
+    let defaultFireOptionsAtInit = defaultFireOptions;
+    let fireOpt = E(defaultFireOptions, CE(opt).Including("fire"));
     //let addProfiling = manager.devEnv; // manager isn't populated yet
     const addProfiling = window["DEV"];
     //const needsWrapper = addProfiling || options.cache;
     let accessor_forMainStore;
     const wrapperAccessor = (...callArgs) => {
         // if defaultFireOptions is only now set, re-apply it to our "fire" variable (it's usually not set when StoreAccessor() is first called)
-        if (Firelink_1.defaultFireOptions != null && defaultFireOptionsAtInit == null) {
-            fireOpt = js_vextensions_1.E(Firelink_1.defaultFireOptions, fireOpt);
+        if (defaultFireOptions != null && defaultFireOptionsAtInit == null) {
+            fireOpt = E(defaultFireOptions, fireOpt);
         }
         if (addProfiling) {
-            exports.accessorStack.push(name);
+            accessorStack.push(name);
             var startTime = performance.now();
             //return accessor.apply(this, callArgs);
         }
         let accessor;
-        const usingMainStore = exports.storeOverridesStack.length == 0; // || storeOverridesStack[storeOverridesStack.length - 1] == fire.rootStore;
+        const usingMainStore = storeOverridesStack.length == 0; // || storeOverridesStack[storeOverridesStack.length - 1] == fire.rootStore;
         if (usingMainStore) {
             if (accessor_forMainStore == null) {
-                js_vextensions_1.Assert(fireOpt.fire.rootStore != null, "A store-accessor cannot be called before its associated Firelink instance has been set.");
+                Assert(fireOpt.fire.rootStore != null, "A store-accessor cannot be called before its associated Firelink instance has been set.");
                 accessor_forMainStore = accessorGetter(fireOpt.fire.rootStore);
             }
             accessor = accessor_forMainStore;
         }
         else {
-            accessor = accessorGetter(exports.storeOverridesStack[exports.storeOverridesStack.length - 1]);
+            accessor = accessorGetter(storeOverridesStack[storeOverridesStack.length - 1]);
         }
         if (name)
-            js_vextensions_1.CE(accessor).SetName(name);
+            CE(accessor).SetName(name);
         let result;
         if (opt.cache && usingMainStore) {
             let callArgs_unwrapped = callArgs;
@@ -126,18 +120,18 @@ exports.StoreAccessor = (...args) => {
             }, {name, keepAlive: opt.cache_keepAlive})(callArgs_unwrapped);*/
             let accessor_proxy = (...callArgs_unwrapped_2) => accessor(...callArgs);
             if (name)
-                js_vextensions_1.CE(accessor_proxy).SetName(name);
-            result = mobx_utils_1.computedFn(accessor_proxy, { name, keepAlive: opt.cache_keepAlive })(callArgs_unwrapped);
+                CE(accessor_proxy).SetName(name);
+            result = computedFn(accessor_proxy, { name, keepAlive: opt.cache_keepAlive })(callArgs_unwrapped);
         }
         else {
             result = accessor(...callArgs);
         }
         if (addProfiling) {
             const runTime = performance.now() - startTime;
-            const profileData = exports.storeAccessorProfileData[name] || (exports.storeAccessorProfileData[name] = new StoreAccessorProfileData(name));
+            const profileData = storeAccessorProfileData[name] || (storeAccessorProfileData[name] = new StoreAccessorProfileData(name));
             profileData.callCount++;
             profileData.totalRunTime += runTime;
-            if (exports.accessorStack.length == 1) {
+            if (accessorStack.length == 1) {
                 profileData.totalRunTime_asRoot += runTime;
             }
             // name should have been added by webpack transformer, but if not, give some info to help debugging (under key "null")
@@ -147,14 +141,14 @@ exports.StoreAccessor = (...args) => {
                     profileData["origAccessors"].push(accessorGetter);
                 }
             }
-            js_vextensions_1.CE(exports.accessorStack).RemoveAt(exports.accessorStack.length - 1);
+            CE(accessorStack).RemoveAt(accessorStack.length - 1);
         }
         return result;
     };
     //if (name) wrapperAccessor["displayName"] = name;
     //if (name) Object.defineProperty(wrapperAccessor, "name", {value: name});
     if (name)
-        js_vextensions_1.CE(wrapperAccessor).SetName(name);
+        CE(wrapperAccessor).SetName(name);
     return wrapperAccessor;
 };
 //# sourceMappingURL=Custom.js.map

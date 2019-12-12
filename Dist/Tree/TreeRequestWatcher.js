@@ -1,6 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-class TreeRequestWatcher {
+export class TreeRequestWatcher {
     constructor(fire) {
         this.nodesRequested = new Set();
         this.fire = fire;
@@ -13,7 +11,6 @@ class TreeRequestWatcher {
         this.fire.treeRequestWatchers.delete(this);
     }
 }
-exports.TreeRequestWatcher = TreeRequestWatcher;
 /*export function CreateTreeAccessWatcher(opt: FireOptions) {
     let watcher = new TreeAccessWatcher(opt.fire);
     opt.fire.treeAccessWatchers.push(watcher);

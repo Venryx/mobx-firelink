@@ -1,9 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-class Filter {
+export class Filter {
 }
-exports.Filter = Filter;
-class WhereFilter extends Filter {
+export class WhereFilter extends Filter {
     constructor(propPath, comparison, value) {
         super();
         this.fieldPath = propPath;
@@ -14,8 +11,7 @@ class WhereFilter extends Filter {
         return collection.where(this.fieldPath, this.comparison, this.value);
     }
 }
-exports.WhereFilter = WhereFilter;
-exports.Where = (...args) => {
+export const Where = (...args) => {
     return new WhereFilter(...args);
 };
 //# sourceMappingURL=Filters.js.map

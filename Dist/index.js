@@ -1,20 +1,15 @@
-"use strict";
 // root
 // ==========
-function __export(m) {
-    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
-}
-Object.defineProperty(exports, "__esModule", { value: true });
-__export(require("./Firelink")); // main
-__export(require("./Filters"));
+export * from "./Firelink"; // main
+export * from "./Filters";
 // subfolders
 // ==========
-__export(require("./Accessors/Custom"));
-__export(require("./Accessors/Generic"));
-__export(require("./Server/Command"));
-__export(require("./Tree/TreeNode"));
-__export(require("./Utils/DatabaseHelpers"));
-__export(require("./Utils/General"));
-__export(require("./Utils/PathHelpers"));
-__export(require("./Utils/StringSplitCache"));
+export * from "./Accessors/Custom";
+export * from "./Accessors/Generic";
+export * from "./Server/Command";
+export * from "./Tree/TreeNode";
+export * from "./Utils/DatabaseHelpers";
+export * from "./Utils/General";
+export * from "./Utils/PathHelpers";
+export * from "./Utils/StringSplitCache";
 //# sourceMappingURL=index.js.map

@@ -1,7 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const js_vextensions_1 = require("js-vextensions");
-function Assert(condition, messageOrMessageFunc) {
+import { StringCE } from "js-vextensions";
+export function Assert(condition, messageOrMessageFunc) {
     if (condition)
         return;
     var message = messageOrMessageFunc instanceof Function ? messageOrMessageFunc() : messageOrMessageFunc;
@@ -12,16 +10,14 @@ function Assert(condition, messageOrMessageFunc) {
     if (!skipError)
         throw new Error("Assert failed) " + message);
 }
-exports.Assert = Assert;
-function AssertWarn(condition, messageOrMessageFunc) {
+export function AssertWarn(condition, messageOrMessageFunc) {
     if (condition)
         return;
     var message = messageOrMessageFunc instanceof Function ? messageOrMessageFunc() : messageOrMessageFunc;
     console.warn(`Assert-warn failed) ${message}\n\nStackTrace) ${GetStackTraceStr()}`);
 }
-exports.AssertWarn = AssertWarn;
 //@((()=> { if (g.onclick == null) g.onclick = ()=>console.log(V.GetStackTraceStr()); }) as any)
-function GetStackTraceStr(...args) {
+export function GetStackTraceStr(...args) {
     var stackTrace, sourceStackTrace = true;
     if (typeof args[0] == "string")
         [stackTrace, sourceStackTrace] = args;
@@ -38,15 +34,13 @@ function GetStackTraceStr(...args) {
         stackTrace = fakeError.stack;
         Error.stackTraceLimit = oldStackLimit;
     }
-    return stackTrace.substr(js_vextensions_1.StringCE(stackTrace).IndexOf_X("\n", 1)); // remove "Error" line and first stack-frame (that of this method)
+    return stackTrace.substr(StringCE(stackTrace).IndexOf_X("\n", 1)); // remove "Error" line and first stack-frame (that of this method)
 }
-exports.GetStackTraceStr = GetStackTraceStr;
-function Log(...args) {
+export function Log(...args) {
     return console.log(...args);
 }
-exports.Log = Log;
 // maybe temp
-class LogTypes_Base {
+export class LogTypes_Base {
     constructor() {
         // from vwebapp-framework
         this.dbRequests = false;
@@ -55,12 +49,10 @@ class LogTypes_Base {
         this.commands = false;
     }
 }
-exports.LogTypes_Base = LogTypes_Base;
-function ShouldLog_Base(shouldLogFunc) {
+export function ShouldLog_Base(shouldLogFunc) {
     return shouldLogFunc(window["logTypes"] || {});
 }
-exports.ShouldLog_Base = ShouldLog_Base;
-function MaybeLog_Base(shouldLogFunc, loggerFunc) {
+export function MaybeLog_Base(shouldLogFunc, loggerFunc) {
     if (!ShouldLog_Base(shouldLogFunc))
         return;
     // let loggerFuncReturnsString = loggerFunc.arguments.length == 0;
@@ -70,5 +62,4 @@ function MaybeLog_Base(shouldLogFunc, loggerFunc) {
     else
         loggerFunc(Log);
 }
-exports.MaybeLog_Base = MaybeLog_Base;
 //# sourceMappingURL=General.js.map

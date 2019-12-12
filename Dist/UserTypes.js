@@ -1,4 +1,3 @@
-"use strict";
 /*
 The interfaces below should be extended by the user project.
 
@@ -25,5 +24,4 @@ export const GetPerson = StoreAccessor({fire}, ...);
 export const person = GetDoc({fire}, ...);
 ==========
 */
-Object.defineProperty(exports, "__esModule", { value: true });
 //# sourceMappingURL=UserTypes.js.map
