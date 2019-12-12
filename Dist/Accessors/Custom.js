@@ -101,6 +101,8 @@ exports.StoreAccessor = (...args) => {
         else {
             accessor = accessorGetter(exports.storeOverridesStack[exports.storeOverridesStack.length - 1]);
         }
+        if (name)
+            js_vextensions_1.CE(accessor).SetName(name);
         let result;
         if (opt.cache && usingMainStore) {
             let callArgs_unwrapped = callArgs;
@@ -119,9 +121,13 @@ exports.StoreAccessor = (...args) => {
                     //callArg_unwrapLengths[argIndex] = unwrappedValuesForCallArg.length;
                 }
             }
-            result = mobx_utils_1.computedFn((...callArgs_unwrapped_2) => {
+            /*result = computedFn((...callArgs_unwrapped_2)=>{
                 return accessor(...callArgs);
-            }, opt.cache_keepAlive)(callArgs_unwrapped);
+            }, {name, keepAlive: opt.cache_keepAlive})(callArgs_unwrapped);*/
+            let accessor_proxy = (...callArgs_unwrapped_2) => accessor(...callArgs);
+            if (name)
+                js_vextensions_1.CE(accessor_proxy).SetName(name);
+            result = mobx_utils_1.computedFn(accessor_proxy, { name, keepAlive: opt.cache_keepAlive })(callArgs_unwrapped);
         }
         else {
             result = accessor(...callArgs);
@@ -145,8 +151,10 @@ exports.StoreAccessor = (...args) => {
         }
         return result;
     };
+    //if (name) wrapperAccessor["displayName"] = name;
+    //if (name) Object.defineProperty(wrapperAccessor, "name", {value: name});
     if (name)
-        wrapperAccessor["displayName"] = name;
+        js_vextensions_1.CE(wrapperAccessor).SetName(name);
     return wrapperAccessor;
 };
 //# sourceMappingURL=Custom.js.map

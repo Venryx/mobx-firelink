@@ -108,7 +108,7 @@ export const StoreAccessor: StoreAccessorFunc<RootStoreShape> = (...args)=>{
 			//return accessor.apply(this, callArgs);
 		}
 
-		let accessor;
+		let accessor: Function;
 		const usingMainStore = storeOverridesStack.length == 0; // || storeOverridesStack[storeOverridesStack.length - 1] == fire.rootStore;
 		if (usingMainStore) {
 			if (accessor_forMainStore == null) {
@@ -119,6 +119,7 @@ export const StoreAccessor: StoreAccessorFunc<RootStoreShape> = (...args)=>{
 		} else {
 			accessor = accessorGetter(storeOverridesStack[storeOverridesStack.length - 1]);
 		}
+		if (name) CE(accessor).SetName(name);
 
 		let result;
 		if (opt.cache && usingMainStore) {
@@ -137,9 +138,12 @@ export const StoreAccessor: StoreAccessorFunc<RootStoreShape> = (...args)=>{
 				}
 			}
 
-			result = computedFn((...callArgs_unwrapped_2)=>{
+			/*result = computedFn((...callArgs_unwrapped_2)=>{
 				return accessor(...callArgs);
-			}, opt.cache_keepAlive)(callArgs_unwrapped);
+			}, {name, keepAlive: opt.cache_keepAlive})(callArgs_unwrapped);*/
+			let accessor_proxy = (...callArgs_unwrapped_2)=>accessor(...callArgs);
+			if (name) CE(accessor_proxy).SetName(name);
+			result = computedFn(accessor_proxy, {name, keepAlive: opt.cache_keepAlive})(callArgs_unwrapped);
 		} else {
 			result = accessor(...callArgs);
 		}
@@ -167,6 +171,8 @@ export const StoreAccessor: StoreAccessorFunc<RootStoreShape> = (...args)=>{
 		return result;
 	};
 
-	if (name) wrapperAccessor["displayName"] = name;
+	//if (name) wrapperAccessor["displayName"] = name;
+	//if (name) Object.defineProperty(wrapperAccessor, "name", {value: name});
+	if (name) CE(wrapperAccessor).SetName(name);
 	return wrapperAccessor as any;
 };

@@ -129,24 +129,34 @@ class TreeNode {
     }
     Get(subpathOrGetterFunc, query, createTreeNodesIfMissing = true) {
         let subpathSegments = PathHelpers_1.PathOrPathGetterToPathSegments(subpathOrGetterFunc);
-        let currentNode = this;
-        for (let [index, segment] of subpathSegments.entries()) {
-            let subpathSegmentsToHere = subpathSegments.slice(0, index + 1);
-            let childNodesMap = currentNode[currentNode.type == TreeNodeType.Collection ? "docNodes" : "collectionNodes"];
-            if (!childNodesMap.has(segment) && createTreeNodesIfMissing) {
-                //let pathToSegment = subpathSegments.slice(0, index).join("/");
-                childNodesMap.set(segment, new TreeNode(this.fire, this.pathSegments.concat(subpathSegmentsToHere)));
+        let currentNode;
+        let proceed_inAction = () => mobx_1.runInAction(`TreeNode.Get @path(${this.path})`, () => proceed(true));
+        let proceed = (inAction) => {
+            currentNode = this;
+            for (let [index, segment] of subpathSegments.entries()) {
+                let subpathSegmentsToHere = subpathSegments.slice(0, index + 1);
+                let childNodesMap = currentNode[currentNode.type == TreeNodeType.Collection ? "docNodes" : "collectionNodes"];
+                if (!childNodesMap.has(segment) && createTreeNodesIfMissing) {
+                    if (!inAction)
+                        return proceed_inAction(); // if not yet running in action, restart in one
+                    //let pathToSegment = subpathSegments.slice(0, index).join("/");
+                    childNodesMap.set(segment, new TreeNode(this.fire, this.pathSegments.concat(subpathSegmentsToHere)));
+                }
+                currentNode = childNodesMap.get(segment);
+                if (currentNode == null)
+                    break;
             }
-            currentNode = childNodesMap.get(segment);
-            if (currentNode == null)
-                break;
-        }
-        if (query) {
-            if (!currentNode.queryNodes.has(query.toString()) && createTreeNodesIfMissing) {
-                currentNode.queryNodes.set(query.toString(), new TreeNode(this.fire, this.pathSegments.concat(subpathSegments).concat("@query:")));
+            if (query) {
+                if (!currentNode.queryNodes.has(query.toString()) && createTreeNodesIfMissing) {
+                    if (!inAction)
+                        return proceed_inAction(); // if not yet running in action, restart in one
+                    currentNode.queryNodes.set(query.toString(), new TreeNode(this.fire, this.pathSegments.concat(subpathSegments).concat("@query:")));
+                }
+                currentNode = currentNode.queryNodes.get(query.toString());
             }
-            currentNode = currentNode.queryNodes.get(query.toString());
-        }
+        };
+        // first, try proceeding without runInAction 
+        proceed(false);
         return currentNode;
     }
     get raw() { return this.AsRawData(); } // helper for in console
