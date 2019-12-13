@@ -34,16 +34,23 @@ export function GetDocs(opt, collectionPathOrGetterFunc) {
     if (CE(pathSegments).Any(a => a == null))
         return emptyArray;
     let queryRequest = opt.filters ? new QueryRequest({ filters: opt.filters }) : null;
-    // we can't change observables from within computations, so do it in a moment (out of computation call-stack)
-    DoX_ComputationSafe(() => runInAction("GetDocs_Request", () => {
-        opt.fire.tree.Get(pathSegments, queryRequest, true).Request();
-    }));
+    const treeNode = opt.fire.tree.Get(pathSegments, queryRequest);
+    // if already subscribed, just mark requested (reduces action-spam of GetDocs_Request)
+    if (treeNode && treeNode.subscription) {
+        treeNode.Request();
+    }
+    else {
+        // we can't change observables from within computations, so do it in a moment (out of computation call-stack)
+        DoX_ComputationSafe(() => runInAction("GetDocs_Request", () => {
+            opt.fire.tree.Get(pathSegments, queryRequest, true).Request();
+        }));
+    }
     // todo: handle opt.useUndefinedForInProgress
     /*let docNodes = Array.from(treeNode.docNodes.values());
     let docDatas = docNodes.map(docNode=>docNode.data);
     return docDatas;*/
     //return opt.fire.tree.Get(pathSegments, queryRequest)?.docDatas ?? emptyArray;
-    let result = (_b = (_a = opt.fire.tree.Get(pathSegments, queryRequest)) === null || _a === void 0 ? void 0 : _a.docDatas, (_b !== null && _b !== void 0 ? _b : []));
+    let result = (_b = (_a = treeNode) === null || _a === void 0 ? void 0 : _a.docDatas, (_b !== null && _b !== void 0 ? _b : []));
     return result.length == 0 ? emptyArray : result; // to help avoid unnecessary react renders
 }
 /*export async function GetDocs_Async<DocT>(opt: FireOptions & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>ObservableMap<any, DocT>)): Promise<DocT[]> {
@@ -64,13 +71,19 @@ export function GetDoc(opt, docPathOrGetterFunc) {
     let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
     if (CE(pathSegments).Any(a => a == null))
         return null;
-    // we can't change observables from within computations, so do it in a moment (out of computation call-stack)
-    DoX_ComputationSafe(() => runInAction("GetDoc_Request", () => {
-        opt.fire.tree.Get(pathSegments, null, true).Request();
-    }));
+    let treeNode = opt.fire.tree.Get(pathSegments);
+    // if already subscribed, just mark requested (reduces action-spam of GetDoc_Request)
+    if (treeNode && treeNode.subscription) {
+        treeNode.Request();
+    }
+    else {
+        // we can't change observables from within computations, so do it in a moment (out of computation call-stack)
+        DoX_ComputationSafe(() => runInAction("GetDoc_Request", () => {
+            opt.fire.tree.Get(pathSegments, null, true).Request();
+        }));
+    }
     // todo: handle opt.useUndefinedForInProgress
-    //return DeepGet(opt.fire.versionData, subpath);
-    return (_a = opt.fire.tree.Get(pathSegments)) === null || _a === void 0 ? void 0 : _a.data;
+    return (_a = treeNode) === null || _a === void 0 ? void 0 : _a.data;
 }
 /*export async function GetDoc_Async<DocT>(opt: FireOptions & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>DocT)): Promise<DocT> {
     opt = E(defaultFireOptions, opt);

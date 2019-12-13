@@ -44,6 +44,7 @@ export class QueryRequest {
 }
 export class TreeNode {
     constructor(fire, pathOrSegments) {
+        var _a;
         this.status = DataStatus.Initial;
         // for doc (and root) nodes
         this.collectionNodes = observable.map();
@@ -51,8 +52,9 @@ export class TreeNode {
         this.queryNodes = observable.map(); // for collection nodes
         this.docNodes = observable.map();
         this.fire = fire;
-        this.path = PathOrPathGetterToPath(pathOrSegments);
         this.pathSegments = PathOrPathGetterToPathSegments(pathOrSegments);
+        this.path = PathOrPathGetterToPath(pathOrSegments);
+        this.path_noQuery = ((_a = this.pathSegments.slice(-1)[0]) === null || _a === void 0 ? void 0 : _a.startsWith("@query")) ? this.pathSegments.slice(0, -1).join("/") : this.path;
         Assert(this.pathSegments.find(a => a == null || a.trim().length == 0) == null, `Path segments cannot be null/empty. @pathSegments(${this.pathSegments})`);
         this.type = GetTreeNodeTypeForPath(this.pathSegments);
     }
@@ -80,7 +82,7 @@ export class TreeNode {
             }));
         }
         else {
-            let collectionRef = this.fire.subs.firestoreDB.collection(this.path);
+            let collectionRef = this.fire.subs.firestoreDB.collection(this.path_noQuery);
             if (this.query) {
                 collectionRef = this.query.Apply(collectionRef);
             }
@@ -156,7 +158,7 @@ export class TreeNode {
                 if (currentNode == null)
                     break;
             }
-            if (query) {
+            if (query && currentNode) {
                 if (!currentNode.queryNodes.has(query.toString()) && createTreeNodesIfMissing) {
                     if (!inAction)
                         return proceed_inAction(); // if not yet running in action, restart in one

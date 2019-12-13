@@ -47,14 +47,16 @@ export class QueryRequest {
 export class TreeNode<DataShape> {
 	constructor(fire: Firelink<any ,any>, pathOrSegments: string | string[]) {
 		this.fire = fire;
-		this.path = PathOrPathGetterToPath(pathOrSegments);
 		this.pathSegments = PathOrPathGetterToPathSegments(pathOrSegments);
+		this.path = PathOrPathGetterToPath(pathOrSegments);
+		this.path_noQuery = this.pathSegments.slice(-1)[0]?.startsWith("@query") ? this.pathSegments.slice(0, -1).join("/"): this.path; 
 		Assert(this.pathSegments.find(a=>a == null || a.trim().length == 0) == null, `Path segments cannot be null/empty. @pathSegments(${this.pathSegments})`);
 		this.type = GetTreeNodeTypeForPath(this.pathSegments);
 	}
 	fire: Firelink<any, any>;
-	path: string;
 	pathSegments: string[];
+	path: string;
+	path_noQuery: string;
 	type: TreeNodeType;
 
 	Request() {
@@ -82,7 +84,7 @@ export class TreeNode<DataShape> {
 				});
 			}));
 		} else {
-			let collectionRef = this.fire.subs.firestoreDB.collection(this.path);
+			let collectionRef = this.fire.subs.firestoreDB.collection(this.path_noQuery);
 			if (this.query) {
 				collectionRef = this.query.Apply(collectionRef);
 			}
@@ -170,7 +172,7 @@ export class TreeNode<DataShape> {
 				currentNode = childNodesMap.get(segment);
 				if (currentNode == null) break;
 			}
-			if (query) {
+			if (query && currentNode) {
 				if (!currentNode.queryNodes.has(query.toString()) && createTreeNodesIfMissing) {
 					if (!inAction) return proceed_inAction(); // if not yet running in action, restart in one
 					currentNode.queryNodes.set(query.toString(), new TreeNode(this.fire, this.pathSegments.concat(subpathSegments).concat("@query:")))

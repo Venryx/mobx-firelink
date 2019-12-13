@@ -25,8 +25,9 @@ export declare class QueryRequest {
 export declare class TreeNode<DataShape> {
     constructor(fire: Firelink<any, any>, pathOrSegments: string | string[]);
     fire: Firelink<any, any>;
-    path: string;
     pathSegments: string[];
+    path: string;
+    path_noQuery: string;
     type: TreeNodeType;
     Request(): void;
     Subscribe(): void;
