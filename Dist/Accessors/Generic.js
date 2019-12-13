@@ -8,11 +8,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { E, ShallowChanged, emptyArray, CE } from "js-vextensions";
-import { when } from "mobx";
+import { when, runInAction } from "mobx";
 import { defaultFireOptions } from "../Firelink";
 import { DataStatus, QueryRequest } from "../Tree/TreeNode";
 import { PathOrPathGetterToPathSegments } from "../Utils/PathHelpers";
 import { TreeRequestWatcher } from "../Tree/TreeRequestWatcher";
+import { DoX_ComputationSafe } from "../Utils/MobX";
 /*
 Why use explicit GetDocs, GetDoc, etc. calls instead of just Proxy's?
 1) It lets you add options (like filters) in a consistent way. (consistent among sync db-accesses, and, old: consistent with async db-accesses, eg. GetDocAsync)
@@ -26,18 +27,24 @@ export class GetDocs_Options {
 }
 GetDocs_Options.default = new GetDocs_Options();
 export function GetDocs(opt, collectionPathOrGetterFunc) {
+    var _a, _b;
     opt = E(defaultFireOptions, GetDocs_Options.default, opt);
     let subpathSegments = PathOrPathGetterToPathSegments(collectionPathOrGetterFunc);
     let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
     if (CE(pathSegments).Any(a => a == null))
         return emptyArray;
-    let treeNode = opt.fire.tree.Get(pathSegments, opt.filters ? new QueryRequest({ filters: opt.filters }) : null);
-    treeNode.Request();
+    let queryRequest = opt.filters ? new QueryRequest({ filters: opt.filters }) : null;
+    // we can't change observables from within computations, so do it in a moment (out of computation call-stack)
+    DoX_ComputationSafe(() => runInAction("GetDocs_Request", () => {
+        opt.fire.tree.Get(pathSegments, queryRequest, true).Request();
+    }));
     // todo: handle opt.useUndefinedForInProgress
     /*let docNodes = Array.from(treeNode.docNodes.values());
     let docDatas = docNodes.map(docNode=>docNode.data);
     return docDatas;*/
-    return treeNode.docDatas;
+    //return opt.fire.tree.Get(pathSegments, queryRequest)?.docDatas ?? emptyArray;
+    let result = (_b = (_a = opt.fire.tree.Get(pathSegments, queryRequest)) === null || _a === void 0 ? void 0 : _a.docDatas, (_b !== null && _b !== void 0 ? _b : []));
+    return result.length == 0 ? emptyArray : result; // to help avoid unnecessary react renders
 }
 /*export async function GetDocs_Async<DocT>(opt: FireOptions & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>ObservableMap<any, DocT>)): Promise<DocT[]> {
     opt = E(defaultFireOptions, opt);
@@ -51,16 +58,19 @@ export class GetDoc_Options {
 }
 GetDoc_Options.default = new GetDoc_Options();
 export function GetDoc(opt, docPathOrGetterFunc) {
+    var _a;
     opt = E(defaultFireOptions, GetDoc_Options.default, opt);
     let subpathSegments = PathOrPathGetterToPathSegments(docPathOrGetterFunc);
     let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
     if (CE(pathSegments).Any(a => a == null))
         return null;
-    let treeNode = opt.fire.tree.Get(pathSegments);
-    treeNode.Request();
+    // we can't change observables from within computations, so do it in a moment (out of computation call-stack)
+    DoX_ComputationSafe(() => runInAction("GetDoc_Request", () => {
+        opt.fire.tree.Get(pathSegments, null, true).Request();
+    }));
     // todo: handle opt.useUndefinedForInProgress
     //return DeepGet(opt.fire.versionData, subpath);
-    return treeNode.data;
+    return (_a = opt.fire.tree.Get(pathSegments)) === null || _a === void 0 ? void 0 : _a.data;
 }
 /*export async function GetDoc_Async<DocT>(opt: FireOptions & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>DocT)): Promise<DocT> {
     opt = E(defaultFireOptions, opt);

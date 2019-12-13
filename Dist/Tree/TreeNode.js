@@ -8,6 +8,7 @@ import { Assert, CE, ToJSON } from "js-vextensions";
 import { observable, runInAction } from "mobx";
 import { PathOrPathGetterToPath, PathOrPathGetterToPathSegments } from "../Utils/PathHelpers";
 import { ProcessDBData } from "../Utils/DatabaseHelpers";
+import { _getGlobalState } from "mobx";
 export var TreeNodeType;
 (function (TreeNodeType) {
     TreeNodeType[TreeNodeType["Root"] = 0] = "Root";
@@ -63,6 +64,12 @@ export class TreeNode {
     }
     Subscribe() {
         Assert(this.subscription == null, "Cannot subscribe more than once!");
+        // old: wait till call-stack completes, so we don't violate "can't change observables from within computation" rule
+        // we can't change observables from within computed values/funcs/store-accessors, so do it in a moment (out of computation call-stack)
+        /*WaitXThenRun(0, ()=> {
+            runInAction("TreeNode.Subscribe_prep", ()=>this.status = DataStatus.Waiting);
+        });*/
+        Assert(_getGlobalState().computationDepth == 0, "Cannot call TreeNode.Subscribe from within a computation.");
         runInAction("TreeNode.Subscribe_prep", () => this.status = DataStatus.Waiting);
         if (this.type == TreeNodeType.Root || this.type == TreeNodeType.Document) {
             let docRef = this.fire.subs.firestoreDB.doc(this.path);
@@ -129,7 +136,8 @@ export class TreeNode {
         //let docDatas = observable.array(docNodes.map(docNode=>docNode.data));
         return docDatas;
     }
-    Get(subpathOrGetterFunc, query, createTreeNodesIfMissing = true) {
+    // default createTreeNodesIfMissing to false, so that it's safe to call this from a computation (which includes store-accessors)
+    Get(subpathOrGetterFunc, query, createTreeNodesIfMissing = false) {
         let subpathSegments = PathOrPathGetterToPathSegments(subpathOrGetterFunc);
         let currentNode;
         let proceed_inAction = () => runInAction(`TreeNode.Get @path(${this.path})`, () => proceed(true));
