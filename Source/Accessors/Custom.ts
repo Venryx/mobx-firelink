@@ -27,13 +27,13 @@ export function LogStoreAccessorRunTimes() {
 	console.table(accessorRunTimes_ordered);
 }
 
-export const storeOverridesStack = [];
-export function WithStore<T>(store: any, accessorFunc: ()=>T): T {
-	storeOverridesStack.push(store);
+export function WithStore<T>(opt: FireOptions, store: any, accessorFunc: ()=>T): T {
+	opt = E(StoreAccessorOptions.default, opt);
+	opt.fire.storeOverridesStack.push(store);
 	try {
 		var result = accessorFunc();
 	} finally {
-		storeOverridesStack.pop();
+		opt.fire.storeOverridesStack.pop();
 	}
 	return result;
 }
@@ -55,11 +55,11 @@ export type CallArgToDependencyConvertorFunc = (callArgs: any[])=>any[];
 	<Func extends Function>(accessor: (s: RootState)=>Func, callArgToDependencyConvertorFunc?: CallArgToDependencyConvertorFunc): Func & {WS: (state: RootState)=>Func};
 	<Func extends Function>(name: string, accessor: (s: RootState)=>Func, callArgToDependencyConvertorFunc?: CallArgToDependencyConvertorFunc): Func & {WS: (state: RootState)=>Func};
 }*/
-interface StoreAccessorFunc<RootState> {
-	<Func extends Function>(accessor: (s: RootState)=>Func): Func;
-	<Func extends Function>(options: FireOptions & StoreAccessorOptions, accessor: (s: RootState)=>Func): Func;
-	<Func extends Function>(name: string, accessor: (s: RootState)=>Func): Func;
-	<Func extends Function>(name: string, options: FireOptions & StoreAccessorOptions, accessor: (s: RootState)=>Func): Func;
+interface StoreAccessorFunc<RootState_PreSet = RootStoreShape> {
+	<Func extends Function, RootState = RootState_PreSet>(accessor: (s: RootState)=>Func): Func;
+	<Func extends Function, RootState = RootState_PreSet>(options: FireOptions<RootState> & StoreAccessorOptions, accessor: (s: RootState)=>Func): Func;
+	<Func extends Function, RootState = RootState_PreSet>(name: string, accessor: (s: RootState)=>Func): Func;
+	<Func extends Function, RootState = RootState_PreSet>(name: string, options: FireOptions<RootState> & StoreAccessorOptions, accessor: (s: RootState)=>Func): Func;
 }
 
 /**
@@ -79,7 +79,7 @@ Wrap a function with StoreAccessor if it's under the "Store/" path, and one of t
 2) It involves "heavy" processing, such that it's worth caching that processing. (rather than use computedFn directly, just standardize on StoreAccessor)
 3) It involves a transformation of data into a new wrapper (ie. breaking reference equality), such that it's worth caching the processing. (to not trigger unnecessary child-ui re-renders)
 */
-export const StoreAccessor: StoreAccessorFunc<RootStoreShape> = (...args)=>{
+export const StoreAccessor: StoreAccessorFunc = (...args)=> {
 	let name: string, opt: FireOptions & StoreAccessorOptions, accessorGetter: Function;
 	if (typeof args[0] == "function" && args.length == 1) [accessorGetter] = args;
 	else if (typeof args[0] == "object" && args.length == 2) [opt, accessorGetter] = args;
@@ -109,7 +109,7 @@ export const StoreAccessor: StoreAccessorFunc<RootStoreShape> = (...args)=>{
 		}
 
 		let accessor: Function;
-		const usingMainStore = storeOverridesStack.length == 0; // || storeOverridesStack[storeOverridesStack.length - 1] == fire.rootStore;
+		const usingMainStore = fireOpt.fire.storeOverridesStack.length == 0; // || storeOverridesStack[storeOverridesStack.length - 1] == fire.rootStore;
 		if (usingMainStore) {
 			if (accessor_forMainStore == null) {
 				Assert(fireOpt.fire.rootStore != null, "A store-accessor cannot be called before its associated Firelink instance has been set.");
@@ -117,7 +117,7 @@ export const StoreAccessor: StoreAccessorFunc<RootStoreShape> = (...args)=>{
 			}
 			accessor = accessor_forMainStore;
 		} else {
-			accessor = accessorGetter(storeOverridesStack[storeOverridesStack.length - 1]);
+			accessor = accessorGetter(fireOpt.fire.storeOverridesStack.slice(-1)[0]);
 		}
 		if (name) CE(accessor).SetName(name);
 

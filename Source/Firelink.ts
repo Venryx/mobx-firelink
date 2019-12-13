@@ -39,6 +39,7 @@ export class Firelink<RootStoreShape, DBShape> {
 	versionPath: string;*/
 	//versionData: DBShape;
 	rootStore: RootStoreShape;
+	storeOverridesStack = [] as RootStoreShape[];
 
 	InitSubs() {
 		this.subs.firestoreDB = firebase.firestore();

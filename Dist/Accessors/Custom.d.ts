@@ -11,8 +11,7 @@ export declare const storeAccessorProfileData: {
     [key: string]: StoreAccessorProfileData;
 };
 export declare function LogStoreAccessorRunTimes(): void;
-export declare const storeOverridesStack: any[];
-export declare function WithStore<T>(store: any, accessorFunc: () => T): T;
+export declare function WithStore<T>(opt: FireOptions, store: any, accessorFunc: () => T): T;
 export declare const accessorStack: any[];
 export declare class StoreAccessorOptions {
     static default: StoreAccessorOptions;
@@ -21,11 +20,11 @@ export declare class StoreAccessorOptions {
     cache_unwrapArgs?: number[];
 }
 export declare type CallArgToDependencyConvertorFunc = (callArgs: any[]) => any[];
-interface StoreAccessorFunc<RootState> {
-    <Func extends Function>(accessor: (s: RootState) => Func): Func;
-    <Func extends Function>(options: FireOptions & StoreAccessorOptions, accessor: (s: RootState) => Func): Func;
-    <Func extends Function>(name: string, accessor: (s: RootState) => Func): Func;
-    <Func extends Function>(name: string, options: FireOptions & StoreAccessorOptions, accessor: (s: RootState) => Func): Func;
+interface StoreAccessorFunc<RootState_PreSet = RootStoreShape> {
+    <Func extends Function, RootState = RootState_PreSet>(accessor: (s: RootState) => Func): Func;
+    <Func extends Function, RootState = RootState_PreSet>(options: FireOptions<RootState> & StoreAccessorOptions, accessor: (s: RootState) => Func): Func;
+    <Func extends Function, RootState = RootState_PreSet>(name: string, accessor: (s: RootState) => Func): Func;
+    <Func extends Function, RootState = RootState_PreSet>(name: string, options: FireOptions<RootState> & StoreAccessorOptions, accessor: (s: RootState) => Func): Func;
 }
 /**
 Probably temp. Usage:
@@ -39,5 +38,5 @@ Wrap a function with StoreAccessor if it's under the "Store/" path, and one of t
 2) It involves "heavy" processing, such that it's worth caching that processing. (rather than use computedFn directly, just standardize on StoreAccessor)
 3) It involves a transformation of data into a new wrapper (ie. breaking reference equality), such that it's worth caching the processing. (to not trigger unnecessary child-ui re-renders)
 */
-export declare const StoreAccessor: StoreAccessorFunc<RootStoreShape>;
+export declare const StoreAccessor: StoreAccessorFunc;
 export {};

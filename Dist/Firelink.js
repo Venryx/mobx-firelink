@@ -25,6 +25,7 @@ export class FireUserInfo {
 }
 export class Firelink {
     constructor(rootPathInDB, rootStore, initSubs = true) {
+        this.storeOverridesStack = [];
         this.subs = {};
         this.treeRequestWatchers = new Set();
         Firelink.instances.push(this);

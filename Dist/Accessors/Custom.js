@@ -19,14 +19,14 @@ export function LogStoreAccessorRunTimes() {
     //Log({}, accessorRunTimes_ordered);
     console.table(accessorRunTimes_ordered);
 }
-export const storeOverridesStack = [];
-export function WithStore(store, accessorFunc) {
-    storeOverridesStack.push(store);
+export function WithStore(opt, store, accessorFunc) {
+    opt = E(StoreAccessorOptions.default, opt);
+    opt.fire.storeOverridesStack.push(store);
     try {
         var result = accessorFunc();
     }
     finally {
-        storeOverridesStack.pop();
+        opt.fire.storeOverridesStack.pop();
     }
     return result;
 }
@@ -84,7 +84,7 @@ export const StoreAccessor = (...args) => {
             //return accessor.apply(this, callArgs);
         }
         let accessor;
-        const usingMainStore = storeOverridesStack.length == 0; // || storeOverridesStack[storeOverridesStack.length - 1] == fire.rootStore;
+        const usingMainStore = fireOpt.fire.storeOverridesStack.length == 0; // || storeOverridesStack[storeOverridesStack.length - 1] == fire.rootStore;
         if (usingMainStore) {
             if (accessor_forMainStore == null) {
                 Assert(fireOpt.fire.rootStore != null, "A store-accessor cannot be called before its associated Firelink instance has been set.");
@@ -93,7 +93,7 @@ export const StoreAccessor = (...args) => {
             accessor = accessor_forMainStore;
         }
         else {
-            accessor = accessorGetter(storeOverridesStack[storeOverridesStack.length - 1]);
+            accessor = accessorGetter(fireOpt.fire.storeOverridesStack.slice(-1)[0]);
         }
         if (name)
             CE(accessor).SetName(name);

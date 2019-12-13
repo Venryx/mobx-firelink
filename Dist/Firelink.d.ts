@@ -16,6 +16,7 @@ export declare class Firelink<RootStoreShape, DBShape> {
     rootPathSegments: string[];
     rootPath: string;
     rootStore: RootStoreShape;
+    storeOverridesStack: RootStoreShape[];
     InitSubs(): void;
     subs: {
         firestoreDB: firebase.firestore.Firestore;
