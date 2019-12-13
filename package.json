@@ -7,8 +7,9 @@
   "typings": "Dist/index.d.ts",
   "license": "MIT",
   "author": {
-    "name": "Stephen Wicklund",
-    "email": "venryx@gmail.com"
+    "name": "Venryx",
+    "email": "venryx@gmail.com",
+    "url": "http://venryx.com"
   },
   "keywords": [
     "mobx",
