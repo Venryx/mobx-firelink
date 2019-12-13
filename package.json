@@ -9,7 +9,11 @@
   "author": {
     "name": "Venryx",
     "email": "venryx@gmail.com",
-    "url": "http://venryx.com"
+    "url": "https://venryx.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Venryx/mobx-firelink.git"
   },
   "keywords": [
     "mobx",
@@ -21,9 +25,6 @@
   "scripts": {
     "dev": "tsc --watch",
     "dist": "tsc"
-  },
-  "engines": {
-    "node": ">=4"
   },
   "peerDependencies": {
     "firebase": "^7.5.0",
