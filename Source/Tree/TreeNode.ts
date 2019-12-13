@@ -64,7 +64,7 @@ export class TreeNode<DataShape> {
 	}
 	Subscribe() {
 		Assert(this.subscription == null, "Cannot subscribe more than once!");
-		this.status = DataStatus.Waiting;
+		runInAction("TreeNode.Subscribe_prep", ()=>this.status = DataStatus.Waiting);
 		if (this.type == TreeNodeType.Root || this.type == TreeNodeType.Document) {
 			let docRef = this.fire.subs.firestoreDB.doc(this.path);
 			this.subscription = new PathSubscription(docRef.onSnapshot((snapshot)=> {
@@ -120,8 +120,13 @@ export class TreeNode<DataShape> {
 		//data = data ? observable(data_raw) as any : null;
 		ProcessDBData(data, true, true, CE(this.pathSegments).Last()); // maybe rework
 		this.data = data;
-		//ProcessDBData(this.data, true, true, CE(this.pathSegments).Last()); // also add to proxy (since the mobx proxy doesn't expose non-enumerable props) // maybe rework
-		this.status = DataStatus.Received;
+		if (data != null) {
+			//ProcessDBData(this.data, true, true, CE(this.pathSegments).Last()); // also add to proxy (since the mobx proxy doesn't expose non-enumerable props) // maybe rework
+			this.status = DataStatus.Received;
+		} else {
+			// entry was deleted; reset status to "initial"
+			this.status = DataStatus.Initial;
+		}
 	}
 
 	// for collection (and collection-query) nodes
@@ -131,7 +136,7 @@ export class TreeNode<DataShape> {
 	@observable docNodes = observable.map<string, TreeNode<any>>();
 	//docNodes = new Map<string, TreeNode<any>>();
 	get docDatas() {
-		let docNodes = Array.from(this.docNodes.values());
+		let docNodes = Array.from(this.docNodes.values()).filter(a=>a.status == DataStatus.Received);
 		let docDatas = docNodes.map(docNode=>docNode.data);
 		//let docDatas = observable.array(docNodes.map(docNode=>docNode.data));
 		return docDatas;

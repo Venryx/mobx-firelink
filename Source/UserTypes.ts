@@ -14,7 +14,7 @@ declare module 'mobx-firelink/Dist/UserTypes' {
 
 This enables you to get typing within StoreAccessor, GetDocs, etc. without having to pass type-data in each call.
 
-Granted, this approach only works "once" per codebase; so it shouldn't be used by libraries. For libraries, you should do the following:
+Note: This approach only works "once" per codebase; so it shouldn't be used by libraries. For libraries, you should do the following:
 ==========
 // in some module
 export const fire = new Firelink<RootStoreShape, DBShape>();
