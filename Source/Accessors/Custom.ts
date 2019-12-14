@@ -28,7 +28,7 @@ export function LogStoreAccessorRunTimes() {
 }
 
 export function WithStore<T>(opt: FireOptions, store: any, accessorFunc: ()=>T): T {
-	opt = E(StoreAccessorOptions.default, opt);
+	opt = E(defaultFireOptions, opt);
 	opt.fire.storeOverridesStack.push(store);
 	try {
 		var result = accessorFunc();

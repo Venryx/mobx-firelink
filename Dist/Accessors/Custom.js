@@ -20,7 +20,7 @@ export function LogStoreAccessorRunTimes() {
     console.table(accessorRunTimes_ordered);
 }
 export function WithStore(opt, store, accessorFunc) {
-    opt = E(StoreAccessorOptions.default, opt);
+    opt = E(defaultFireOptions, opt);
     opt.fire.storeOverridesStack.push(store);
     try {
         var result = accessorFunc();
