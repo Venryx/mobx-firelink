@@ -68,18 +68,14 @@ export const StoreAccessor = (...args) => {
     else
         [name, options, accessorGetter] = args;
     name = (_a = name, (_a !== null && _a !== void 0 ? _a : "[name missing]"));
-    const opt = E(StoreAccessorOptions.default, options);
-    let defaultFireOptionsAtInit = defaultFireOptions;
-    let fireOpt = E(defaultFireOptions, CE(opt).Including("fire"));
     //let addProfiling = manager.devEnv; // manager isn't populated yet
     const addProfiling = window["DEV"];
     //const needsWrapper = addProfiling || options.cache;
     let accessor_forMainStore;
     const wrapperAccessor = (...callArgs) => {
-        // if defaultFireOptions is only now set, re-apply it to our "fire" variable (it's usually not set when StoreAccessor() is first called)
-        if (defaultFireOptions != null && defaultFireOptionsAtInit == null) {
-            fireOpt = E(defaultFireOptions, fireOpt);
-        }
+        // initialize these in wrapper-accessor rather than root-func, because defaultFireOptions is usually not ready when root-func is called
+        const opt = E(StoreAccessorOptions.default, options);
+        let fireOpt = E(defaultFireOptions, CE(opt).Including("fire"));
         if (addProfiling) {
             accessorStack.push((name !== null && name !== void 0 ? name : "n/a"));
             var startTime = performance.now();

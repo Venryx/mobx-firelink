@@ -1,5 +1,5 @@
 import {E, ShallowChanged, emptyArray, CE, WaitXThenRun} from "js-vextensions";
-import {ObservableMap, autorun, when, runInAction} from "mobx";
+import {ObservableMap, autorun, when, runInAction, reaction} from "mobx";
 import {DBShape} from "../UserTypes";
 import {Filter} from "../Filters";
 import {defaultFireOptions, FireOptions} from "../Firelink";
@@ -93,7 +93,7 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, opt?: FireOptions & Get
 	let lastResult;
 	let watcher = new TreeRequestWatcher(opt.fire);
 
-	let nodesRequested_obj_last;
+	/*let nodesRequested_obj_last;
 	let nodesRequested_obj;
 	do {
 		nodesRequested_obj_last = nodesRequested_obj;
@@ -113,6 +113,34 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, opt?: FireOptions & Get
 			return when(()=>node.status == DataStatus.Received);
 		}));
 	} while (ShallowChanged(nodesRequested_obj, nodesRequested_obj_last));
+	
+	return lastResult;*/
 
-	return lastResult;
+	return new Promise((resolve, reject)=> {
+		let dispose = reaction(()=> {
+			watcher.Start();
+			lastResult = dataGetterFunc();
+			watcher.Stop();
+			let nodesRequested_array = Array.from(watcher.nodesRequested);
+			let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status != DataStatus.Received);
+			return {
+				nodesRequested_array,
+				possiblyDone: requestsBeingWaitedFor.length == 0,
+			};
+		}, data=> {
+			let {nodesRequested_array, possiblyDone} = data;
+			if (!possiblyDone) return;
+			// wait till all requested nodes have their data received
+			/*await Promise.all(nodesRequested_array.map(node=> {
+				return when(()=>node.status == DataStatus.Received);
+			}));*/
+			//if (!ShallowChanged(nodesRequested_obj, nodesRequested_obj_last)) {
+			let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status != DataStatus.Received);
+			if (requestsBeingWaitedFor.length == 0) {
+				dispose();
+				//console.log("Done:", lastResult);
+				resolve(lastResult);
+			}
+		});
+	});
 }
