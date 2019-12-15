@@ -20,8 +20,8 @@ export class GetDocs_Options {
 	filters?: Filter[];
 	useUndefinedForInProgress? = false;
 }
-export function GetDocs<DB = DBShape, DocT = any>(opt: FireOptions<any, DB> & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>ObservableMap<any, DocT>)): DocT[] {
-	opt = E(defaultFireOptions, GetDocs_Options.default, opt);
+export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<any, DB>> & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>ObservableMap<any, DocT>)): DocT[] {
+	const opt = E(defaultFireOptions, GetDocs_Options.default, options) as FireOptions & GetDocs_Options;
 	let subpathSegments = PathOrPathGetterToPathSegments(collectionPathOrGetterFunc);
 	let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
 	if (CE(pathSegments).Any(a=>a == null)) return emptyArray;
@@ -57,8 +57,8 @@ export class GetDoc_Options {
 	inLinkRoot? = true;
 	useUndefinedForInProgress? = false;
 }
-export function GetDoc<DB = DBShape, DocT = any>(opt: FireOptions<any, DB> & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>DocT)): DocT|n {
-	opt = E(defaultFireOptions, GetDoc_Options.default, opt);
+export function GetDoc<DB = DBShape, DocT = any>(options: Partial<FireOptions<any, DB>> & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>DocT)): DocT|n {
+	const opt = E(defaultFireOptions, GetDoc_Options.default, options) as FireOptions & GetDocs_Options;
 	let subpathSegments = PathOrPathGetterToPathSegments(docPathOrGetterFunc);
 	let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
 	if (CE(pathSegments).Any(a=>a == null)) return null;

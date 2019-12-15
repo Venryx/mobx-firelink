@@ -35,12 +35,12 @@ export class Command {
         // ==========
         // parent commands should call MarkAsSubcommand() immediately after setting a subcommand's payload
         this.asSubcommand = false;
-        let opt, payload;
+        let options, payload;
         if (args.length == 1)
             [payload] = args;
         else
-            [opt, payload] = args;
-        opt = E(defaultFireOptions, opt);
+            [options, payload] = args;
+        const opt = E(defaultFireOptions, options);
         //this.userInfo = {id: opt.fire.userID}; // temp
         //this.userInfo = opt.fire.userInfo; // temp (needs rework to be server-compatible in future)
         this.type = this.constructor.name;

@@ -119,8 +119,8 @@ export function ConvertDataToValidDBUpdates(versionPath: string, versionData: an
 	throw new Error("Not yet implemented.");
 }
 
-export async function ApplyDBUpdates(opt: FireOptions, rootPath: string, dbUpdates: Object) {
-	opt = E(defaultFireOptions, opt);
+export async function ApplyDBUpdates(options: Partial<FireOptions>, rootPath: string, dbUpdates: Object) {
+	const opt = E(defaultFireOptions, options) as FireOptions;
 	//dbUpdates = WithoutHelpers(Clone(dbUpdates));
 	dbUpdates = Clone(dbUpdates);
 	if (rootPath != null) {
@@ -191,8 +191,8 @@ export async function ApplyDBUpdates(opt: FireOptions, rootPath: string, dbUpdat
 }
 
 export const maxDBUpdatesPerBatch = 500;
-export async function ApplyDBUpdates_InChunks(opt: FireOptions, rootPath: string, dbUpdates: Object, updatesPerChunk = maxDBUpdatesPerBatch) {
-	opt = E(defaultFireOptions, opt);
+export async function ApplyDBUpdates_InChunks(options: Partial<FireOptions>, rootPath: string, dbUpdates: Object, updatesPerChunk = maxDBUpdatesPerBatch) {
+	const opt = E(defaultFireOptions, options) as FireOptions;
 	const dbUpdates_pairs = ObjectCE(dbUpdates).Pairs();
 
 	const dbUpdates_pairs_chunks = [] as any[];

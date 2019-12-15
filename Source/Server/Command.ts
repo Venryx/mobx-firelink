@@ -24,12 +24,12 @@ function NotifyListenersThatCurrentCommandFinished() {
 export abstract class Command<Payload, ReturnData = void> {
 	static defaultPayload = {};
 	constructor(payload: Payload);
-	constructor(opt: FireOptions, payload: Payload);
+	constructor(opt: Partial<FireOptions>, payload: Payload);
 	constructor(...args) {
-		let opt: FireOptions, payload: Payload;
+		let options: Partial<FireOptions>, payload: Payload;
 		if (args.length == 1) [payload] = args;
-		else [opt, payload] = args;
-		opt = E(defaultFireOptions, opt!);
+		else [options, payload] = args;
+		const opt = E(defaultFireOptions, options!) as FireOptions;
 
 		//this.userInfo = {id: opt.fire.userID}; // temp
 		//this.userInfo = opt.fire.userInfo; // temp (needs rework to be server-compatible in future)

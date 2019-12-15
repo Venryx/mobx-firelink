@@ -3,7 +3,7 @@ export declare const commandsWaitingToComplete: Command<any, any>[];
 export declare abstract class Command<Payload, ReturnData = void> {
     static defaultPayload: {};
     constructor(payload: Payload);
-    constructor(opt: FireOptions, payload: Payload);
+    constructor(opt: Partial<FireOptions>, payload: Payload);
     get userInfo(): FireUserInfo | null;
     type: string;
     options: FireOptions;

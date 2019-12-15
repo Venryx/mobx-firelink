@@ -9,8 +9,8 @@ export declare function FBFieldPathToVFieldPath(vFieldPath: string): string;
  * @returns [colOrDocPath, fieldPathInDoc]
  * */
 export declare function GetPathParts(path: string, asFBPath?: boolean): [string, string | n];
-export declare function DBPath(opt: FireOptions, path?: string, inLinkRoot?: boolean): string;
-export declare function DBPathSegments(opt: FireOptions, pathSegments: (string | number)[], inLinkRoot?: boolean): string[];
+export declare function DBPath(options: Partial<FireOptions>, path?: string, inLinkRoot?: boolean): string;
+export declare function DBPathSegments(options: Partial<FireOptions>, pathSegments: (string | number)[], inLinkRoot?: boolean): string[];
 export declare function SlicePath(path: string, removeFromEndCount: number, ...itemsToAdd: string[]): string | null;
 export declare function PathOrPathGetterToPath(pathOrPathSegmentsOrPathGetter: string | (string | number)[] | ((placeholder: any) => any)): string;
 export declare function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter: string | (string | number)[] | ((placeholder: any) => any)): string[];

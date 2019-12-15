@@ -119,9 +119,9 @@ export function ConvertDataToValidDBUpdates(versionPath, versionData, dbUpdatesR
     return result;*/
     throw new Error("Not yet implemented.");
 }
-export function ApplyDBUpdates(opt, rootPath, dbUpdates) {
+export function ApplyDBUpdates(options, rootPath, dbUpdates) {
     return __awaiter(this, void 0, void 0, function* () {
-        opt = E(defaultFireOptions, opt);
+        const opt = E(defaultFireOptions, options);
         //dbUpdates = WithoutHelpers(Clone(dbUpdates));
         dbUpdates = Clone(dbUpdates);
         if (rootPath != null) {
@@ -190,9 +190,9 @@ export function ApplyDBUpdates(opt, rootPath, dbUpdates) {
     });
 }
 export const maxDBUpdatesPerBatch = 500;
-export function ApplyDBUpdates_InChunks(opt, rootPath, dbUpdates, updatesPerChunk = maxDBUpdatesPerBatch) {
+export function ApplyDBUpdates_InChunks(options, rootPath, dbUpdates, updatesPerChunk = maxDBUpdatesPerBatch) {
     return __awaiter(this, void 0, void 0, function* () {
-        opt = E(defaultFireOptions, opt);
+        const opt = E(defaultFireOptions, options);
         const dbUpdates_pairs = ObjectCE(dbUpdates).Pairs();
         const dbUpdates_pairs_chunks = [];
         for (let offset = 0; offset < dbUpdates_pairs.length; offset += updatesPerChunk) {

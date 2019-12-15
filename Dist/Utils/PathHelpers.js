@@ -29,8 +29,8 @@ export function GetPathParts(path, asFBPath = false) {
     }
     return [colOrDocPath, fieldPathInDoc];
 }
-export function DBPath(opt, path = "", inLinkRoot = true) {
-    opt = E(defaultFireOptions, opt);
+export function DBPath(options, path = "", inLinkRoot = true) {
+    const opt = E(defaultFireOptions, options);
     Assert(path != null, "Path cannot be null.");
     Assert(typeof path == "string", "Path must be a string.");
     /*let versionPrefix = path.match(/^v[0-9]+/);
@@ -40,8 +40,8 @@ export function DBPath(opt, path = "", inLinkRoot = true) {
     }
     return path;
 }
-export function DBPathSegments(opt, pathSegments, inLinkRoot = true) {
-    opt = E(defaultFireOptions, opt);
+export function DBPathSegments(options, pathSegments, inLinkRoot = true) {
+    const opt = E(defaultFireOptions, options);
     let result = pathSegments.map(a => { var _a; return (_a = a) === null || _a === void 0 ? void 0 : _a.toString(); });
     if (inLinkRoot) {
         result = opt.fire.rootPathSegments.concat(result);

@@ -19,8 +19,8 @@ export function LogStoreAccessorRunTimes() {
     //Log({}, accessorRunTimes_ordered);
     console.table(accessorRunTimes_ordered);
 }
-export function WithStore(opt, store, accessorFunc) {
-    opt = E(defaultFireOptions, opt);
+export function WithStore(options, store, accessorFunc) {
+    const opt = E(defaultFireOptions, options);
     opt.fire.storeOverridesStack.push(store);
     try {
         var result = accessorFunc();
@@ -58,17 +58,17 @@ Wrap a function with StoreAccessor if it's under the "Store/" path, and one of t
 */
 export const StoreAccessor = (...args) => {
     var _a;
-    let name, opt, accessorGetter;
+    let name, options, accessorGetter;
     if (typeof args[0] == "function" && args.length == 1)
         [accessorGetter] = args;
     else if (typeof args[0] == "object" && args.length == 2)
-        [opt, accessorGetter] = args;
+        [options, accessorGetter] = args;
     else if (args.length == 2)
         [name, accessorGetter] = args;
     else
-        [name, opt, accessorGetter] = args;
+        [name, options, accessorGetter] = args;
     name = (_a = name, (_a !== null && _a !== void 0 ? _a : "[name missing]"));
-    opt = E(StoreAccessorOptions.default, opt);
+    const opt = E(defaultFireOptions, options);
     let defaultFireOptionsAtInit = defaultFireOptions;
     let fireOpt = E(defaultFireOptions, CE(opt).Including("fire"));
     //let addProfiling = manager.devEnv; // manager isn't populated yet

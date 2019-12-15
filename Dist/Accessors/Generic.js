@@ -26,9 +26,9 @@ export class GetDocs_Options {
     }
 }
 GetDocs_Options.default = new GetDocs_Options();
-export function GetDocs(opt, collectionPathOrGetterFunc) {
+export function GetDocs(options, collectionPathOrGetterFunc) {
     var _a, _b;
-    opt = E(defaultFireOptions, GetDocs_Options.default, opt);
+    const opt = E(defaultFireOptions, GetDocs_Options.default, options);
     let subpathSegments = PathOrPathGetterToPathSegments(collectionPathOrGetterFunc);
     let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
     if (CE(pathSegments).Any(a => a == null))
@@ -64,9 +64,9 @@ export class GetDoc_Options {
     }
 }
 GetDoc_Options.default = new GetDoc_Options();
-export function GetDoc(opt, docPathOrGetterFunc) {
+export function GetDoc(options, docPathOrGetterFunc) {
     var _a;
-    opt = E(defaultFireOptions, GetDoc_Options.default, opt);
+    const opt = E(defaultFireOptions, GetDoc_Options.default, options);
     let subpathSegments = PathOrPathGetterToPathSegments(docPathOrGetterFunc);
     let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
     if (CE(pathSegments).Any(a => a == null))

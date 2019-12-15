@@ -34,8 +34,8 @@ export function GetPathParts(path: string, asFBPath = false): [string, string|n]
 	return [colOrDocPath, fieldPathInDoc];
 }
 
-export function DBPath(opt: FireOptions, path = "", inLinkRoot = true) {
-	opt = E(defaultFireOptions, opt);
+export function DBPath(options: Partial<FireOptions>, path = "", inLinkRoot = true) {
+	const opt = E(defaultFireOptions, options) as FireOptions;
 	Assert(path != null, "Path cannot be null.");
 	Assert(typeof path == "string", "Path must be a string.");
 	/*let versionPrefix = path.match(/^v[0-9]+/);
@@ -45,8 +45,8 @@ export function DBPath(opt: FireOptions, path = "", inLinkRoot = true) {
 	}
 	return path;
 }
-export function DBPathSegments(opt: FireOptions, pathSegments: (string | number)[], inLinkRoot = true) {
-	opt = E(defaultFireOptions, opt);
+export function DBPathSegments(options: Partial<FireOptions>, pathSegments: (string | number)[], inLinkRoot = true) {
+	const opt = E(defaultFireOptions, options) as FireOptions;
 	let result = pathSegments.map(a=>a?.toString());
 	if (inLinkRoot) {
 		result = opt.fire.rootPathSegments.concat(result);
