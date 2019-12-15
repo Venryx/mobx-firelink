@@ -90,10 +90,10 @@ export async GetDocField_Async<DocT, FieldT>(docGetterFunc: (dbRoot: DBShape)=>D
 // (one of the rare cases where opt is not the first argument; that's because GetAsync may be called very frequently/in-sequences, and usually wraps nice user accessors, so could add too much visual clutter)
 export async function GetAsync<T>(dataGetterFunc: ()=>T, opt?: FireOptions & GetDoc_Options): Promise<T> {
 	opt = E(defaultFireOptions, opt);
-	let lastResult;
 	let watcher = new TreeRequestWatcher(opt.fire);
 
-	/*let nodesRequested_obj_last;
+	/*let lastResult;
+	let nodesRequested_obj_last;
 	let nodesRequested_obj;
 	do {
 		nodesRequested_obj_last = nodesRequested_obj;
@@ -119,27 +119,23 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, opt?: FireOptions & Get
 	return new Promise((resolve, reject)=> {
 		let dispose = reaction(()=> {
 			watcher.Start();
-			lastResult = dataGetterFunc();
+			let result = dataGetterFunc();
 			watcher.Stop();
 			let nodesRequested_array = Array.from(watcher.nodesRequested);
 			let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status != DataStatus.Received);
 			return {
+				result,
 				nodesRequested_array,
 				possiblyDone: requestsBeingWaitedFor.length == 0,
 			};
 		}, data=> {
-			let {nodesRequested_array, possiblyDone} = data;
+			let {result, nodesRequested_array, possiblyDone} = data;
 			if (!possiblyDone) return;
-			// wait till all requested nodes have their data received
-			/*await Promise.all(nodesRequested_array.map(node=> {
-				return when(()=>node.status == DataStatus.Received);
-			}));*/
 			//if (!ShallowChanged(nodesRequested_obj, nodesRequested_obj_last)) {
 			let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status != DataStatus.Received);
 			if (requestsBeingWaitedFor.length == 0) {
 				dispose();
-				//console.log("Done:", lastResult);
-				resolve(lastResult);
+				resolve(result);
 			}
 		});
 	});
