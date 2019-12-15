@@ -68,7 +68,7 @@ export const StoreAccessor = (...args) => {
     else
         [name, options, accessorGetter] = args;
     name = (_a = name, (_a !== null && _a !== void 0 ? _a : "[name missing]"));
-    const opt = E(defaultFireOptions, options);
+    const opt = E(StoreAccessorOptions.default, options);
     let defaultFireOptionsAtInit = defaultFireOptions;
     let fireOpt = E(defaultFireOptions, CE(opt).Including("fire"));
     //let addProfiling = manager.devEnv; // manager isn't populated yet

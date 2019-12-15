@@ -15,16 +15,16 @@ export declare function WithStore<T>(options: Partial<FireOptions>, store: any, 
 export declare const accessorStack: string[];
 export declare class StoreAccessorOptions {
     static default: StoreAccessorOptions;
-    cache?: boolean | undefined;
-    cache_keepAlive?: boolean | undefined;
+    cache: boolean;
+    cache_keepAlive: boolean;
     cache_unwrapArgs?: number[];
 }
 export declare type CallArgToDependencyConvertorFunc = (callArgs: any[]) => any[];
 interface StoreAccessorFunc<RootState_PreSet = RootStoreShape> {
     <Func extends Function, RootState = RootState_PreSet>(accessor: (s: RootState) => Func): Func;
-    <Func extends Function, RootState = RootState_PreSet>(options: Partial<FireOptions<RootState>> & StoreAccessorOptions, accessor: (s: RootState) => Func): Func;
+    <Func extends Function, RootState = RootState_PreSet>(options: Partial<FireOptions<RootState> & StoreAccessorOptions>, accessor: (s: RootState) => Func): Func;
     <Func extends Function, RootState = RootState_PreSet>(name: string, accessor: (s: RootState) => Func): Func;
-    <Func extends Function, RootState = RootState_PreSet>(name: string, options: Partial<FireOptions<RootState>> & StoreAccessorOptions, accessor: (s: RootState) => Func): Func;
+    <Func extends Function, RootState = RootState_PreSet>(name: string, options: Partial<FireOptions<RootState> & StoreAccessorOptions>, accessor: (s: RootState) => Func): Func;
 }
 /**
 Probably temp. Usage:

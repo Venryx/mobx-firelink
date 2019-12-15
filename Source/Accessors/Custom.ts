@@ -43,8 +43,8 @@ export const accessorStack = [] as string[];
 
 export class StoreAccessorOptions {
 	static default = new StoreAccessorOptions();
-	cache? = true;
-	cache_keepAlive? = false;
+	cache = true;
+	cache_keepAlive = false;
 	//cache_unwrapArgs?: {[key: number]: boolean};
 	cache_unwrapArgs?: number[];
 	//callArgToDependencyConvertorFunc?: CallArgToDependencyConvertorFunc;
@@ -57,9 +57,9 @@ export type CallArgToDependencyConvertorFunc = (callArgs: any[])=>any[];
 }*/
 interface StoreAccessorFunc<RootState_PreSet = RootStoreShape> {
 	<Func extends Function, RootState = RootState_PreSet>(accessor: (s: RootState)=>Func): Func;
-	<Func extends Function, RootState = RootState_PreSet>(options: Partial<FireOptions<RootState>> & StoreAccessorOptions, accessor: (s: RootState)=>Func): Func;
+	<Func extends Function, RootState = RootState_PreSet>(options: Partial<FireOptions<RootState> & StoreAccessorOptions>, accessor: (s: RootState)=>Func): Func;
 	<Func extends Function, RootState = RootState_PreSet>(name: string, accessor: (s: RootState)=>Func): Func;
-	<Func extends Function, RootState = RootState_PreSet>(name: string, options: Partial<FireOptions<RootState>> & StoreAccessorOptions, accessor: (s: RootState)=>Func): Func;
+	<Func extends Function, RootState = RootState_PreSet>(name: string, options: Partial<FireOptions<RootState> & StoreAccessorOptions>, accessor: (s: RootState)=>Func): Func;
 }
 
 /**
@@ -80,13 +80,13 @@ Wrap a function with StoreAccessor if it's under the "Store/" path, and one of t
 3) It involves a transformation of data into a new wrapper (ie. breaking reference equality), such that it's worth caching the processing. (to not trigger unnecessary child-ui re-renders)
 */
 export const StoreAccessor: StoreAccessorFunc = (...args)=> {
-	let name: string, options: (Partial<FireOptions> & StoreAccessorOptions)|n, accessorGetter: Function;
+	let name: string, options: Partial<FireOptions & StoreAccessorOptions>|n, accessorGetter: Function;
 	if (typeof args[0] == "function" && args.length == 1) [accessorGetter] = args;
 	else if (typeof args[0] == "object" && args.length == 2) [options, accessorGetter] = args;
 	else if (args.length == 2) [name, accessorGetter] = args;
 	else	[name, options, accessorGetter] = args;
 	name = name! ?? "[name missing]";
-	const opt = E(defaultFireOptions, options!) as FireOptions & StoreAccessorOptions;
+	const opt = E(StoreAccessorOptions.default, options!) as Partial<FireOptions> & StoreAccessorOptions;
 
 	let defaultFireOptionsAtInit = defaultFireOptions;
 	let fireOpt = E(defaultFireOptions, CE(opt).Including("fire"));
