@@ -31,10 +31,10 @@ export declare class TreeNode<DataShape> {
     type: TreeNodeType;
     Request(): void;
     Subscribe(): void;
-    Unsubscribe(): PathSubscription;
+    Unsubscribe(): PathSubscription | null;
     UnsubscribeAll(): void;
     status: DataStatus;
-    subscription: PathSubscription;
+    subscription: PathSubscription | n;
     collectionNodes: ObservableMap<string, TreeNode<any>>;
     data: DataShape;
     SetData(data: DataShape): void;

@@ -10,10 +10,19 @@
 		"experimentalDecorators": true,
 		"allowSyntheticDefaultImports": true, // doesn't modify output, *or* own import code (it's just for type-checking)
 		//"esModuleInterop": true, // doesn't modify output, only code for the stuff we import
-		"alwaysStrict": true,
 		"outDir": "Dist",
 		"declaration": true,
-		"declarationDir": "Dist"
+		"declarationDir": "Dist",
+
+		//"strict": true, // enables all of the below (other than noImplicitReturns)
+		//"noImplicitAny": true,
+		//"noImplicitThis": true,
+		//"noImplicitReturns": true,
+		"alwaysStrict": true,
+		//"strictBindCallApply": true,
+		"strictNullChecks": true,
+		//"strictFunctionTypes": true,
+		//"strictPropertyInitialization": true,
 	},
 	"include": [
 		"Typings/**/*.d.ts",

@@ -2,16 +2,16 @@ import { Assert, IsString, E, CE, IsArray, IsFunction } from "js-vextensions";
 import { defaultFireOptions } from "../Firelink";
 import { SplitStringBySlash_Cached } from "./StringSplitCache";
 export function VPathToFBPath(vPath) {
-    return vPath != null ? vPath.replace(/\/\./g, ".") : null;
+    return vPath.replace(/\/\./g, ".");
 }
 export function FBPathToVPath(fbPath) {
-    return fbPath != null ? fbPath.replace(/\./g, "/.") : null;
+    return fbPath.replace(/\./g, "/.");
 }
 export function VFieldPathToFBFieldPath(vFieldPath) {
-    return vFieldPath != null ? vFieldPath.replace(/\//g, ".") : null;
+    return vFieldPath.replace(/\//g, ".");
 }
 export function FBFieldPathToVFieldPath(vFieldPath) {
-    return vFieldPath != null ? vFieldPath.replace(/\./g, "/") : null;
+    return vFieldPath.replace(/\./g, "/");
 }
 /**
  * @param asFBPath If true, returned paths are separated with "."; if false, by "/". Default: false
@@ -25,7 +25,7 @@ export function GetPathParts(path, asFBPath = false) {
     }
     let fieldPathInDoc = colOrDocPath.length < path.length ? path.substr(colOrDocPath.length + 2).replace(/\./g, "") : null;
     if (asFBPath) {
-        [colOrDocPath, fieldPathInDoc] = [VPathToFBPath(colOrDocPath), VFieldPathToFBFieldPath(fieldPathInDoc)];
+        [colOrDocPath, fieldPathInDoc] = [VPathToFBPath(colOrDocPath), fieldPathInDoc ? VFieldPathToFBFieldPath(fieldPathInDoc) : null];
     }
     return [colOrDocPath, fieldPathInDoc];
 }

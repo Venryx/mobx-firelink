@@ -141,7 +141,7 @@ export class TreeNode {
     // default createTreeNodesIfMissing to false, so that it's safe to call this from a computation (which includes store-accessors)
     Get(subpathOrGetterFunc, query, createTreeNodesIfMissing = false) {
         let subpathSegments = PathOrPathGetterToPathSegments(subpathOrGetterFunc);
-        let currentNode;
+        let currentNode = this;
         let proceed_inAction = () => runInAction(`TreeNode.Get @path(${this.path})`, () => proceed(true));
         let proceed = (inAction) => {
             currentNode = this;

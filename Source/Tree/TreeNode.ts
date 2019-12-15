@@ -48,7 +48,7 @@ export class TreeNode<DataShape> {
 	constructor(fire: Firelink<any ,any>, pathOrSegments: string | string[]) {
 		this.fire = fire;
 		this.pathSegments = PathOrPathGetterToPathSegments(pathOrSegments);
-		this.path = PathOrPathGetterToPath(pathOrSegments);
+		this.path = PathOrPathGetterToPath(pathOrSegments)!;
 		this.path_noQuery = this.pathSegments.slice(-1)[0]?.startsWith("@query") ? this.pathSegments.slice(0, -1).join("/"): this.path; 
 		Assert(this.pathSegments.find(a=>a == null || a.trim().length == 0) == null, `Path segments cannot be null/empty. @pathSegments(${this.pathSegments})`);
 		this.type = GetTreeNodeTypeForPath(this.pathSegments);
@@ -99,7 +99,7 @@ export class TreeNode<DataShape> {
 						if (!this.docNodes.has(doc.id)) {
 							this.docNodes.set(doc.id, new TreeNode(this.fire, this.pathSegments.concat([doc.id])));
 						}
-						this.docNodes.get(doc.id).SetData(doc.data());
+						this.docNodes.get(doc.id)!.SetData(doc.data());
 					}
 					this.status = DataStatus.Received;
 				});
@@ -121,7 +121,7 @@ export class TreeNode<DataShape> {
 	}
 
 	@observable status = DataStatus.Initial;
-	subscription: PathSubscription;
+	subscription: PathSubscription|n;
 
 	// for doc (and root) nodes
 	@observable collectionNodes = observable.map<string, TreeNode<any>>();
@@ -156,7 +156,7 @@ export class TreeNode<DataShape> {
 	// default createTreeNodesIfMissing to false, so that it's safe to call this from a computation (which includes store-accessors)
 	Get(subpathOrGetterFunc: string | string[] | ((data: DataShape)=>any), query?: QueryRequest, createTreeNodesIfMissing = false) {
 		let subpathSegments = PathOrPathGetterToPathSegments(subpathOrGetterFunc);
-		let currentNode: TreeNode<any>;
+		let currentNode: TreeNode<any> = this;
 
 		let proceed_inAction = ()=>runInAction(`TreeNode.Get @path(${this.path})`, ()=>proceed(true));
 		let proceed = (inAction: boolean)=> {
@@ -169,7 +169,7 @@ export class TreeNode<DataShape> {
 					//let pathToSegment = subpathSegments.slice(0, index).join("/");
 					childNodesMap.set(segment, new TreeNode(this.fire, this.pathSegments.concat(subpathSegmentsToHere)));
 				}
-				currentNode = childNodesMap.get(segment);
+				currentNode = childNodesMap.get(segment)!;
 				if (currentNode == null) break;
 			}
 			if (query && currentNode) {
@@ -177,7 +177,7 @@ export class TreeNode<DataShape> {
 					if (!inAction) return proceed_inAction(); // if not yet running in action, restart in one
 					currentNode.queryNodes.set(query.toString(), new TreeNode(this.fire, this.pathSegments.concat(subpathSegments).concat("@query:")))
 				}
-				currentNode = currentNode.queryNodes.get(query.toString());
+				currentNode = currentNode.queryNodes.get(query.toString())!;
 			}
 		}
 		// first, try proceeding without runInAction 

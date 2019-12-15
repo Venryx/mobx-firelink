@@ -26,7 +26,7 @@ export function GetDocs<DB = DBShape, DocT = any>(opt: FireOptions<any, DB> & Ge
 	let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
 	if (CE(pathSegments).Any(a=>a == null)) return emptyArray;
 
-	let queryRequest = opt.filters ? new QueryRequest({filters: opt.filters}) : null;
+	let queryRequest = opt.filters ? new QueryRequest({filters: opt.filters}) : undefined;
 
 	const treeNode = opt.fire.tree.Get(pathSegments, queryRequest);
 	// if already subscribed, just mark requested (reduces action-spam of GetDocs_Request)
@@ -57,7 +57,7 @@ export class GetDoc_Options {
 	inLinkRoot? = true;
 	useUndefinedForInProgress? = false;
 }
-export function GetDoc<DB = DBShape, DocT = any>(opt: FireOptions<any, DB> & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>DocT)): DocT {
+export function GetDoc<DB = DBShape, DocT = any>(opt: FireOptions<any, DB> & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>DocT)): DocT|n {
 	opt = E(defaultFireOptions, GetDoc_Options.default, opt);
 	let subpathSegments = PathOrPathGetterToPathSegments(docPathOrGetterFunc);
 	let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
@@ -70,7 +70,7 @@ export function GetDoc<DB = DBShape, DocT = any>(opt: FireOptions<any, DB> & Get
 	} else {
 		// we can't change observables from within computations, so do it in a moment (out of computation call-stack)
 		DoX_ComputationSafe(()=>runInAction("GetDoc_Request", ()=> {
-			opt.fire.tree.Get(pathSegments, null, true).Request();
+			opt.fire.tree.Get(pathSegments, undefined, true).Request();
 		}));
 	}
 

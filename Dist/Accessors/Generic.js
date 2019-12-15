@@ -33,7 +33,7 @@ export function GetDocs(opt, collectionPathOrGetterFunc) {
     let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
     if (CE(pathSegments).Any(a => a == null))
         return emptyArray;
-    let queryRequest = opt.filters ? new QueryRequest({ filters: opt.filters }) : null;
+    let queryRequest = opt.filters ? new QueryRequest({ filters: opt.filters }) : undefined;
     const treeNode = opt.fire.tree.Get(pathSegments, queryRequest);
     // if already subscribed, just mark requested (reduces action-spam of GetDocs_Request)
     if (treeNode && treeNode.subscription) {
@@ -79,7 +79,7 @@ export function GetDoc(opt, docPathOrGetterFunc) {
     else {
         // we can't change observables from within computations, so do it in a moment (out of computation call-stack)
         DoX_ComputationSafe(() => runInAction("GetDoc_Request", () => {
-            opt.fire.tree.Get(pathSegments, null, true).Request();
+            opt.fire.tree.Get(pathSegments, undefined, true).Request();
         }));
     }
     // todo: handle opt.useUndefinedForInProgress

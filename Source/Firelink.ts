@@ -9,7 +9,7 @@ export function SetDefaultFireOptions(opt: FireOptions) {
 	defaultFireOptions = opt;
 }
 export interface FireOptions<RootStoreShape = any, DBShape = any> {
-	fire?: Firelink<RootStoreShape, DBShape>;
+	fire: Firelink<RootStoreShape, DBShape>;
 }
 
 export class FireUserInfo {
@@ -30,7 +30,7 @@ export class Firelink<RootStoreShape, DBShape> {
 		if (initSubs) {
 			this.InitSubs();
 		}
-		this.tree = new TreeNode(this, null);
+		this.tree = new TreeNode(this, []);
 	}
 
 	rootPathSegments: string[];
@@ -48,7 +48,7 @@ export class Firelink<RootStoreShape, DBShape> {
 				this.userInfo_raw = rawUserInfo;
 				this.userInfo = rawUserInfo == null ? null : {
 					id: rawUserInfo.uid,
-					displayName: rawUserInfo.displayName,
+					displayName: rawUserInfo.displayName!,
 				};
 			});
 		});
@@ -58,14 +58,14 @@ export class Firelink<RootStoreShape, DBShape> {
 	};
 
 	//@observable userInfo_raw: firebase.auth.UserCredential;
-	@observable userInfo_raw: firebase.User;
-	@observable userInfo: FireUserInfo;
+	@observable userInfo_raw: firebase.User|n;
+	@observable userInfo: FireUserInfo|n;
 	async LogIn(opt: {provider: "google" | "facebook" | "twitter" | "github", type: "popup"}) {
 		let provider: firebase.auth.AuthProvider;
 		if (opt.provider == "google") provider = new firebase.auth.GoogleAuthProvider();
 		else if (opt.provider == "facebook") provider = new firebase.auth.FacebookAuthProvider();
 		else if (opt.provider == "twitter") provider = new firebase.auth.TwitterAuthProvider();
-		else if (opt.provider == "github") provider = new firebase.auth.GithubAuthProvider();
+		else /*if (opt.provider == "github")*/ provider = new firebase.auth.GithubAuthProvider();
 		
 		if (opt.type == "popup") {
 			let rawUserInfo = await firebase.auth().signInWithPopup(provider);
@@ -84,5 +84,5 @@ export class Firelink<RootStoreShape, DBShape> {
 		this.tree.UnsubscribeAll();
 	}
 
-	ValidateDBData: (dbData: DBShape)=>void;
+	ValidateDBData?: (dbData: DBShape)=>void;
 }

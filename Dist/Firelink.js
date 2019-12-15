@@ -37,7 +37,7 @@ export class Firelink {
         if (initSubs) {
             this.InitSubs();
         }
-        this.tree = new TreeNode(this, null);
+        this.tree = new TreeNode(this, []);
     }
     InitSubs() {
         this.subs.firestoreDB = firebase.firestore();
@@ -60,7 +60,7 @@ export class Firelink {
                 provider = new firebase.auth.FacebookAuthProvider();
             else if (opt.provider == "twitter")
                 provider = new firebase.auth.TwitterAuthProvider();
-            else if (opt.provider == "github")
+            else /*if (opt.provider == "github")*/
                 provider = new firebase.auth.GithubAuthProvider();
             if (opt.type == "popup") {
                 let rawUserInfo = yield firebase.auth().signInWithPopup(provider);

@@ -14,7 +14,7 @@ import { MaybeLog_Base } from "../Utils/General";
 import { defaultFireOptions } from "../Firelink";
 import { DBPath } from "../Utils/PathHelpers";
 export const commandsWaitingToComplete = [];
-let currentCommandRun_listeners = null;
+let currentCommandRun_listeners = [];
 function WaitTillCurrentCommandFinishes() {
     return __awaiter(this, void 0, void 0, function* () {
         return new Promise((resolve, reject) => {
@@ -24,7 +24,7 @@ function WaitTillCurrentCommandFinishes() {
 }
 function NotifyListenersThatCurrentCommandFinished() {
     const currentCommandRun_listeners_copy = currentCommandRun_listeners;
-    currentCommandRun_listeners = null;
+    currentCommandRun_listeners = [];
     for (const listener of currentCommandRun_listeners_copy) {
         listener.resolve();
     }

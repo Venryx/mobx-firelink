@@ -4,7 +4,7 @@ import { TreeRequestWatcher } from "./Tree/TreeRequestWatcher";
 export declare let defaultFireOptions: FireOptions;
 export declare function SetDefaultFireOptions(opt: FireOptions): void;
 export interface FireOptions<RootStoreShape = any, DBShape = any> {
-    fire?: Firelink<RootStoreShape, DBShape>;
+    fire: Firelink<RootStoreShape, DBShape>;
 }
 export declare class FireUserInfo {
     id: string;
@@ -21,8 +21,8 @@ export declare class Firelink<RootStoreShape, DBShape> {
     subs: {
         firestoreDB: firebase.firestore.Firestore;
     };
-    userInfo_raw: firebase.User;
-    userInfo: FireUserInfo;
+    userInfo_raw: firebase.User | n;
+    userInfo: FireUserInfo | n;
     LogIn(opt: {
         provider: "google" | "facebook" | "twitter" | "github";
         type: "popup";
@@ -31,5 +31,5 @@ export declare class Firelink<RootStoreShape, DBShape> {
     tree: TreeNode<DBShape>;
     treeRequestWatchers: Set<TreeRequestWatcher>;
     UnsubscribeAll(): void;
-    ValidateDBData: (dbData: DBShape) => void;
+    ValidateDBData?: (dbData: DBShape) => void;
 }

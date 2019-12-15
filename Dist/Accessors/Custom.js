@@ -57,6 +57,7 @@ Wrap a function with StoreAccessor if it's under the "Store/" path, and one of t
 3) It involves a transformation of data into a new wrapper (ie. breaking reference equality), such that it's worth caching the processing. (to not trigger unnecessary child-ui re-renders)
 */
 export const StoreAccessor = (...args) => {
+    var _a;
     let name, opt, accessorGetter;
     if (typeof args[0] == "function" && args.length == 1)
         [accessorGetter] = args;
@@ -66,6 +67,7 @@ export const StoreAccessor = (...args) => {
         [name, accessorGetter] = args;
     else
         [name, opt, accessorGetter] = args;
+    name = (_a = name, (_a !== null && _a !== void 0 ? _a : "[name missing]"));
     opt = E(StoreAccessorOptions.default, opt);
     let defaultFireOptionsAtInit = defaultFireOptions;
     let fireOpt = E(defaultFireOptions, CE(opt).Including("fire"));
@@ -79,7 +81,7 @@ export const StoreAccessor = (...args) => {
             fireOpt = E(defaultFireOptions, fireOpt);
         }
         if (addProfiling) {
-            accessorStack.push(name);
+            accessorStack.push((name !== null && name !== void 0 ? name : "n/a"));
             var startTime = performance.now();
             //return accessor.apply(this, callArgs);
         }
@@ -135,7 +137,7 @@ export const StoreAccessor = (...args) => {
                 profileData.totalRunTime_asRoot += runTime;
             }
             // name should have been added by webpack transformer, but if not, give some info to help debugging (under key "null")
-            if (name == null) {
+            if (name == "[name missing]") {
                 profileData["origAccessors"] = profileData["origAccessors"] || [];
                 if (!profileData["origAccessors"].Contains(accessorGetter)) {
                     profileData["origAccessors"].push(accessorGetter);

@@ -1,10 +1,10 @@
 import { FireOptions, FireUserInfo } from "../Firelink";
-export declare const commandsWaitingToComplete: any[];
+export declare const commandsWaitingToComplete: Command<any, any>[];
 export declare abstract class Command<Payload, ReturnData = void> {
     static defaultPayload: {};
     constructor(payload: Payload);
     constructor(opt: FireOptions, payload: Payload);
-    get userInfo(): FireUserInfo;
+    get userInfo(): FireUserInfo | null;
     type: string;
     options: FireOptions;
     payload: Payload;

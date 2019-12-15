@@ -1,13 +1,13 @@
 import u from "updeep";
-import {Clone, Assert, DeepGet, E, ObjectCE, ArrayCE, CE} from "js-vextensions";
+import {Clone, Assert, E, ObjectCE, ArrayCE, CE} from "js-vextensions";
 import {maxDBUpdatesPerBatch, ApplyDBUpdates, ApplyDBUpdates_Local} from "../Utils/DatabaseHelpers";
 import {MaybeLog_Base} from "../Utils/General";
 import {FireOptions, defaultFireOptions, FireUserInfo} from "../Firelink";
 import {DBPath} from "../Utils/PathHelpers";
 
-export const commandsWaitingToComplete = [];
+export const commandsWaitingToComplete = [] as Command<any, any>[];
 
-let currentCommandRun_listeners = null;
+let currentCommandRun_listeners = [] as {resolve, reject}[];
 async function WaitTillCurrentCommandFinishes() {
 	return new Promise((resolve, reject)=>{
 		currentCommandRun_listeners.push({resolve, reject});
@@ -15,7 +15,7 @@ async function WaitTillCurrentCommandFinishes() {
 }
 function NotifyListenersThatCurrentCommandFinished() {
 	const currentCommandRun_listeners_copy = currentCommandRun_listeners;
-	currentCommandRun_listeners = null;
+	currentCommandRun_listeners = [];
 	for (const listener of currentCommandRun_listeners_copy) {
 		listener.resolve();
 	}
@@ -29,7 +29,7 @@ export abstract class Command<Payload, ReturnData = void> {
 		let opt: FireOptions, payload: Payload;
 		if (args.length == 1) [payload] = args;
 		else [opt, payload] = args;
-		opt = E(defaultFireOptions, opt);
+		opt = E(defaultFireOptions, opt!);
 
 		//this.userInfo = {id: opt.fire.userID}; // temp
 		//this.userInfo = opt.fire.userInfo; // temp (needs rework to be server-compatible in future)
@@ -135,7 +135,7 @@ export abstract class Command<Payload, ReturnData = void> {
 		// locally-apply db-updates, then validate the result (for now, only works for already-loaded data paths)
 		const oldData = Clone(this.options.fire.tree.AsRawData());
 		const newData = ApplyDBUpdates_Local(oldData, dbUpdates);
-		this.options.fire.ValidateDBData(newData);
+		this.options.fire.ValidateDBData!(newData);
 	}
 }
 

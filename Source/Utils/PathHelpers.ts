@@ -4,23 +4,23 @@ import {SplitStringBySlash_Cached} from "./StringSplitCache";
 import {DBShape} from "../UserTypes";
 
 export function VPathToFBPath(vPath: string) {
-	return vPath != null ? vPath.replace(/\/\./g, ".") : null;
+	return vPath.replace(/\/\./g, ".");
 }
 export function FBPathToVPath(fbPath: string) {
-	return fbPath != null ? fbPath.replace(/\./g, "/.") : null;
+	return fbPath.replace(/\./g, "/.");
 }
 export function VFieldPathToFBFieldPath(vFieldPath: string) {
-	return vFieldPath != null ? vFieldPath.replace(/\//g, ".") : null;
+	return vFieldPath.replace(/\//g, ".");
 }
 export function FBFieldPathToVFieldPath(vFieldPath: string) {
-	return vFieldPath != null ? vFieldPath.replace(/\./g, "/") : null;
+	return vFieldPath.replace(/\./g, "/");
 }
 
 /**
  * @param asFBPath If true, returned paths are separated with "."; if false, by "/". Default: false
  * @returns [colOrDocPath, fieldPathInDoc]
  * */
-export function GetPathParts(path: string, asFBPath = false): [string, string] {
+export function GetPathParts(path: string, asFBPath = false): [string, string|n] {
 	let colOrDocPath = path.substr(0, CE(path.indexOf("/.")).IfN1Then(path.length));
 	const isDocPath = colOrDocPath.length != path.length; // if length differs, it means field-path is supplied, which means it's a doc-path
 	if (isDocPath) {
@@ -29,7 +29,7 @@ export function GetPathParts(path: string, asFBPath = false): [string, string] {
 
 	let fieldPathInDoc = colOrDocPath.length < path.length ? path.substr(colOrDocPath.length + 2).replace(/\./g, "") : null;
 	if (asFBPath) {
-		[colOrDocPath, fieldPathInDoc] = [VPathToFBPath(colOrDocPath), VFieldPathToFBFieldPath(fieldPathInDoc)];
+		[colOrDocPath, fieldPathInDoc] = [VPathToFBPath(colOrDocPath), fieldPathInDoc ? VFieldPathToFBFieldPath(fieldPathInDoc) : null];
 	}
 	return [colOrDocPath, fieldPathInDoc];
 }
@@ -66,7 +66,7 @@ export function PathOrPathGetterToPath(pathOrPathSegmentsOrPathGetter: string | 
 	if (IsString(pathOrPathSegmentsOrPathGetter)) return pathOrPathSegmentsOrPathGetter;
 	if (IsArray(pathOrPathSegmentsOrPathGetter)) return pathOrPathSegmentsOrPathGetter.map(a=>a?.toString()).join("/");
 	if (IsFunction(pathOrPathSegmentsOrPathGetter)) return MobXPathGetterToPath(pathOrPathSegmentsOrPathGetter);
-	return null;
+	return null as never;
 }
 export function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter: string | (string | number)[] | ((placeholder: any)=>any)) {
 	if (IsString(pathOrPathSegmentsOrPathGetter)) return pathOrPathSegmentsOrPathGetter.split("/");

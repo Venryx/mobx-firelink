@@ -12,11 +12,11 @@ export declare const storeAccessorProfileData: {
 };
 export declare function LogStoreAccessorRunTimes(): void;
 export declare function WithStore<T>(opt: FireOptions, store: any, accessorFunc: () => T): T;
-export declare const accessorStack: any[];
+export declare const accessorStack: string[];
 export declare class StoreAccessorOptions {
     static default: StoreAccessorOptions;
-    cache?: boolean;
-    cache_keepAlive?: boolean;
+    cache?: boolean | undefined;
+    cache_keepAlive?: boolean | undefined;
     cache_unwrapArgs?: number[];
 }
 export declare type CallArgToDependencyConvertorFunc = (callArgs: any[]) => any[];

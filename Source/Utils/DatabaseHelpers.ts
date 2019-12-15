@@ -195,7 +195,7 @@ export async function ApplyDBUpdates_InChunks(opt: FireOptions, rootPath: string
 	opt = E(defaultFireOptions, opt);
 	const dbUpdates_pairs = ObjectCE(dbUpdates).Pairs();
 
-	const dbUpdates_pairs_chunks = [];
+	const dbUpdates_pairs_chunks = [] as any[];
 	for (let offset = 0; offset < dbUpdates_pairs.length; offset += updatesPerChunk) {
 		const chunk = dbUpdates_pairs.slice(offset, offset + updatesPerChunk);
 		dbUpdates_pairs_chunks.push(chunk);

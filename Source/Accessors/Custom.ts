@@ -39,7 +39,7 @@ export function WithStore<T>(opt: FireOptions, store: any, accessorFunc: ()=>T):
 }
 
 // for profiling
-export const accessorStack = [];
+export const accessorStack = [] as string[];
 
 export class StoreAccessorOptions {
 	static default = new StoreAccessorOptions();
@@ -85,7 +85,8 @@ export const StoreAccessor: StoreAccessorFunc = (...args)=> {
 	else if (typeof args[0] == "object" && args.length == 2) [opt, accessorGetter] = args;
 	else if (args.length == 2) [name, accessorGetter] = args;
 	else [name, opt, accessorGetter] = args;
-	opt = E(StoreAccessorOptions.default, opt);
+	name = name! ?? "[name missing]";
+	opt = E(StoreAccessorOptions.default, opt!);
 
 	let defaultFireOptionsAtInit = defaultFireOptions;
 	let fireOpt = E(defaultFireOptions, CE(opt).Including("fire"));
@@ -102,7 +103,7 @@ export const StoreAccessor: StoreAccessorFunc = (...args)=> {
 		}
 
 		if (addProfiling) {
-			accessorStack.push(name);
+			accessorStack.push(name ?? "n/a");
 
 			var startTime = performance.now();
 			//return accessor.apply(this, callArgs);
@@ -149,7 +150,7 @@ export const StoreAccessor: StoreAccessorFunc = (...args)=> {
 		}
 
 		if (addProfiling) {
-			const runTime = performance.now() - startTime;
+			const runTime = performance.now() - startTime!;
 
 			const profileData = storeAccessorProfileData[name] || (storeAccessorProfileData[name] = new StoreAccessorProfileData(name));
 			profileData.callCount++;
@@ -158,7 +159,7 @@ export const StoreAccessor: StoreAccessorFunc = (...args)=> {
 				profileData.totalRunTime_asRoot += runTime;
 			}
 			// name should have been added by webpack transformer, but if not, give some info to help debugging (under key "null")
-			if (name == null) {
+			if (name == "[name missing]") {
 				profileData["origAccessors"] = profileData["origAccessors"] || [];
 				if (!profileData["origAccessors"].Contains(accessorGetter)) {
 					profileData["origAccessors"].push(accessorGetter);
