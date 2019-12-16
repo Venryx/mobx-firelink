@@ -1,4 +1,4 @@
-import {Assert, CE, ToJSON, WaitXThenRun} from "js-vextensions";
+import {Assert, CE, ToJSON, WaitXThenRun, FromJSON} from "js-vextensions";
 import {observable, ObservableMap, runInAction} from "mobx";
 import {Filter} from "../Filters";
 import {Firelink} from "../Firelink";
@@ -27,10 +27,21 @@ export class PathSubscription {
 }
 
 export class QueryRequest {
+	static ParseString(dataStr: string) {
+		return QueryRequest.ParseData(FromJSON(dataStr));
+	}
+	static ParseData(data: any) {
+		let result = new QueryRequest({});
+		for (let filterData of data.filters) {
+			result.filters.push(Filter.ParseData(filterData));
+		}
+		return result
+	}
+
 	constructor(initialData?: Partial<QueryRequest>) {
 		CE(this).Extend(initialData);
 	}
-	filters: Filter[];
+	filters = [] as Filter[];
 	Apply(collection: firebase.firestore.CollectionReference) {
 		let result = collection;
 		for (let filter of this.filters) {
@@ -40,18 +51,20 @@ export class QueryRequest {
 	}
 
 	toString() {
-		return ToJSON(this.filters);
+		return ToJSON(this);
 	}
 }
 
 export class TreeNode<DataShape> {
-	constructor(fire: Firelink<any ,any>, pathOrSegments: string | string[]) {
+	constructor(fire: Firelink<any, any>, pathOrSegments: string | string[]) {
 		this.fire = fire;
 		this.pathSegments = PathOrPathGetterToPathSegments(pathOrSegments);
 		this.path = PathOrPathGetterToPath(pathOrSegments)!;
-		this.path_noQuery = this.pathSegments.slice(-1)[0]?.startsWith("@query") ? this.pathSegments.slice(0, -1).join("/"): this.path; 
+		const queryStr = this.pathSegments.slice(-1)[0]?.startsWith("@query:") ? this.pathSegments.slice(-1)[0].substr("@query:".length) : null;
+		this.path_noQuery = queryStr ? this.pathSegments.slice(0, -1).join("/") : this.path;
 		Assert(this.pathSegments.find(a=>a == null || a.trim().length == 0) == null, `Path segments cannot be null/empty. @pathSegments(${this.pathSegments})`);
 		this.type = GetTreeNodeTypeForPath(this.pathSegments);
+		this.query = queryStr ? QueryRequest.ParseString(queryStr) : undefined;
 	}
 	fire: Firelink<any, any>;
 	pathSegments: string[];
@@ -143,7 +156,7 @@ export class TreeNode<DataShape> {
 	// for collection (and collection-query) nodes
 	@observable queryNodes = observable.map<string, TreeNode<any>>(); // for collection nodes
 	//queryNodes = new Map<string, TreeNode<any>>(); // for collection nodes
-	query: QueryRequest; // for collection-query nodes
+	query?: QueryRequest; // for collection-query nodes
 	@observable docNodes = observable.map<string, TreeNode<any>>();
 	//docNodes = new Map<string, TreeNode<any>>();
 	get docDatas() {
@@ -175,7 +188,7 @@ export class TreeNode<DataShape> {
 			if (query && currentNode) {
 				if (!currentNode.queryNodes.has(query.toString()) && createTreeNodesIfMissing) {
 					if (!inAction) return proceed_inAction(); // if not yet running in action, restart in one
-					currentNode.queryNodes.set(query.toString(), new TreeNode(this.fire, this.pathSegments.concat(subpathSegments).concat("@query:")))
+					currentNode.queryNodes.set(query.toString(), new TreeNode(this.fire, this.pathSegments.concat(subpathSegments).concat("@query:" + query)))
 				}
 				currentNode = currentNode.queryNodes.get(query.toString())!;
 			}

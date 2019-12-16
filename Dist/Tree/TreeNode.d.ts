@@ -17,6 +17,8 @@ export declare class PathSubscription {
     unsubscribe: () => void;
 }
 export declare class QueryRequest {
+    static ParseString(dataStr: string): QueryRequest;
+    static ParseData(data: any): QueryRequest;
     constructor(initialData?: Partial<QueryRequest>);
     filters: Filter[];
     Apply(collection: firebase.firestore.CollectionReference): import("firebase").firestore.CollectionReference;
@@ -39,7 +41,7 @@ export declare class TreeNode<DataShape> {
     data: DataShape;
     SetData(data: DataShape): void;
     queryNodes: ObservableMap<string, TreeNode<any>>;
-    query: QueryRequest;
+    query?: QueryRequest;
     docNodes: ObservableMap<string, TreeNode<any>>;
     get docDatas(): any[];
     Get(subpathOrGetterFunc: string | string[] | ((data: DataShape) => any), query?: QueryRequest, createTreeNodesIfMissing?: boolean): TreeNode<any>;

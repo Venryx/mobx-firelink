@@ -17,7 +17,7 @@ export declare class StoreAccessorOptions {
     static default: StoreAccessorOptions;
     cache: boolean;
     cache_keepAlive: boolean;
-    cache_unwrapArgs?: number[];
+    cache_unwrapArrays: boolean;
 }
 export declare type CallArgToDependencyConvertorFunc = (callArgs: any[]) => any[];
 interface StoreAccessorFunc<RootState_PreSet = RootStoreShape> {

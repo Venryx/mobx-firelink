@@ -36,6 +36,9 @@ export class StoreAccessorOptions {
     constructor() {
         this.cache = true;
         this.cache_keepAlive = false;
+        //cache_unwrapArgs?: {[key: number]: boolean};
+        //cache_unwrapArgs?: number[];
+        this.cache_unwrapArrays = true;
         //callArgToDependencyConvertorFunc?: CallArgToDependencyConvertorFunc;
     }
 }
@@ -72,6 +75,7 @@ export const StoreAccessor = (...args) => {
     const addProfiling = window["DEV"];
     //const needsWrapper = addProfiling || options.cache;
     let accessor_forMainStore;
+    let accessor_forMainStore_cacherProxy;
     const wrapperAccessor = (...callArgs) => {
         // initialize these in wrapper-accessor rather than root-func, because defaultFireOptions is usually not ready when root-func is called
         const opt = E(StoreAccessorOptions.default, options);
@@ -99,27 +103,54 @@ export const StoreAccessor = (...args) => {
         if (opt.cache && usingMainStore) {
             let callArgs_unwrapped = callArgs;
             //const callArg_unwrapLengths = {};
-            if (opt.cache_unwrapArgs) {
+            if (opt.cache_unwrapArrays) {
                 //Assert(options.cache, "There is no point to unwrapping-args if caching is disabled.");
                 //for (const argIndex of options.cache_unwrapArgs.Pairs().map(a=>a.keyNum)) {
                 //callArgs_unwrapped = callArgs.slice();
-                for (const argIndex of opt.cache_unwrapArgs) {
-                    if (!Array.isArray(callArgs[argIndex]))
+                for (const [argIndex, callArg] of callArgs.entries()) {
+                    if (!Array.isArray(callArg))
                         continue;
-                    const unwrappedValuesForCallArg = callArgs[argIndex];
+                    // make sure we're not modifying the passed in callArgs array
                     if (callArgs_unwrapped == callArgs)
                         callArgs_unwrapped = callArgs.slice();
-                    callArgs_unwrapped.splice(argIndex, 1, ...unwrappedValuesForCallArg);
+                    callArgs_unwrapped.splice(argIndex, 1, "$ARRAY_ITEMS_START", ...callArg, "$ARRAY_ITEMS_END");
                     //callArg_unwrapLengths[argIndex] = unwrappedValuesForCallArg.length;
                 }
             }
-            /*result = computedFn((...callArgs_unwrapped_2)=>{
-                return accessor(...callArgs);
-            }, {name, keepAlive: opt.cache_keepAlive})(callArgs_unwrapped);*/
-            let accessor_proxy = (...callArgs_unwrapped_2) => accessor(...callArgs);
-            if (name)
-                CE(accessor_proxy).SetName(name);
-            result = computedFn(accessor_proxy, { name, keepAlive: opt.cache_keepAlive })(callArgs_unwrapped);
+            if (accessor_forMainStore_cacherProxy == null) {
+                /*result = computedFn((...callArgs_unwrapped_2)=>{
+                    return accessor(...callArgs);
+                }, {name, keepAlive: opt.cache_keepAlive})(callArgs_unwrapped);*/
+                let accessor_rewrapper = (...callArgs_unwrapped_2) => {
+                    let callArgs_rewrapped = [];
+                    let arrayBeingReconstructed = null;
+                    for (let callArgOrItem of callArgs_unwrapped_2) {
+                        if (callArgOrItem == "$ARRAY_ITEMS_START") {
+                            Assert(arrayBeingReconstructed == null);
+                            arrayBeingReconstructed = [];
+                        }
+                        else if (callArgOrItem == "$ARRAY_ITEMS_END") {
+                            Assert(arrayBeingReconstructed != null);
+                            callArgs_rewrapped.push(arrayBeingReconstructed);
+                            arrayBeingReconstructed = null;
+                        }
+                        else {
+                            if (arrayBeingReconstructed != null) {
+                                arrayBeingReconstructed.push(callArgOrItem);
+                            }
+                            else {
+                                callArgs_rewrapped.push(callArgOrItem);
+                            }
+                        }
+                    }
+                    return accessor(...callArgs_rewrapped);
+                };
+                //if (name) CE(accessor_rewrapper).SetName(name);
+                accessor_forMainStore_cacherProxy = computedFn(accessor_rewrapper, { name, keepAlive: opt.cache_keepAlive });
+                if (name)
+                    CE(accessor_forMainStore_cacherProxy).SetName(name);
+            }
+            result = accessor_forMainStore_cacherProxy(...callArgs_unwrapped);
         }
         else {
             result = accessor(...callArgs);

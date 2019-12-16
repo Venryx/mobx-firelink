@@ -4,8 +4,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import { Assert, CE, ToJSON } from "js-vextensions";
+import { Assert, CE, ToJSON, FromJSON } from "js-vextensions";
 import { observable, runInAction } from "mobx";
+import { Filter } from "../Filters";
 import { PathOrPathGetterToPath, PathOrPathGetterToPathSegments } from "../Utils/PathHelpers";
 import { ProcessDBData } from "../Utils/DatabaseHelpers";
 import { _getGlobalState } from "mobx";
@@ -29,7 +30,18 @@ export class PathSubscription {
 }
 export class QueryRequest {
     constructor(initialData) {
+        this.filters = [];
         CE(this).Extend(initialData);
+    }
+    static ParseString(dataStr) {
+        return QueryRequest.ParseData(FromJSON(dataStr));
+    }
+    static ParseData(data) {
+        let result = new QueryRequest({});
+        for (let filterData of data.filters) {
+            result.filters.push(Filter.ParseData(filterData));
+        }
+        return result;
     }
     Apply(collection) {
         let result = collection;
@@ -39,7 +51,7 @@ export class QueryRequest {
         return result;
     }
     toString() {
-        return ToJSON(this.filters);
+        return ToJSON(this);
     }
 }
 export class TreeNode {
@@ -54,9 +66,11 @@ export class TreeNode {
         this.fire = fire;
         this.pathSegments = PathOrPathGetterToPathSegments(pathOrSegments);
         this.path = PathOrPathGetterToPath(pathOrSegments);
-        this.path_noQuery = ((_a = this.pathSegments.slice(-1)[0]) === null || _a === void 0 ? void 0 : _a.startsWith("@query")) ? this.pathSegments.slice(0, -1).join("/") : this.path;
+        const queryStr = ((_a = this.pathSegments.slice(-1)[0]) === null || _a === void 0 ? void 0 : _a.startsWith("@query:")) ? this.pathSegments.slice(-1)[0].substr("@query:".length) : null;
+        this.path_noQuery = queryStr ? this.pathSegments.slice(0, -1).join("/") : this.path;
         Assert(this.pathSegments.find(a => a == null || a.trim().length == 0) == null, `Path segments cannot be null/empty. @pathSegments(${this.pathSegments})`);
         this.type = GetTreeNodeTypeForPath(this.pathSegments);
+        this.query = queryStr ? QueryRequest.ParseString(queryStr) : undefined;
     }
     Request() {
         this.fire.treeRequestWatchers.forEach(a => a.nodesRequested.add(this));
@@ -162,7 +176,7 @@ export class TreeNode {
                 if (!currentNode.queryNodes.has(query.toString()) && createTreeNodesIfMissing) {
                     if (!inAction)
                         return proceed_inAction(); // if not yet running in action, restart in one
-                    currentNode.queryNodes.set(query.toString(), new TreeNode(this.fire, this.pathSegments.concat(subpathSegments).concat("@query:")));
+                    currentNode.queryNodes.set(query.toString(), new TreeNode(this.fire, this.pathSegments.concat(subpathSegments).concat("@query:" + query)));
                 }
                 currentNode = currentNode.queryNodes.get(query.toString());
             }

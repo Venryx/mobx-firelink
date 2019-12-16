@@ -1,9 +1,15 @@
 export class Filter {
+    static ParseData(json) {
+        if (json.type == "where")
+            return new WhereFilter(json.fieldPath, json.comparison, json.value);
+        return null;
+    }
 }
 export class WhereFilter extends Filter {
-    constructor(propPath, comparison, value) {
+    constructor(fieldPath, comparison, value) {
         super();
-        this.fieldPath = propPath;
+        this.type = "where";
+        this.fieldPath = fieldPath;
         this.comparison = comparison;
         this.value = value;
     }
