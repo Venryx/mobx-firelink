@@ -2,6 +2,7 @@ import {computedFn} from "mobx-utils";
 import {CE, ObjectCE, E, Assert} from "js-vextensions";
 import {FireOptions, defaultFireOptions} from "../Firelink";
 import {RootStoreShape} from "../UserTypes";
+import {storeAccessorCachingTempDisabled} from "./Generic";
 
 // for profiling
 class StoreAccessorProfileData {
@@ -120,7 +121,7 @@ export const StoreAccessor: StoreAccessorFunc = (...args)=> {
 		if (name) CE(accessor).SetName(name);
 
 		let result;
-		if (opt.cache && usingMainStore) {
+		if (opt.cache && usingMainStore && !storeAccessorCachingTempDisabled) {
 			let callArgs_unwrapped = callArgs;
 			//const callArg_unwrapLengths = {};
 			if (opt.cache_unwrapArrays) {
@@ -129,7 +130,7 @@ export const StoreAccessor: StoreAccessorFunc = (...args)=> {
 				//callArgs_unwrapped = callArgs.slice();
 				for (const [argIndex, callArg] of callArgs.entries()) {
 					if (!Array.isArray(callArg)) continue;
-					
+
 					// make sure we're not modifying the passed in callArgs array
 					if (callArgs_unwrapped == callArgs) callArgs_unwrapped = callArgs.slice();
 

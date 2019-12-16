@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { DeepSet, IsNumberString, Assert, Clone, ObjectCE, ArrayCE, GetTreeNodesInObjTree, E } from "js-vextensions";
+import { DeepSet, IsNumberString, Assert, Clone, ObjectCE, ArrayCE, GetTreeNodesInObjTree, E, CE } from "js-vextensions";
 import u from "updeep";
 import { MaybeLog_Base } from "./General";
 import { defaultFireOptions } from "../Firelink";
@@ -210,7 +210,7 @@ export function ApplyDBUpdates_InChunks(options, rootPath, dbUpdates, updatesPer
 }
 export function ApplyDBUpdates_Local(dbData, dbUpdates) {
     let result = dbData;
-    for (const { name: path, value } of Clone(dbUpdates).Props()) {
+    for (const { key: path, value } of CE(Clone(dbUpdates)).Pairs()) {
         if (value != null) {
             result = u.updateIn(path.replace(/\//g, "."), u.constant(value), result);
         }

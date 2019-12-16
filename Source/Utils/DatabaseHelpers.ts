@@ -1,4 +1,4 @@
-import {DeepSet, IsNumberString, Assert, StringCE, Clone, ObjectCE, ArrayCE, GetTreeNodesInObjTree, E} from "js-vextensions";
+import {DeepSet, IsNumberString, Assert, StringCE, Clone, ObjectCE, ArrayCE, GetTreeNodesInObjTree, E, CE} from "js-vextensions";
 import u from "updeep";
 import {MaybeLog_Base} from "./General";
 import {FireOptions} from "..";
@@ -212,7 +212,7 @@ export async function ApplyDBUpdates_InChunks(options: Partial<FireOptions>, roo
 
 export function ApplyDBUpdates_Local(dbData: any, dbUpdates: Object) {
 	let result = dbData;
-	for (const {name: path, value} of Clone(dbUpdates).Props()) {
+	for (const {key: path, value} of CE(Clone(dbUpdates)).Pairs()) {
 		if (value != null) {
 			result = u.updateIn(path.replace(/\//g, "."), u.constant(value), result);
 		} else {

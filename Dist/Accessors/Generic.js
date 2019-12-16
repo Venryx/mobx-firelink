@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { E, emptyArray, CE } from "js-vextensions";
+import { E, emptyArray, CE, WaitXThenRun } from "js-vextensions";
 import { runInAction, reaction } from "mobx";
 import { defaultFireOptions } from "../Firelink";
 import { DataStatus, QueryRequest } from "../Tree/TreeNode";
@@ -125,10 +125,14 @@ export function GetAsync(dataGetterFunc, opt) {
         return new Promise((resolve, reject) => {
             let dispose = reaction(() => {
                 watcher.Start();
+                // flip some flag here to say, "don't use cached data -- re-request!"
+                storeAccessorCachingTempDisabled = true;
                 let result = dataGetterFunc();
+                storeAccessorCachingTempDisabled = false;
                 watcher.Stop();
                 let nodesRequested_array = Array.from(watcher.nodesRequested);
-                let requestsBeingWaitedFor = nodesRequested_array.filter(node => node.status != DataStatus.Received);
+                //let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status != DataStatus.Received);
+                let requestsBeingWaitedFor = nodesRequested_array.filter(node => node.status == DataStatus.Waiting);
                 return {
                     result,
                     nodesRequested_array,
@@ -139,13 +143,14 @@ export function GetAsync(dataGetterFunc, opt) {
                 if (!possiblyDone)
                     return;
                 //if (!ShallowChanged(nodesRequested_obj, nodesRequested_obj_last)) {
-                let requestsBeingWaitedFor = nodesRequested_array.filter(node => node.status != DataStatus.Received);
+                let requestsBeingWaitedFor = nodesRequested_array.filter(node => node.status == DataStatus.Waiting);
                 if (requestsBeingWaitedFor.length == 0) {
-                    dispose();
+                    WaitXThenRun(0, () => dispose()); // wait a bit, so dispose-func is ready (for when fired immediately)
                     resolve(result);
                 }
-            });
+            }, { fireImmediately: true });
         });
     });
 }
+export let storeAccessorCachingTempDisabled = false;
 //# sourceMappingURL=Generic.js.map

@@ -1,6 +1,7 @@
 import { computedFn } from "mobx-utils";
 import { CE, E, Assert } from "js-vextensions";
 import { defaultFireOptions } from "../Firelink";
+import { storeAccessorCachingTempDisabled } from "./Generic";
 // for profiling
 class StoreAccessorProfileData {
     constructor(name) {
@@ -100,7 +101,7 @@ export const StoreAccessor = (...args) => {
         if (name)
             CE(accessor).SetName(name);
         let result;
-        if (opt.cache && usingMainStore) {
+        if (opt.cache && usingMainStore && !storeAccessorCachingTempDisabled) {
             let callArgs_unwrapped = callArgs;
             //const callArg_unwrapLengths = {};
             if (opt.cache_unwrapArrays) {

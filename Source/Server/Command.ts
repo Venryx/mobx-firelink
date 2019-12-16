@@ -81,7 +81,7 @@ export abstract class Command<Payload, ReturnData = void> {
 				}@type:`, this.constructor.name, " @payload(", this.payload, ")"));
 		}
 		commandsWaitingToComplete.push(this);
-		while (currentCommandRun_listeners) {
+		while (currentCommandRun_listeners.length) {
 			await WaitTillCurrentCommandFinishes();
 		}
 		currentCommandRun_listeners = [];
