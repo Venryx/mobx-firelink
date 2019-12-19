@@ -145,6 +145,7 @@ export function GetAsync(dataGetterFunc, opt) {
                 //if (!ShallowChanged(nodesRequested_obj, nodesRequested_obj_last)) {
                 let requestsBeingWaitedFor = nodesRequested_array.filter(node => node.status == DataStatus.Waiting);
                 if (requestsBeingWaitedFor.length == 0) {
+                    //Assert(result != null, "GetAsync should not usually return null.");
                     WaitXThenRun(0, () => dispose()); // wait a bit, so dispose-func is ready (for when fired immediately)
                     resolve(result);
                 }

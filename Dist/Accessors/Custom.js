@@ -146,7 +146,8 @@ export const StoreAccessor = (...args) => {
                     }
                     return accessor(...callArgs_rewrapped);
                 };
-                //if (name) CE(accessor_rewrapper).SetName(name);
+                if (name)
+                    CE(accessor_rewrapper).SetName(name);
                 accessor_forMainStore_cacherProxy = computedFn(accessor_rewrapper, { name, keepAlive: opt.cache_keepAlive });
                 if (name)
                     CE(accessor_forMainStore_cacherProxy).SetName(name);
