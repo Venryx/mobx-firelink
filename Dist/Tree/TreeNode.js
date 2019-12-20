@@ -228,9 +228,10 @@ export function TreeNodeToRawData(treeNode, addTreeLink = true) {
         CE(result)._AddItem("_node", treeNode);
     }
     CE(result)._AddItem("_path", treeNode.path);
-    if (treeNode.data) {
+    /*if (treeNode.data) {
         CE(result).Extend(treeNode.data);
-    }
+    }*/
+    result["data"] = treeNode.data;
     for (let [key, collection] of treeNode.collectionNodes) {
         result[key] = TreeNodeToRawData(collection);
     }
