@@ -126,8 +126,9 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, opt?: FireOptions & Get
 			storeAccessorCachingTempDisabled = false;
 			watcher.Stop();
 			let nodesRequested_array = Array.from(watcher.nodesRequested);
+			//let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status == DataStatus.Waiting);
 			//let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status != DataStatus.Received);
-			let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status == DataStatus.Waiting);
+			let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status != DataStatus.Received_Full);
 			return {
 				result,
 				nodesRequested_array,
@@ -137,7 +138,8 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, opt?: FireOptions & Get
 			let {result, nodesRequested_array, possiblyDone} = data;
 			if (!possiblyDone) return;
 			//if (!ShallowChanged(nodesRequested_obj, nodesRequested_obj_last)) {
-			let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status == DataStatus.Waiting);
+			//let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status == DataStatus.Waiting);
+			let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status != DataStatus.Received_Full);
 			if (requestsBeingWaitedFor.length == 0) {
 				//Assert(result != null, "GetAsync should not usually return null.");
 				WaitXThenRun(0, ()=>dispose()); // wait a bit, so dispose-func is ready (for when fired immediately)

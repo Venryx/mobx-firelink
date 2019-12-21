@@ -55,6 +55,7 @@ export class LogTypes_Base {
 	dbRequests_onlyFirst = false;
 	cacheUpdates = false;
 	commands = false;
+	subscriptions = false;
 }
 export function ShouldLog_Base<LogTypes extends LogTypes_Base>(shouldLogFunc: (logTypes: LogTypes)=>boolean) {
 	return shouldLogFunc(window["logTypes"] || {});

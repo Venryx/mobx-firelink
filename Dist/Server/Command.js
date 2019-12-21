@@ -71,7 +71,7 @@ export class Command {
                 MaybeLog_Base(a => a.commands, l => l(`Queing command, since ${commandsWaitingToComplete.length} ${commandsWaitingToComplete.length == 1 ? "is" : "are"} already waiting for completion.${""}@type:`, this.constructor.name, " @payload(", this.payload, ")"));
             }
             commandsWaitingToComplete.push(this);
-            while (currentCommandRun_listeners.length) {
+            while (commandsWaitingToComplete[0] != this) {
                 yield WaitTillCurrentCommandFinishes();
             }
             currentCommandRun_listeners = [];

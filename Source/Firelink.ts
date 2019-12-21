@@ -70,7 +70,7 @@ export class Firelink<RootStoreShape, DBShape> {
 		if (opt.type == "popup") {
 			let rawUserInfo = await firebase.auth().signInWithPopup(provider);
 			// we don't need to do anything with the user-info; it's handled by the listener in InitSubs()
-			console.log("Raw user info:", rawUserInfo);
+			//console.log("Raw user info:", rawUserInfo);
 		}
 	}
 	async LogOut() {

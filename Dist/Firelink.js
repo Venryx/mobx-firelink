@@ -65,7 +65,7 @@ export class Firelink {
             if (opt.type == "popup") {
                 let rawUserInfo = yield firebase.auth().signInWithPopup(provider);
                 // we don't need to do anything with the user-info; it's handled by the listener in InitSubs()
-                console.log("Raw user info:", rawUserInfo);
+                //console.log("Raw user info:", rawUserInfo);
             }
         });
     }

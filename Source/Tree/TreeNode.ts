@@ -6,6 +6,7 @@ import {PathOrPathGetterToPath, PathOrPathGetterToPathSegments} from "../Utils/P
 import {ProcessDBData} from "../Utils/DatabaseHelpers";
 import {_getGlobalState} from "mobx";
 import {nil} from "../Utils/Nil";
+import {MaybeLog_Base} from "../Utils/General";
 
 export enum TreeNodeType {
 	Root,
@@ -17,7 +18,8 @@ export enum TreeNodeType {
 export enum DataStatus {
 	Initial,
 	Waiting,
-	Received,
+	Received_Cache,
+	Received_Full,
 }
 
 export class PathSubscription {
@@ -90,11 +92,13 @@ export class TreeNode<DataShape> {
 		Assert(_getGlobalState().computationDepth == 0, "Cannot call TreeNode.Subscribe from within a computation.");
 		runInAction("TreeNode.Subscribe_prep", ()=>this.status = DataStatus.Waiting);
 
+		MaybeLog_Base(a=>a.subscriptions, ()=>`Subscribing to: ${this.path}`);
 		if (this.type == TreeNodeType.Root || this.type == TreeNodeType.Document) {
 			let docRef = this.fire.subs.firestoreDB.doc(this.path);
-			this.subscription = new PathSubscription(docRef.onSnapshot((snapshot)=> {
+			this.subscription = new PathSubscription(docRef.onSnapshot({includeMetadataChanges: true}, (snapshot)=> {
+				MaybeLog_Base(a=>a.subscriptions, l=>l(`Got doc snapshot. @path(${this.path}) @snapshot:`, snapshot));
 				runInAction("TreeNode.Subscribe.onSnapshot_doc", ()=> {
-					this.SetData(snapshot.data() as any);
+					this.SetData(snapshot.data() as any, snapshot.metadata.fromCache);
 				});
 			}));
 		} else {
@@ -102,7 +106,8 @@ export class TreeNode<DataShape> {
 			if (this.query) {
 				collectionRef = this.query.Apply(collectionRef);
 			}
-			this.subscription = new PathSubscription(collectionRef.onSnapshot((snapshot)=> {
+			this.subscription = new PathSubscription(collectionRef.onSnapshot({includeMetadataChanges: true}, (snapshot)=> {
+				MaybeLog_Base(a=>a.subscriptions, l=>l(`Got collection snapshot. @path(${this.path}) @snapshot:`, snapshot));
 				/*let newData = {};
 				for (let doc of snapshot.docs) {
 					newData[doc.id] = doc.data();
@@ -113,9 +118,13 @@ export class TreeNode<DataShape> {
 						if (!this.docNodes.has(doc.id)) {
 							this.docNodes.set(doc.id, new TreeNode(this.fire, this.pathSegments.concat([doc.id])));
 						}
-						this.docNodes.get(doc.id)!.SetData(doc.data());
+						this.docNodes.get(doc.id)!.SetData(doc.data(), snapshot.metadata.fromCache);
 					}
-					this.status = DataStatus.Received;
+					this.status = snapshot.metadata.fromCache ? DataStatus.Received_Cache : DataStatus.Received_Full;
+					// fix for possible bug; when queries are used, an onSnapshot listener only gives the single {fromCache:true} snapshot (leaving out the follow-up {fromCache:false} snapshot)
+					/*if (this.query && this.status == DataStatus.Received_Cache) {
+						this.status = DataStatus.Received_Full;
+					}*/
 				});
 			}));
 		}
@@ -141,17 +150,17 @@ export class TreeNode<DataShape> {
 	@observable collectionNodes = observable.map<string, TreeNode<any>>();
 	//collectionNodes = new Map<string, TreeNode<any>>();
 	@observable.ref data: DataShape;
-	SetData(data: DataShape) {
+	SetData(data: DataShape, fromCache: boolean) {
 		//data = data ? observable(data_raw) as any : null;
 		ProcessDBData(data, true, true, CE(this.pathSegments).Last()); // maybe rework
 		this.data = data;
-		if (data != null) {
-			//ProcessDBData(this.data, true, true, CE(this.pathSegments).Last()); // also add to proxy (since the mobx proxy doesn't expose non-enumerable props) // maybe rework
-			this.status = DataStatus.Received;
-		} else {
+		//if (data != null) {
+		//ProcessDBData(this.data, true, true, CE(this.pathSegments).Last()); // also add to proxy (since the mobx proxy doesn't expose non-enumerable props) // maybe rework
+		this.status = fromCache ? DataStatus.Received_Cache : DataStatus.Received_Full;
+		/*} else {
 			// entry was deleted; reset status to "initial"
 			this.status = DataStatus.Initial;
-		}
+		}*/
 	}
 
 	// for collection (and collection-query) nodes
@@ -161,7 +170,7 @@ export class TreeNode<DataShape> {
 	@observable docNodes = observable.map<string, TreeNode<any>>();
 	//docNodes = new Map<string, TreeNode<any>>();
 	get docDatas() {
-		let docNodes = Array.from(this.docNodes.values()).filter(a=>a.status == DataStatus.Received);
+		let docNodes = Array.from(this.docNodes.values()).filter(a=>a.status == DataStatus.Received_Full);
 		let docDatas = docNodes.map(docNode=>docNode.data);
 		//let docDatas = observable.array(docNodes.map(docNode=>docNode.data));
 		return docDatas;

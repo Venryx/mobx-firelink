@@ -10,7 +10,8 @@ export declare enum TreeNodeType {
 export declare enum DataStatus {
     Initial = 0,
     Waiting = 1,
-    Received = 2
+    Received_Cache = 2,
+    Received_Full = 3
 }
 export declare class PathSubscription {
     constructor(unsubscribe: () => void);
@@ -39,7 +40,7 @@ export declare class TreeNode<DataShape> {
     subscription: PathSubscription | n;
     collectionNodes: ObservableMap<string, TreeNode<any>>;
     data: DataShape;
-    SetData(data: DataShape): void;
+    SetData(data: DataShape, fromCache: boolean): void;
     queryNodes: ObservableMap<string, TreeNode<any>>;
     query?: QueryRequest;
     docNodes: ObservableMap<string, TreeNode<any>>;

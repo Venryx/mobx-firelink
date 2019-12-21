@@ -45,6 +45,7 @@ export class LogTypes_Base {
         this.dbRequests_onlyFirst = false;
         this.cacheUpdates = false;
         this.commands = false;
+        this.subscriptions = false;
     }
 }
 export function ShouldLog_Base(shouldLogFunc) {
