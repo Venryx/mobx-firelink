@@ -14,6 +14,7 @@ import { DataStatus, QueryRequest } from "../Tree/TreeNode";
 import { PathOrPathGetterToPathSegments } from "../Utils/PathHelpers";
 import { TreeRequestWatcher } from "../Tree/TreeRequestWatcher";
 import { DoX_ComputationSafe } from "../Utils/MobX";
+import { nil } from "../Utils/Nil";
 /*
 Why use explicit GetDocs, GetDoc, etc. calls instead of just Proxy's?
 1) It lets you add options (like filters) in a consistent way. (consistent among sync db-accesses, and, old: consistent with async db-accesses, eg. GetDocAsync)
@@ -33,7 +34,7 @@ export function GetDocs(options, collectionPathOrGetterFunc) {
     let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
     if (CE(pathSegments).Any(a => a == null))
         return emptyArray;
-    let queryRequest = opt.filters ? new QueryRequest({ filters: opt.filters }) : undefined;
+    let queryRequest = opt.filters ? new QueryRequest({ filters: opt.filters }) : nil;
     const treeNode = opt.fire.tree.Get(pathSegments, queryRequest);
     // if already subscribed, just mark requested (reduces action-spam of GetDocs_Request)
     if (treeNode && treeNode.subscription) {
@@ -79,7 +80,7 @@ export function GetDoc(options, docPathOrGetterFunc) {
     else {
         // we can't change observables from within computations, so do it in a moment (out of computation call-stack)
         DoX_ComputationSafe(() => runInAction("GetDoc_Request", () => {
-            opt.fire.tree.Get(pathSegments, undefined, true).Request();
+            opt.fire.tree.Get(pathSegments, nil, true).Request();
         }));
     }
     // todo: handle opt.useUndefinedForInProgress

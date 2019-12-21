@@ -10,6 +10,7 @@ import { Filter } from "../Filters";
 import { PathOrPathGetterToPath, PathOrPathGetterToPathSegments } from "../Utils/PathHelpers";
 import { ProcessDBData } from "../Utils/DatabaseHelpers";
 import { _getGlobalState } from "mobx";
+import { nil } from "../Utils/Nil";
 export var TreeNodeType;
 (function (TreeNodeType) {
     TreeNodeType[TreeNodeType["Root"] = 0] = "Root";
@@ -70,7 +71,7 @@ export class TreeNode {
         this.path_noQuery = queryStr ? this.pathSegments.slice(0, -1).join("/") : this.path;
         Assert(this.pathSegments.find(a => a == null || a.trim().length == 0) == null, `Path segments cannot be null/empty. @pathSegments(${this.pathSegments})`);
         this.type = GetTreeNodeTypeForPath(this.pathSegments);
-        this.query = queryStr ? QueryRequest.ParseString(queryStr) : undefined;
+        this.query = queryStr ? QueryRequest.ParseString(queryStr) : nil;
     }
     Request() {
         this.fire.treeRequestWatchers.forEach(a => a.nodesRequested.add(this));

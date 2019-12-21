@@ -5,6 +5,7 @@ import {Firelink} from "../Firelink";
 import {PathOrPathGetterToPath, PathOrPathGetterToPathSegments} from "../Utils/PathHelpers";
 import {ProcessDBData} from "../Utils/DatabaseHelpers";
 import {_getGlobalState} from "mobx";
+import {nil} from "../Utils/Nil";
 
 export enum TreeNodeType {
 	Root,
@@ -64,7 +65,7 @@ export class TreeNode<DataShape> {
 		this.path_noQuery = queryStr ? this.pathSegments.slice(0, -1).join("/") : this.path;
 		Assert(this.pathSegments.find(a=>a == null || a.trim().length == 0) == null, `Path segments cannot be null/empty. @pathSegments(${this.pathSegments})`);
 		this.type = GetTreeNodeTypeForPath(this.pathSegments);
-		this.query = queryStr ? QueryRequest.ParseString(queryStr) : undefined;
+		this.query = queryStr ? QueryRequest.ParseString(queryStr) : nil;
 	}
 	fire: Firelink<any, any>;
 	pathSegments: string[];

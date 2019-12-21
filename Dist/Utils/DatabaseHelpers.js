@@ -13,6 +13,7 @@ import { MaybeLog_Base } from "./General";
 import { defaultFireOptions } from "../Firelink";
 import firebase from "firebase";
 import { GetPathParts } from "./PathHelpers";
+import { nil } from "./Nil";
 export function IsAuthValid(auth) {
     return auth && !auth.isEmpty;
 }
@@ -44,7 +45,7 @@ export function ProcessDBData(data, standardizeForm, addHelpers, rootKey) {
             for (const key in valueAsObject) {
                 // if fake array-item added by Firebase/js (just so the array would have no holes), remove it
                 //if (valueAsObject[key] == null)
-                if (valueAsObject[key] === undefined) {
+                if (valueAsObject[key] === nil) {
                     delete valueAsObject[key];
                 }
             }
@@ -54,7 +55,7 @@ export function ProcessDBData(data, standardizeForm, addHelpers, rootKey) {
                 DeepSet(data, treeNode.PathStr, valueAsObject); // else, we need to use deep-set, because ancestors may have already changed during this transform/processing
         }
         // turn the should-have-been-array objects (the ones with a "0" property) into arrays
-        if (standardizeForm && typeof treeNode.Value == "object" && !(treeNode.Value instanceof Array) && treeNode.Value[0] !== undefined) {
+        if (standardizeForm && typeof treeNode.Value == "object" && !(treeNode.Value instanceof Array) && treeNode.Value[0] !== nil) {
             // if changing root, we have to actually modify the prototype of the passed-in "data" object
             /*if (treeNode.Value == data) {
                 Object.setPrototypeOf(data, Object.getPrototypeOf([]));

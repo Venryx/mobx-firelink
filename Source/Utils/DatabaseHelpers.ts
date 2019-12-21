@@ -5,6 +5,7 @@ import {FireOptions} from "..";
 import {defaultFireOptions} from "../Firelink";
 import firebase from "firebase";
 import {GetPathParts} from "./PathHelpers";
+import {nil} from "./Nil";
 
 export function IsAuthValid(auth) {
 	return auth && !auth.isEmpty;
@@ -40,7 +41,7 @@ export function ProcessDBData(data, standardizeForm: boolean, addHelpers: boolea
 			for (const key in valueAsObject) {
 				// if fake array-item added by Firebase/js (just so the array would have no holes), remove it
 				//if (valueAsObject[key] == null)
-				if (valueAsObject[key] === undefined) { delete valueAsObject[key]; }
+				if (valueAsObject[key] === nil) { delete valueAsObject[key]; }
 			}
 
 			if (treeNode.Value == data) treeNode.obj[treeNode.prop] = valueAsObject; // if changing root, we need to modify wrapper.data
@@ -48,7 +49,7 @@ export function ProcessDBData(data, standardizeForm: boolean, addHelpers: boolea
 		}
 
 		// turn the should-have-been-array objects (the ones with a "0" property) into arrays
-		if (standardizeForm && typeof treeNode.Value == "object" && !(treeNode.Value instanceof Array) && treeNode.Value[0] !== undefined) {
+		if (standardizeForm && typeof treeNode.Value == "object" && !(treeNode.Value instanceof Array) && treeNode.Value[0] !== nil) {
 			// if changing root, we have to actually modify the prototype of the passed-in "data" object
 			/*if (treeNode.Value == data) {
 				Object.setPrototypeOf(data, Object.getPrototypeOf([]));
