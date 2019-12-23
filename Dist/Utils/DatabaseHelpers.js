@@ -120,11 +120,12 @@ export function ConvertDataToValidDBUpdates(versionPath, versionData, dbUpdatesR
     return result;*/
     throw new Error("Not yet implemented.");
 }
-export function ApplyDBUpdates(options, rootPath, dbUpdates) {
+export function ApplyDBUpdates(options, dbUpdates, rootPath_override) {
     return __awaiter(this, void 0, void 0, function* () {
         const opt = E(defaultFireOptions, options);
         //dbUpdates = WithoutHelpers(Clone(dbUpdates));
         dbUpdates = Clone(dbUpdates);
+        let rootPath = (rootPath_override !== null && rootPath_override !== void 0 ? rootPath_override : opt.fire.rootPath);
         if (rootPath != null) {
             //for (const {key: localPath, value} of ObjectCE.Pairs(dbUpdates)) {
             for (const { key: localPath, value } of ObjectCE(dbUpdates).Pairs()) {
@@ -191,7 +192,7 @@ export function ApplyDBUpdates(options, rootPath, dbUpdates) {
     });
 }
 export const maxDBUpdatesPerBatch = 500;
-export function ApplyDBUpdates_InChunks(options, rootPath, dbUpdates, updatesPerChunk = maxDBUpdatesPerBatch) {
+export function ApplyDBUpdates_InChunks(options, dbUpdates, rootPath_override, updatesPerChunk = maxDBUpdatesPerBatch) {
     return __awaiter(this, void 0, void 0, function* () {
         const opt = E(defaultFireOptions, options);
         const dbUpdates_pairs = ObjectCE(dbUpdates).Pairs();
@@ -205,7 +206,7 @@ export function ApplyDBUpdates_InChunks(options, rootPath, dbUpdates, updatesPer
             if (dbUpdates_pairs_chunks.length > 1) {
                 MaybeLog_Base(a => a.commands, l => l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
             }
-            yield ApplyDBUpdates(opt, rootPath, dbUpdates_chunk);
+            yield ApplyDBUpdates(opt, dbUpdates_chunk, rootPath_override);
         }
     });
 }

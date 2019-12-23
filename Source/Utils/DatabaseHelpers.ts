@@ -120,10 +120,11 @@ export function ConvertDataToValidDBUpdates(versionPath: string, versionData: an
 	throw new Error("Not yet implemented.");
 }
 
-export async function ApplyDBUpdates(options: Partial<FireOptions>, rootPath: string, dbUpdates: Object) {
+export async function ApplyDBUpdates(options: Partial<FireOptions>, dbUpdates: Object, rootPath_override?: string) {
 	const opt = E(defaultFireOptions, options) as FireOptions;
 	//dbUpdates = WithoutHelpers(Clone(dbUpdates));
 	dbUpdates = Clone(dbUpdates);
+	let rootPath = rootPath_override ?? opt.fire.rootPath;
 	if (rootPath != null) {
 		//for (const {key: localPath, value} of ObjectCE.Pairs(dbUpdates)) {
 		for (const {key: localPath, value} of ObjectCE(dbUpdates).Pairs()) {
@@ -192,7 +193,7 @@ export async function ApplyDBUpdates(options: Partial<FireOptions>, rootPath: st
 }
 
 export const maxDBUpdatesPerBatch = 500;
-export async function ApplyDBUpdates_InChunks(options: Partial<FireOptions>, rootPath: string, dbUpdates: Object, updatesPerChunk = maxDBUpdatesPerBatch) {
+export async function ApplyDBUpdates_InChunks(options: Partial<FireOptions>, dbUpdates: Object, rootPath_override?: string, updatesPerChunk = maxDBUpdatesPerBatch) {
 	const opt = E(defaultFireOptions, options) as FireOptions;
 	const dbUpdates_pairs = ObjectCE(dbUpdates).Pairs();
 
@@ -207,7 +208,7 @@ export async function ApplyDBUpdates_InChunks(options: Partial<FireOptions>, roo
 		if (dbUpdates_pairs_chunks.length > 1) {
 			MaybeLog_Base(a=>a.commands, l=>l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
 		}
-		await ApplyDBUpdates(opt, rootPath, dbUpdates_chunk);
+		await ApplyDBUpdates(opt, dbUpdates_chunk, rootPath_override);
 	}
 }
 

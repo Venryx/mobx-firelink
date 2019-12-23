@@ -12,7 +12,6 @@ import { Clone, Assert, E, ObjectCE, ArrayCE, CE } from "js-vextensions";
 import { maxDBUpdatesPerBatch, ApplyDBUpdates, ApplyDBUpdates_Local } from "../Utils/DatabaseHelpers";
 import { MaybeLog_Base } from "../Utils/General";
 import { defaultFireOptions } from "../Firelink";
-import { DBPath } from "../Utils/PathHelpers";
 export const commandsWaitingToComplete = [];
 let currentCommandRun_listeners = [];
 function WaitTillCurrentCommandFinishes() {
@@ -85,7 +84,7 @@ export class Command {
                 }
                 // FixDBUpdates(dbUpdates);
                 // await store.firebase.helpers.DBRef().update(dbUpdates);
-                yield ApplyDBUpdates(this.options, DBPath(this.options), dbUpdates);
+                yield ApplyDBUpdates(this.options, dbUpdates);
                 // MaybeLog(a=>a.commands, ()=>`Finishing command. @type:${this.constructor.name} @payload(${ToJSON(this.payload)}) @dbUpdates(${ToJSON(dbUpdates)})`);
                 MaybeLog_Base(a => a.commands, l => l("Finishing command. @type:", this.constructor.name, " @command(", this, ") @dbUpdates(", dbUpdates, ")"));
             }
