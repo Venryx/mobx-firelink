@@ -70,7 +70,8 @@ export class TreeNode {
         this.pathSegments = PathOrPathGetterToPathSegments(pathOrSegments);
         this.path = PathOrPathGetterToPath(pathOrSegments);
         const queryStr = ((_a = this.pathSegments.slice(-1)[0]) === null || _a === void 0 ? void 0 : _a.startsWith("@query:")) ? this.pathSegments.slice(-1)[0].substr("@query:".length) : null;
-        this.path_noQuery = queryStr ? this.pathSegments.slice(0, -1).join("/") : this.path;
+        this.pathSegments_noQuery = this.pathSegments.filter(a => !a.startsWith("@query:"));
+        this.path_noQuery = this.pathSegments_noQuery.join("/");
         Assert(this.pathSegments.find(a => a == null || a.trim().length == 0) == null, `Path segments cannot be null/empty. @pathSegments(${this.pathSegments})`);
         this.type = GetTreeNodeTypeForPath(this.pathSegments);
         this.query = queryStr ? QueryRequest.ParseString(queryStr) : nil;
@@ -92,7 +93,7 @@ export class TreeNode {
         runInAction("TreeNode.Subscribe_prep", () => this.status = DataStatus.Waiting);
         MaybeLog_Base(a => a.subscriptions, () => `Subscribing to: ${this.path}`);
         if (this.type == TreeNodeType.Root || this.type == TreeNodeType.Document) {
-            let docRef = this.fire.subs.firestoreDB.doc(this.path);
+            let docRef = this.fire.subs.firestoreDB.doc(this.path_noQuery);
             this.subscription = new PathSubscription(docRef.onSnapshot({ includeMetadataChanges: true }, (snapshot) => {
                 MaybeLog_Base(a => a.subscriptions, l => l(`Got doc snapshot. @path(${this.path}) @snapshot:`, snapshot));
                 runInAction("TreeNode.Subscribe.onSnapshot_doc", () => {
@@ -113,17 +114,21 @@ export class TreeNode {
                 }
                 this.data = observable(newData) as any;*/
                 runInAction("TreeNode.Subscribe.onSnapshot_collection", () => {
+                    var _a;
+                    let deletedDocIDs = CE(Array.from(this.docNodes.keys())).Except(...snapshot.docs.map(a => a.id));
                     for (let doc of snapshot.docs) {
                         if (!this.docNodes.has(doc.id)) {
                             this.docNodes.set(doc.id, new TreeNode(this.fire, this.pathSegments.concat([doc.id])));
                         }
                         this.docNodes.get(doc.id).SetData(doc.data(), snapshot.metadata.fromCache);
                     }
+                    for (let docID of deletedDocIDs) {
+                        let docNode = this.docNodes.get(docID);
+                        (_a = docNode) === null || _a === void 0 ? void 0 : _a.SetData(null, snapshot.metadata.fromCache);
+                        //docNode?.Unsubscribe(); // if someone subscribed directly, I guess we let them keep the detached subscription?
+                        this.docNodes.delete(docID);
+                    }
                     this.status = snapshot.metadata.fromCache ? DataStatus.Received_Cache : DataStatus.Received_Full;
-                    // fix for possible bug; when queries are used, an onSnapshot listener only gives the single {fromCache:true} snapshot (leaving out the follow-up {fromCache:false} snapshot)
-                    /*if (this.query && this.status == DataStatus.Received_Cache) {
-                        this.status = DataStatus.Received_Full;
-                    }*/
                 });
             }));
         }

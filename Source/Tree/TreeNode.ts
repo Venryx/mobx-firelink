@@ -1,4 +1,4 @@
-import {Assert, CE, ToJSON, WaitXThenRun, FromJSON} from "js-vextensions";
+import {Assert, CE, ToJSON, WaitXThenRun, FromJSON, ObjectCE} from "js-vextensions";
 import {observable, ObservableMap, runInAction} from "mobx";
 import {Filter} from "../Filters";
 import {Firelink} from "../Firelink";
@@ -64,13 +64,15 @@ export class TreeNode<DataShape> {
 		this.pathSegments = PathOrPathGetterToPathSegments(pathOrSegments);
 		this.path = PathOrPathGetterToPath(pathOrSegments)!;
 		const queryStr = this.pathSegments.slice(-1)[0]?.startsWith("@query:") ? this.pathSegments.slice(-1)[0].substr("@query:".length) : null;
-		this.path_noQuery = queryStr ? this.pathSegments.slice(0, -1).join("/") : this.path;
+		this.pathSegments_noQuery = this.pathSegments.filter(a=>!a.startsWith("@query:"));
+		this.path_noQuery = this.pathSegments_noQuery.join("/");
 		Assert(this.pathSegments.find(a=>a == null || a.trim().length == 0) == null, `Path segments cannot be null/empty. @pathSegments(${this.pathSegments})`);
 		this.type = GetTreeNodeTypeForPath(this.pathSegments);
 		this.query = queryStr ? QueryRequest.ParseString(queryStr) : nil;
 	}
 	fire: Firelink<any, any>;
 	pathSegments: string[];
+	pathSegments_noQuery: string[];
 	path: string;
 	path_noQuery: string;
 	type: TreeNodeType;
@@ -94,7 +96,7 @@ export class TreeNode<DataShape> {
 
 		MaybeLog_Base(a=>a.subscriptions, ()=>`Subscribing to: ${this.path}`);
 		if (this.type == TreeNodeType.Root || this.type == TreeNodeType.Document) {
-			let docRef = this.fire.subs.firestoreDB.doc(this.path);
+			let docRef = this.fire.subs.firestoreDB.doc(this.path_noQuery);
 			this.subscription = new PathSubscription(docRef.onSnapshot({includeMetadataChanges: true}, (snapshot)=> {
 				MaybeLog_Base(a=>a.subscriptions, l=>l(`Got doc snapshot. @path(${this.path}) @snapshot:`, snapshot));
 				runInAction("TreeNode.Subscribe.onSnapshot_doc", ()=> {
@@ -114,17 +116,20 @@ export class TreeNode<DataShape> {
 				}
 				this.data = observable(newData) as any;*/
 				runInAction("TreeNode.Subscribe.onSnapshot_collection", ()=> {
+					let deletedDocIDs = CE(Array.from(this.docNodes.keys())).Except(...snapshot.docs.map(a=>a.id));
 					for (let doc of snapshot.docs) {
 						if (!this.docNodes.has(doc.id)) {
 							this.docNodes.set(doc.id, new TreeNode(this.fire, this.pathSegments.concat([doc.id])));
 						}
 						this.docNodes.get(doc.id)!.SetData(doc.data(), snapshot.metadata.fromCache);
 					}
+					for (let docID of deletedDocIDs) {
+						let docNode = this.docNodes.get(docID);
+						docNode?.SetData(null, snapshot.metadata.fromCache);
+						//docNode?.Unsubscribe(); // if someone subscribed directly, I guess we let them keep the detached subscription?
+						this.docNodes.delete(docID);
+					}
 					this.status = snapshot.metadata.fromCache ? DataStatus.Received_Cache : DataStatus.Received_Full;
-					// fix for possible bug; when queries are used, an onSnapshot listener only gives the single {fromCache:true} snapshot (leaving out the follow-up {fromCache:false} snapshot)
-					/*if (this.query && this.status == DataStatus.Received_Cache) {
-						this.status = DataStatus.Received_Full;
-					}*/
 				});
 			}));
 		}

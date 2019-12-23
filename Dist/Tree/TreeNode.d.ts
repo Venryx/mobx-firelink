@@ -29,6 +29,7 @@ export declare class TreeNode<DataShape> {
     constructor(fire: Firelink<any, any>, pathOrSegments: string | string[]);
     fire: Firelink<any, any>;
     pathSegments: string[];
+    pathSegments_noQuery: string[];
     path: string;
     path_noQuery: string;
     type: TreeNodeType;
