@@ -164,4 +164,11 @@ export function MergeDBUpdates(baseUpdatesMap, updatesToMergeMap) {
     const finalUpdatesMap = finalUpdates.reduce((result, current) => ObjectCE(result).VSet(current.path, current.data), {});
     return finalUpdatesMap;
 }
+export function MergeDBUpdates_Multi(...dbUpdateMaps) {
+    let result = {};
+    for (let dbUpdateMap of dbUpdateMaps) {
+        result = MergeDBUpdates(result, dbUpdateMap);
+    }
+    return result;
+}
 //# sourceMappingURL=Command.js.map

@@ -201,3 +201,10 @@ export function MergeDBUpdates(baseUpdatesMap: Object, updatesToMergeMap: Object
 	const finalUpdatesMap = finalUpdates.reduce((result, current)=>ObjectCE(result).VSet(current.path, current.data), {});
 	return finalUpdatesMap;
 }
+export function MergeDBUpdates_Multi(...dbUpdateMaps: Object[]) {
+	let result = {};
+	for (let dbUpdateMap of dbUpdateMaps) {
+		result = MergeDBUpdates(result, dbUpdateMap);
+	}
+	return result;
+}

@@ -25,3 +25,4 @@ export declare abstract class Command<Payload, ReturnData = void> {
     Validate_LateHeavy(dbUpdates: any): Promise<void>;
 }
 export declare function MergeDBUpdates(baseUpdatesMap: Object, updatesToMergeMap: Object): {};
+export declare function MergeDBUpdates_Multi(...dbUpdateMaps: Object[]): {};
