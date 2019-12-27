@@ -30,10 +30,6 @@ function NotifyListenersThatCurrentCommandFinished() {
 }
 export class CommandNew {
     constructor(...args) {
-        // these methods are executed on the server (well, will be later)
-        // ==========
-        // parent commands should call MarkAsSubcommand() immediately after setting a subcommand's payload
-        this.asSubcommand = false;
         let options, payload;
         if (args.length == 1)
             [payload] = args;
@@ -48,8 +44,8 @@ export class CommandNew {
     }
     //userInfo: FireUserInfo;
     get userInfo() { return this.options.fire.userInfo; }
-    MarkAsSubcommand() {
-        this.asSubcommand = true;
+    MarkAsSubcommand(parentCommand) {
+        this.parentCommand = parentCommand;
         //this.Validate_Early();
         return this;
     }

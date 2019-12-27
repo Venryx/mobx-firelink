@@ -52,9 +52,9 @@ export abstract class CommandNew<Payload, ReturnData = void> {
 	// ==========
 
 	// parent commands should call MarkAsSubcommand() immediately after setting a subcommand's payload
-	asSubcommand = false;
-	MarkAsSubcommand() {
-		this.asSubcommand = true;
+	parentCommand: CommandNew<any, any>;
+	MarkAsSubcommand(parentCommand: CommandNew<any, any>) {
+		this.parentCommand = parentCommand;
 		//this.Validate_Early();
 		return this;
 	}

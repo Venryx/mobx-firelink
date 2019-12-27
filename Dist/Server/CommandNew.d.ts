@@ -9,8 +9,8 @@ export declare abstract class CommandNew<Payload, ReturnData = void> {
     options: FireOptions;
     payload: Payload;
     returnData: any;
-    asSubcommand: boolean;
-    MarkAsSubcommand(): this;
+    parentCommand: CommandNew<any, any>;
+    MarkAsSubcommand(parentCommand: CommandNew<any, any>): this;
     /** Transforms the payload data (eg. combining it with existing db-data) in preparation for constructing the db-updates-map, while also validating user permissions and such along the way. */
     abstract StartValidate(): void;
     StartValidate_ForUI(): any;
