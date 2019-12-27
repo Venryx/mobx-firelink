@@ -50,17 +50,27 @@ export class CommandNew {
     get userInfo() { return this.options.fire.userInfo; }
     MarkAsSubcommand() {
         this.asSubcommand = true;
-        this.Validate_Early();
+        //this.Validate_Early();
         return this;
     }
-    // probably temp
-    /** Validates the payload data. (ie. the validation that doesn't require accessing the database) */
-    Validate_Early() { }
+    StartValidate_ForUI() {
+        try {
+            this.StartValidate();
+            return null;
+        }
+        catch (ex) {
+            return ex;
+        }
+    }
+    Validate() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield GetAsync(() => this.StartValidate(), { errorHandling: "ignore" });
+        });
+    }
     PreRun() {
         return __awaiter(this, void 0, void 0, function* () {
             //RemoveHelpers(this.payload);
-            this.Validate_Early(); // have this run locally, before sending, to save on bandwidth
-            yield GetAsync(() => this.Validate(), { errorHandling: "ignore" });
+            yield this.Validate();
         });
     }
     /** [async] Validates the data, prepares it, and executes it -- thus applying it into the database. */

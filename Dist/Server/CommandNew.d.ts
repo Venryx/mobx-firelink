@@ -3,7 +3,7 @@ export declare const commandsWaitingToComplete_new: CommandNew<any, any>[];
 export declare abstract class CommandNew<Payload, ReturnData = void> {
     static defaultPayload: {};
     constructor(payload: Payload);
-    constructor(opt: Partial<FireOptions>, payload: Payload);
+    constructor(options: Partial<FireOptions>, payload: Payload);
     get userInfo(): FireUserInfo | null;
     type: string;
     options: FireOptions;
@@ -11,10 +11,10 @@ export declare abstract class CommandNew<Payload, ReturnData = void> {
     returnData: any;
     asSubcommand: boolean;
     MarkAsSubcommand(): this;
-    /** Validates the payload data. (ie. the validation that doesn't require accessing the database) */
-    Validate_Early(): void;
     /** Transforms the payload data (eg. combining it with existing db-data) in preparation for constructing the db-updates-map, while also validating user permissions and such along the way. */
-    abstract Validate(): void;
+    abstract StartValidate(): void;
+    StartValidate_ForUI(): any;
+    Validate(): Promise<void>;
     /** Retrieves the actual database updates that are to be made. (so we can do it in one atomic call) */
     abstract GetDBUpdates(): {};
     PreRun(): Promise<void>;

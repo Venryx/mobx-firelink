@@ -25,7 +25,7 @@ function NotifyListenersThatCurrentCommandFinished() {
 export abstract class CommandNew<Payload, ReturnData = void> {
 	static defaultPayload = {};
 	constructor(payload: Payload);
-	constructor(opt: Partial<FireOptions>, payload: Payload);
+	constructor(options: Partial<FireOptions>, payload: Payload);
 	constructor(...args) {
 		let options: Partial<FireOptions>, payload: Payload;
 		if (args.length == 1) [payload] = args;
@@ -55,23 +55,29 @@ export abstract class CommandNew<Payload, ReturnData = void> {
 	asSubcommand = false;
 	MarkAsSubcommand() {
 		this.asSubcommand = true;
-		this.Validate_Early();
+		//this.Validate_Early();
 		return this;
 	}
 
-	// probably temp
-	/** Validates the payload data. (ie. the validation that doesn't require accessing the database) */
-	Validate_Early() {}
-
 	/** Transforms the payload data (eg. combining it with existing db-data) in preparation for constructing the db-updates-map, while also validating user permissions and such along the way. */
-	abstract Validate(): void;
+	abstract StartValidate(): void;
+	StartValidate_ForUI() {
+		try {
+			this.StartValidate();
+			return null;
+		} catch (ex) {
+			return ex;
+		}
+	}
+	async Validate() {
+		await GetAsync(()=>this.StartValidate(), {errorHandling: "ignore"});
+	}
 	/** Retrieves the actual database updates that are to be made. (so we can do it in one atomic call) */
 	abstract GetDBUpdates(): {}
 
 	async PreRun() {
 		//RemoveHelpers(this.payload);
-		this.Validate_Early(); // have this run locally, before sending, to save on bandwidth
-		await GetAsync(()=>this.Validate(), {errorHandling: "ignore"});
+		await this.Validate();
 	}
 
 	/** [async] Validates the data, prepares it, and executes it -- thus applying it into the database. */
