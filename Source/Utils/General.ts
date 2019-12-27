@@ -29,7 +29,7 @@ export function GetStackTraceStr(opt?: {stackTrace?: string, sourceStackTrace?: 
 	//stackTrace = stackTrace || (sourceStackTrace ? StackTrace.get().then(stack=>stackTrace = stack.map(a=>a.toString()).join("\n")) : new Error().stack);
 	//stackTrace = stackTrace || new Error().stack;
 
-	let stackTrace_final = opt.stackTrace!;
+	let stackTrace_final = opt!.stackTrace!;
 	if (stackTrace_final == null) {
 		//let fakeError = {}.VAct(a=>Error.captureStackTrace(a));
 		let oldStackLimit = (Error as any).stackTraceLimit;

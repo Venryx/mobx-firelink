@@ -7,13 +7,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import u from "updeep";
-import { Clone, Assert, E, ObjectCE, ArrayCE, CE } from "js-vextensions";
+import { Clone, E, ArrayCE } from "js-vextensions";
 import { maxDBUpdatesPerBatch, ApplyDBUpdates, ApplyDBUpdates_Local } from "../Utils/DatabaseHelpers";
 import { MaybeLog_Base } from "../Utils/General";
 import { defaultFireOptions } from "../Firelink";
-import { CommandNew } from "./CommandNew";
-export const commandsWaitingToComplete = [];
+export const commandsWaitingToComplete_new = [];
 let currentCommandRun_listeners = [];
 function WaitTillCurrentCommandFinishes() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -29,7 +27,7 @@ function NotifyListenersThatCurrentCommandFinished() {
         listener.resolve();
     }
 }
-export class Command {
+export class CommandNew {
     constructor(...args) {
         // these methods are executed on the server (well, will be later)
         // ==========
@@ -54,31 +52,29 @@ export class Command {
         this.Validate_Early();
         return this;
     }
-    /** [sync] Validates the payload data. (ie. the validation that doesn't require accessing the database) */
+    // probably temp
+    /** Validates the payload data. (ie. the validation that doesn't require accessing the database) */
     Validate_Early() { }
     PreRun() {
-        return __awaiter(this, void 0, void 0, function* () {
-            //RemoveHelpers(this.payload);
-            this.Validate_Early(); // have this run locally, before sending, to save on bandwidth
-            yield this.Prepare();
-            yield this.Validate();
-        });
+        //RemoveHelpers(this.payload);
+        this.Validate_Early(); // have this run locally, before sending, to save on bandwidth
+        this.Validate();
     }
     /** [async] Validates the data, prepares it, and executes it -- thus applying it into the database. */
     Run(maxUpdatesPerChunk = maxDBUpdatesPerBatch) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (commandsWaitingToComplete.length > 0) {
-                MaybeLog_Base(a => a.commands, l => l(`Queing command, since ${commandsWaitingToComplete.length} ${commandsWaitingToComplete.length == 1 ? "is" : "are"} already waiting for completion.${""}@type:`, this.constructor.name, " @payload(", this.payload, ")"));
+            if (commandsWaitingToComplete_new.length > 0) {
+                MaybeLog_Base(a => a.commands, l => l(`Queing command, since ${commandsWaitingToComplete_new.length} ${commandsWaitingToComplete_new.length == 1 ? "is" : "are"} already waiting for completion.${""}@type:`, this.constructor.name, " @payload(", this.payload, ")"));
             }
-            commandsWaitingToComplete.push(this);
-            while (commandsWaitingToComplete[0] != this) {
+            commandsWaitingToComplete_new.push(this);
+            while (commandsWaitingToComplete_new[0] != this) {
                 yield WaitTillCurrentCommandFinishes();
             }
             currentCommandRun_listeners = [];
             MaybeLog_Base(a => a.commands, l => l("Running command. @type:", this.constructor.name, " @payload(", this.payload, ")"));
             try {
                 //this.runStartTime = Date.now();
-                yield this.PreRun();
+                this.PreRun();
                 const dbUpdates = this.GetDBUpdates();
                 if (this.options.fire.ValidateDBData) {
                     yield this.Validate_LateHeavy(dbUpdates);
@@ -91,7 +87,7 @@ export class Command {
             }
             finally {
                 //const areOtherCommandsBuffered = currentCommandRun_listeners.length > 0;
-                ArrayCE(commandsWaitingToComplete).Remove(this);
+                ArrayCE(commandsWaitingToComplete_new).Remove(this);
                 NotifyListenersThatCurrentCommandFinished();
             }
             // later on (once set up on server), this will send the data back to the client, rather than return it
@@ -125,43 +121,5 @@ export class Command {
         });
     }
 }
-Command.defaultPayload = {};
-export function MergeDBUpdates(baseUpdatesMap, updatesToMergeMap) {
-    const baseUpdates = ObjectCE(baseUpdatesMap).Pairs().map(pair => ({ path: pair.key, data: pair.value }));
-    const updatesToMerge = ObjectCE(updatesToMergeMap).Pairs().map(pair => ({ path: pair.key, data: pair.value }));
-    for (const update of updatesToMerge) {
-        Assert(!(update.data instanceof Command) && !(update.data instanceof CommandNew), "You forgot to add the GetDBUpdates() method-call, ie: sub.GetDBUpdates().");
-        // if an update-to-merge exists for a path, remove any base-updates starting with that path (since the to-merge ones have priority)
-        if (update.data == null) {
-            for (const update2 of baseUpdates.slice()) { // make copy, since Remove() seems to break iteration otherwise
-                if (update2.path.startsWith(update.path)) {
-                    CE(baseUpdates).Remove(update2);
-                }
-            }
-        }
-    }
-    const finalUpdates = [];
-    for (const update of baseUpdates) {
-        // find updates-to-merge where a field under this path is updated (collection-updates under this path are left alone since they're supposed to be separate updates)
-        const updatesToMergeIntoThisOne = updatesToMerge.filter(update2 => update2.path.startsWith(`${update.path}/.`));
-        for (const updateToMerge of updatesToMergeIntoThisOne) {
-            const updateToMerge_relativePath = updateToMerge.path.substr(`${update.path}/`.length);
-            // if (updateToMerge.data) {
-            // assume that the update-to-merge has priority, so have it completely overwrite the data at its path
-            update.data = u.updateIn(updateToMerge_relativePath.replace(/\//g, "."), u.constant(updateToMerge.data), update.data);
-            /* } else {
-                update.data = null;
-            } */
-            // remove from updates-to-merge list (since we just merged it)
-            CE(updatesToMerge).Remove(updateToMerge);
-        }
-        finalUpdates.push(update);
-    }
-    // for any "update to merge" which couldn't be merged into one of the base-updates, just add it as its own update (it won't clash with the others)
-    for (const update of updatesToMerge) {
-        finalUpdates.push(update);
-    }
-    const finalUpdatesMap = finalUpdates.reduce((result, current) => ObjectCE(result).VSet(current.path, current.data), {});
-    return finalUpdatesMap;
-}
-//# sourceMappingURL=Command.js.map
+CommandNew.defaultPayload = {};
+//# sourceMappingURL=CommendNew.js.map

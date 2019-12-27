@@ -7,6 +7,7 @@ export * from "./Filters";
 export * from "./Accessors/Custom";
 export * from "./Accessors/Generic";
 export * from "./Server/Command";
+export * from "./Server/CommandNew";
 export * from "./Tree/TreeNode";
 export * from "./Utils/DatabaseHelpers";
 export * from "./Utils/General";

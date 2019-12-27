@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { E, emptyArray, CE, WaitXThenRun } from "js-vextensions";
+import { E, emptyArray, CE, WaitXThenRun, Assert } from "js-vextensions";
 import { runInAction, reaction } from "mobx";
 import { defaultFireOptions } from "../Firelink";
 import { DataStatus, QueryRequest } from "../Tree/TreeNode";
@@ -94,11 +94,17 @@ export function GetDoc(options, docPathOrGetterFunc) {
 }
 export async GetDocField_Async<DocT, FieldT>(docGetterFunc: (dbRoot: DBShape)=>DocT, fieldGetterFunc: (doc: DocT)=>FieldT, suboptions?: GetDocs_Options): Promise<FieldT> {
 } */
+export class GetAsync_Options {
+    constructor() {
+        this.errorHandling = "none";
+    }
+}
+GetAsync_Options.default = new GetAsync_Options();
 // async helper
 // (one of the rare cases where opt is not the first argument; that's because GetAsync may be called very frequently/in-sequences, and usually wraps nice user accessors, so could add too much visual clutter)
-export function GetAsync(dataGetterFunc, opt) {
+export function GetAsync(dataGetterFunc, options) {
     return __awaiter(this, void 0, void 0, function* () {
-        opt = E(defaultFireOptions, opt);
+        const opt = E(defaultFireOptions, GetAsync_Options.default, options);
         let watcher = new TreeRequestWatcher(opt.fire);
         /*let lastResult;
         let nodesRequested_obj_last;
@@ -128,33 +134,57 @@ export function GetAsync(dataGetterFunc, opt) {
                 watcher.Start();
                 // flip some flag here to say, "don't use cached data -- re-request!"
                 storeAccessorCachingTempDisabled = true;
-                let result = dataGetterFunc();
+                let result;
+                let error;
+                if (opt.errorHandling == "none") {
+                    result = dataGetterFunc();
+                }
+                else {
+                    try {
+                        result = dataGetterFunc();
+                    }
+                    catch (ex) {
+                        error = ex;
+                        if (opt.errorHandling == "log") {
+                            console.error(ex);
+                        }
+                    }
+                }
                 storeAccessorCachingTempDisabled = false;
                 watcher.Stop();
                 let nodesRequested_array = Array.from(watcher.nodesRequested);
                 //let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status == DataStatus.Waiting);
                 //let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status != DataStatus.Received);
                 let requestsBeingWaitedFor = nodesRequested_array.filter(node => node.status != DataStatus.Received_Full);
-                return {
-                    result,
-                    nodesRequested_array,
-                    possiblyDone: requestsBeingWaitedFor.length == 0,
-                };
-            }, data => {
-                let { result, nodesRequested_array, possiblyDone } = data;
-                if (!possiblyDone)
-                    return;
-                //if (!ShallowChanged(nodesRequested_obj, nodesRequested_obj_last)) {
-                //let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status == DataStatus.Waiting);
-                let requestsBeingWaitedFor = nodesRequested_array.filter(node => node.status != DataStatus.Received_Full);
-                if (requestsBeingWaitedFor.length == 0) {
-                    //Assert(result != null, "GetAsync should not usually return null.");
-                    WaitXThenRun(0, () => dispose()); // wait a bit, so dispose-func is ready (for when fired immediately)
-                    resolve(result);
+                let done = requestsBeingWaitedFor.length == 0;
+                if (done && error != null) {
+                    //Assert(error == null, `Error occurred during final GetAsync iteration: ${error}`);
+                    AssertV_triggerDebugger = true;
+                    try {
+                        //result = dataGetterFunc();
+                        dataGetterFunc();
+                    }
+                    finally {
+                        AssertV_triggerDebugger = false;
+                    }
                 }
+                return { result, nodesRequested_array, done };
+            }, data => {
+                let { result, nodesRequested_array, done } = data;
+                if (!done)
+                    return;
+                //Assert(result != null, "GetAsync should not usually return null.");
+                WaitXThenRun(0, () => dispose()); // wait a bit, so dispose-func is ready (for when fired immediately)
+                resolve(result);
             }, { fireImmediately: true });
         });
     });
+}
+/** Variant of Assert, which does not trigger the debugger. (to be used in mobx-firelink Command.Validate functions, since it's okay/expected for those to fail asserts) */
+export let AssertV_triggerDebugger = false;
+export function AssertV(condition, messageOrMessageFunc) {
+    Assert(condition, messageOrMessageFunc, AssertV_triggerDebugger);
+    return true;
 }
 export let storeAccessorCachingTempDisabled = false;
 //# sourceMappingURL=Generic.js.map
