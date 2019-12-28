@@ -93,6 +93,7 @@ export async GetDocField_Async<DocT, FieldT>(docGetterFunc: (dbRoot: DBShape)=>D
 
 export class GetAsync_Options {
 	static default = new GetAsync_Options();
+	maxIterations? = 100; // pretty arbitrary; just meant to alert us for infinite-loop-like calls/getter-funcs
 	errorHandling? = "none" as "none" | "log" | "ignore";
 }
 
@@ -127,13 +128,20 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, options?: Partial<FireO
 	return lastResult;*/
 
 	return new Promise((resolve, reject)=> {
+		let iterationIndex = -1;
 		let dispose = reaction(()=> {
+			iterationIndex++;
+			
+			// prep for getter-func
 			watcher.Start();
 			// flip some flag here to say, "don't use cached data -- re-request!"
 			storeAccessorCachingTempDisabled = true;
 			let result;
+
+			// execute getter-func
 			let error;
-			if (opt.errorHandling == "none") {
+			// if last iteration, never catch -- we want to see the error, as it's likely the cause of the seemingly-infinite iteration
+			if (opt.errorHandling == "none" || iterationIndex >= opt.maxIterations! - 1) {
 				result = dataGetterFunc();
 			} else {
 				try {
@@ -145,6 +153,8 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, options?: Partial<FireO
 					}
 				}
 			}
+			
+			// cleanup for getter-func
 			storeAccessorCachingTempDisabled = false;
 			watcher.Stop();
 			
@@ -162,6 +172,10 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, options?: Partial<FireO
 				} finally {
 					AssertV_triggerDebugger = false;
 				}
+			}
+
+			if (iterationIndex + 1 > opt.maxIterations!) {
+				reject(`GetAsync exceeded the maxIterations (${opt.maxIterations}).`);
 			}
 
 			return {result, nodesRequested_array, done};

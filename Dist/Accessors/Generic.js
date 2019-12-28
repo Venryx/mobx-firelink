@@ -100,6 +100,7 @@ export async GetDocField_Async<DocT, FieldT>(docGetterFunc: (dbRoot: DBShape)=>D
 } */
 export class GetAsync_Options {
     constructor() {
+        this.maxIterations = 100; // pretty arbitrary; just meant to alert us for infinite-loop-like calls/getter-funcs
         this.errorHandling = "none";
     }
 }
@@ -134,13 +135,18 @@ export function GetAsync(dataGetterFunc, options) {
         
         return lastResult;*/
         return new Promise((resolve, reject) => {
+            let iterationIndex = -1;
             let dispose = reaction(() => {
+                iterationIndex++;
+                // prep for getter-func
                 watcher.Start();
                 // flip some flag here to say, "don't use cached data -- re-request!"
                 storeAccessorCachingTempDisabled = true;
                 let result;
+                // execute getter-func
                 let error;
-                if (opt.errorHandling == "none") {
+                // if last iteration, never catch -- we want to see the error, as it's likely the cause of the seemingly-infinite iteration
+                if (opt.errorHandling == "none" || iterationIndex >= opt.maxIterations - 1) {
                     result = dataGetterFunc();
                 }
                 else {
@@ -154,6 +160,7 @@ export function GetAsync(dataGetterFunc, options) {
                         }
                     }
                 }
+                // cleanup for getter-func
                 storeAccessorCachingTempDisabled = false;
                 watcher.Stop();
                 let nodesRequested_array = Array.from(watcher.nodesRequested);
@@ -171,6 +178,9 @@ export function GetAsync(dataGetterFunc, options) {
                     finally {
                         AssertV_triggerDebugger = false;
                     }
+                }
+                if (iterationIndex + 1 > opt.maxIterations) {
+                    reject(`GetAsync exceeded the maxIterations (${opt.maxIterations}).`);
                 }
                 return { result, nodesRequested_array, done };
             }, data => {
