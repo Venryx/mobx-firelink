@@ -28,7 +28,7 @@ export class GetDocs_Options {
 }
 GetDocs_Options.default = new GetDocs_Options();
 export function GetDocs(options, collectionPathOrGetterFunc) {
-    var _a, _b;
+    var _a, _b, _c;
     const opt = E(defaultFireOptions, GetDocs_Options.default, options);
     let subpathSegments = PathOrPathGetterToPathSegments(collectionPathOrGetterFunc);
     let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
@@ -46,12 +46,14 @@ export function GetDocs(options, collectionPathOrGetterFunc) {
             opt.fire.tree.Get(pathSegments, queryRequest, true).Request();
         }));
     }
-    // todo: handle opt.useUndefinedForInProgress
+    if (opt.useUndefinedForInProgress && ((_a = treeNode) === null || _a === void 0 ? void 0 : _a.status) != DataStatus.Received_Full) {
+        return undefined;
+    }
     /*let docNodes = Array.from(treeNode.docNodes.values());
     let docDatas = docNodes.map(docNode=>docNode.data);
     return docDatas;*/
     //return opt.fire.tree.Get(pathSegments, queryRequest)?.docDatas ?? emptyArray;
-    let result = (_b = (_a = treeNode) === null || _a === void 0 ? void 0 : _a.docDatas, (_b !== null && _b !== void 0 ? _b : []));
+    let result = (_c = (_b = treeNode) === null || _b === void 0 ? void 0 : _b.docDatas, (_c !== null && _c !== void 0 ? _c : []));
     return result.length == 0 ? emptyArray : result; // to help avoid unnecessary react renders
 }
 /*export async function GetDocs_Async<DocT>(opt: FireOptions & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>ObservableMap<any, DocT>)): Promise<DocT[]> {
@@ -83,7 +85,9 @@ export function GetDoc(options, docPathOrGetterFunc) {
             opt.fire.tree.Get(pathSegments, nil, true).Request();
         }));
     }
-    // todo: handle opt.useUndefinedForInProgress
+    if (opt.useUndefinedForInProgress && treeNode.status != DataStatus.Received_Full) {
+        return undefined;
+    }
     return (_a = treeNode) === null || _a === void 0 ? void 0 : _a.data;
 }
 /*export async function GetDoc_Async<DocT>(opt: FireOptions & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>DocT)): Promise<DocT> {

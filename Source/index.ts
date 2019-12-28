@@ -12,8 +12,8 @@ export * from "./Accessors/Generic";
 
 export * from "./DBShape/Constructs";
 
+export * from "./Server/Command_Old";
 export * from "./Server/Command";
-export * from "./Server/CommandNew";
 
 export * from "./Tree/TreeNode";
 

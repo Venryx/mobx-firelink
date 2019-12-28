@@ -21,7 +21,7 @@ export class GetDocs_Options {
 	filters?: Filter[];
 	useUndefinedForInProgress? = false;
 }
-export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<any, DB>> & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>ObservableMap<any, DocT>)): DocT[] {
+export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<any, DB>> & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>ObservableMap<any, DocT>)): DocT[]|undefined {
 	const opt = E(defaultFireOptions, GetDocs_Options.default, options) as FireOptions & GetDocs_Options;
 	let subpathSegments = PathOrPathGetterToPathSegments(collectionPathOrGetterFunc);
 	let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
@@ -40,7 +40,9 @@ export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<a
 		}));
 	}
 	
-	// todo: handle opt.useUndefinedForInProgress
+	if (opt.useUndefinedForInProgress && treeNode?.status != DataStatus.Received_Full) {
+		return undefined;
+	}
 	/*let docNodes = Array.from(treeNode.docNodes.values());
 	let docDatas = docNodes.map(docNode=>docNode.data);
 	return docDatas;*/
@@ -58,7 +60,7 @@ export class GetDoc_Options {
 	inLinkRoot? = true;
 	useUndefinedForInProgress? = false;
 }
-export function GetDoc<DB = DBShape, DocT = any>(options: Partial<FireOptions<any, DB>> & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>DocT)): DocT|n {
+export function GetDoc<DB = DBShape, DocT = any>(options: Partial<FireOptions<any, DB>> & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>DocT)): DocT|n|undefined {
 	const opt = E(defaultFireOptions, GetDoc_Options.default, options) as FireOptions & GetDocs_Options;
 	let subpathSegments = PathOrPathGetterToPathSegments(docPathOrGetterFunc);
 	let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
@@ -75,7 +77,9 @@ export function GetDoc<DB = DBShape, DocT = any>(options: Partial<FireOptions<an
 		}));
 	}
 
-	// todo: handle opt.useUndefinedForInProgress
+	if (opt.useUndefinedForInProgress && treeNode.status != DataStatus.Received_Full) {
+		return undefined;
+	}
 	return treeNode?.data;
 }
 /*export async function GetDoc_Async<DocT>(opt: FireOptions & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>DocT)): Promise<DocT> {

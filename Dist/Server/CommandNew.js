@@ -49,18 +49,20 @@ export class CommandNew {
         //this.Validate_Early();
         return this;
     }
-    StartValidate_ForUI() {
+    Validate_Safe() {
         try {
-            this.StartValidate();
+            this.Validate_Safe();
+            this.validateError = null;
             return null;
         }
         catch (ex) {
+            this.validateError = ex;
             return ex;
         }
     }
-    Validate() {
+    Validate_Async() {
         return __awaiter(this, void 0, void 0, function* () {
-            yield GetAsync(() => this.StartValidate(), { errorHandling: "ignore" });
+            yield GetAsync(() => this.Validate_Safe(), { errorHandling: "ignore" });
         });
     }
     PreRun() {
