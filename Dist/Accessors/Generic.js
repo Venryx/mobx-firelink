@@ -23,7 +23,7 @@ Why use explicit GetDocs, GetDoc, etc. calls instead of just Proxy's?
 export class GetDocs_Options {
     constructor() {
         this.inLinkRoot = true;
-        this.useUndefinedForInProgress = false;
+        this.undefinedForLoading = false;
     }
 }
 GetDocs_Options.default = new GetDocs_Options();
@@ -46,7 +46,7 @@ export function GetDocs(options, collectionPathOrGetterFunc) {
             opt.fire.tree.Get(pathSegments, queryRequest, true).Request();
         }));
     }
-    if (opt.useUndefinedForInProgress && ((_a = treeNode) === null || _a === void 0 ? void 0 : _a.status) != DataStatus.Received_Full) {
+    if (opt.undefinedForLoading && ((_a = treeNode) === null || _a === void 0 ? void 0 : _a.status) != DataStatus.Received_Full) {
         return undefined;
     }
     /*let docNodes = Array.from(treeNode.docNodes.values());
@@ -63,7 +63,7 @@ export function GetDocs(options, collectionPathOrGetterFunc) {
 export class GetDoc_Options {
     constructor() {
         this.inLinkRoot = true;
-        this.useUndefinedForInProgress = false;
+        this.undefinedForLoading = false;
     }
 }
 GetDoc_Options.default = new GetDoc_Options();
@@ -85,7 +85,7 @@ export function GetDoc(options, docPathOrGetterFunc) {
             opt.fire.tree.Get(pathSegments, nil, true).Request();
         }));
     }
-    if (opt.useUndefinedForInProgress && treeNode.status != DataStatus.Received_Full) {
+    if (opt.undefinedForLoading && treeNode.status != DataStatus.Received_Full) {
         return undefined;
     }
     return (_a = treeNode) === null || _a === void 0 ? void 0 : _a.data;

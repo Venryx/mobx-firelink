@@ -19,7 +19,7 @@ export class GetDocs_Options {
 	static default = new GetDocs_Options();
 	inLinkRoot? = true;
 	filters?: Filter[];
-	useUndefinedForInProgress? = false;
+	undefinedForLoading? = false;
 }
 export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<any, DB>> & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>ObservableMap<any, DocT>)): DocT[]|undefined {
 	const opt = E(defaultFireOptions, GetDocs_Options.default, options) as FireOptions & GetDocs_Options;
@@ -40,7 +40,7 @@ export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<a
 		}));
 	}
 	
-	if (opt.useUndefinedForInProgress && treeNode?.status != DataStatus.Received_Full) {
+	if (opt.undefinedForLoading && treeNode?.status != DataStatus.Received_Full) {
 		return undefined;
 	}
 	/*let docNodes = Array.from(treeNode.docNodes.values());
@@ -58,7 +58,7 @@ export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<a
 export class GetDoc_Options {
 	static default = new GetDoc_Options();
 	inLinkRoot? = true;
-	useUndefinedForInProgress? = false;
+	undefinedForLoading? = false;
 }
 export function GetDoc<DB = DBShape, DocT = any>(options: Partial<FireOptions<any, DB>> & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>DocT)): DocT|n|undefined {
 	const opt = E(defaultFireOptions, GetDoc_Options.default, options) as FireOptions & GetDocs_Options;
@@ -77,7 +77,7 @@ export function GetDoc<DB = DBShape, DocT = any>(options: Partial<FireOptions<an
 		}));
 	}
 
-	if (opt.useUndefinedForInProgress && treeNode.status != DataStatus.Received_Full) {
+	if (opt.undefinedForLoading && treeNode.status != DataStatus.Received_Full) {
 		return undefined;
 	}
 	return treeNode?.data;
