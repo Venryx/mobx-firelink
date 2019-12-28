@@ -20,7 +20,7 @@ export function FBFieldPathToVFieldPath(vFieldPath: string) {
  * @param asFBPath If true, returned paths are separated with "."; if false, by "/". Default: false
  * @returns [colOrDocPath, fieldPathInDoc]
  * */
-export function GetPathParts(path: string, asFBPath = false): [string, string|n] {
+export function GetPathParts(path: string, asFBPath = false): [string, string|null] {
 	let colOrDocPath = path.substr(0, CE(path.indexOf("/.")).IfN1Then(path.length));
 	const isDocPath = colOrDocPath.length != path.length; // if length differs, it means field-path is supplied, which means it's a doc-path
 	if (isDocPath) {

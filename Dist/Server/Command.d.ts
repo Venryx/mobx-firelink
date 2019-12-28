@@ -14,7 +14,7 @@ export declare abstract class Command<Payload, ReturnData = void> {
     /** Transforms the payload data (eg. combining it with existing db-data) in preparation for constructing the db-updates-map, while also validating user permissions and such along the way. */
     abstract Validate(): void;
     /** Last validation error, from calling Validate_Safe(). */
-    validateError: string | n;
+    validateError: string | null;
     Validate_Safe(): any;
     Validate_Async(): Promise<void>;
     /** Retrieves the actual database updates that are to be made. (so we can do it in one atomic call) */

@@ -8,7 +8,7 @@ export declare function FBFieldPathToVFieldPath(vFieldPath: string): string;
  * @param asFBPath If true, returned paths are separated with "."; if false, by "/". Default: false
  * @returns [colOrDocPath, fieldPathInDoc]
  * */
-export declare function GetPathParts(path: string, asFBPath?: boolean): [string, string | n];
+export declare function GetPathParts(path: string, asFBPath?: boolean): [string, string | null];
 export declare function DBPath(options: Partial<FireOptions>, path?: string, inLinkRoot?: boolean): string;
 export declare function DBPathSegments(options: Partial<FireOptions>, pathSegments: (string | number)[], inLinkRoot?: boolean): string[];
 export declare function SlicePath(path: string, removeFromEndCount: number, ...itemsToAdd: string[]): string | null;

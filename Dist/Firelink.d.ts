@@ -21,8 +21,8 @@ export declare class Firelink<RootStoreShape, DBShape> {
     subs: {
         firestoreDB: firebase.firestore.Firestore;
     };
-    userInfo_raw: firebase.User | n;
-    userInfo: FireUserInfo | n;
+    userInfo_raw: firebase.User | null;
+    userInfo: FireUserInfo | null;
     LogIn(opt: {
         provider: "google" | "facebook" | "twitter" | "github";
         type: "popup";

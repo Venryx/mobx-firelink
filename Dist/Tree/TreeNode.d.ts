@@ -38,7 +38,7 @@ export declare class TreeNode<DataShape> {
     Unsubscribe(): PathSubscription | null;
     UnsubscribeAll(): void;
     status: DataStatus;
-    subscription: PathSubscription | n;
+    subscription: PathSubscription | null;
     collectionNodes: ObservableMap<string, TreeNode<any>>;
     data: DataShape;
     SetData(data: DataShape, fromCache: boolean): void;

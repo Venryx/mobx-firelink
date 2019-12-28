@@ -62,7 +62,7 @@ export abstract class Command<Payload, ReturnData = void> {
 	/** Transforms the payload data (eg. combining it with existing db-data) in preparation for constructing the db-updates-map, while also validating user permissions and such along the way. */
 	abstract Validate(): void;
 	/** Last validation error, from calling Validate_Safe(). */
-	validateError: string|n;
+	validateError: string|null;
 	Validate_Safe() {
 		try {
 			this.Validate();

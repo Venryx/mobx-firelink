@@ -14,7 +14,7 @@ export declare class GetDoc_Options {
     inLinkRoot?: boolean | undefined;
     undefinedForLoading?: boolean | undefined;
 }
-export declare function GetDoc<DB = DBShape, DocT = any>(options: Partial<FireOptions<any, DB>> & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DB) => DocT)): DocT | n | undefined;
+export declare function GetDoc<DB = DBShape, DocT = any>(options: Partial<FireOptions<any, DB>> & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DB) => DocT)): DocT | null | undefined;
 export declare class GetAsync_Options {
     static default: GetAsync_Options;
     maxIterations?: number | undefined;

@@ -149,7 +149,7 @@ export class TreeNode<DataShape> {
 	}
 
 	@observable status = DataStatus.Initial;
-	subscription: PathSubscription|n;
+	subscription: PathSubscription|null;
 
 	// for doc (and root) nodes
 	@observable collectionNodes = observable.map<string, TreeNode<any>>();

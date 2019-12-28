@@ -58,8 +58,8 @@ export class Firelink<RootStoreShape, DBShape> {
 	};
 
 	//@observable userInfo_raw: firebase.auth.UserCredential;
-	@observable userInfo_raw: firebase.User|n;
-	@observable userInfo: FireUserInfo|n;
+	@observable userInfo_raw: firebase.User|null;
+	@observable userInfo: FireUserInfo|null;
 	async LogIn(opt: {provider: "google" | "facebook" | "twitter" | "github", type: "popup"}) {
 		let provider: firebase.auth.AuthProvider;
 		if (opt.provider == "google") provider = new firebase.auth.GoogleAuthProvider();

@@ -82,7 +82,7 @@ Wrap a function with StoreAccessor if it's under the "Store/" path, and one of t
 3) It involves a transformation of data into a new wrapper (ie. breaking reference equality), such that it's worth caching the processing. (to not trigger unnecessary child-ui re-renders)
 */
 export const StoreAccessor: StoreAccessorFunc = (...args)=> {
-	let name: string, options: Partial<FireOptions & StoreAccessorOptions>|n, accessorGetter: Function;
+	let name: string, options: Partial<FireOptions & StoreAccessorOptions>|null, accessorGetter: Function;
 	if (typeof args[0] == "function" && args.length == 1) [accessorGetter] = args;
 	else if (typeof args[0] == "object" && args.length == 2) [options, accessorGetter] = args;
 	else if (args.length == 2) [name, accessorGetter] = args;
@@ -145,7 +145,7 @@ export const StoreAccessor: StoreAccessorFunc = (...args)=> {
 				}, {name, keepAlive: opt.cache_keepAlive})(callArgs_unwrapped);*/
 				let accessor_rewrapper = (...callArgs_unwrapped_2)=>{
 					let callArgs_rewrapped = [] as any[];
-					let arrayBeingReconstructed: any[]|n = null;
+					let arrayBeingReconstructed: any[]|null = null;
 					for (let callArgOrItem of callArgs_unwrapped_2) {
 						if (callArgOrItem == "$ARRAY_ITEMS_START") {
 							Assert(arrayBeingReconstructed == null);
