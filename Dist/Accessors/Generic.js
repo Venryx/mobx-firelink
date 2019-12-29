@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { E, emptyArray, CE, WaitXThenRun, Assert } from "js-vextensions";
+import { E, emptyArray, CE, WaitXThenRun, Assert, StringCE } from "js-vextensions";
 import { runInAction, reaction } from "mobx";
 import { defaultFireOptions } from "../Firelink";
 import { DataStatus, QueryRequest } from "../Tree/TreeNode";
@@ -100,7 +100,7 @@ export async GetDocField_Async<DocT, FieldT>(docGetterFunc: (dbRoot: DBShape)=>D
 } */
 export class GetAsync_Options {
     constructor() {
-        this.maxIterations = 100; // pretty arbitrary; just meant to alert us for infinite-loop-like calls/getter-funcs
+        this.maxIterations = 50; // pretty arbitrary; just meant to alert us for infinite-loop-like calls/getter-funcs
         this.errorHandling = "none";
     }
 }
@@ -180,7 +180,11 @@ export function GetAsync(dataGetterFunc, options) {
                     }
                 }
                 if (iterationIndex + 1 > opt.maxIterations) {
-                    reject(`GetAsync exceeded the maxIterations (${opt.maxIterations}).`);
+                    reject(StringCE(`
+					GetAsync exceeded the maxIterations (${opt.maxIterations}).
+					
+					Setting "window.logTypes.subscriptions = true" in console may help with debugging.
+				`).AsMultiline(0));
                 }
                 return { result, nodesRequested_array, done };
             }, data => {

@@ -1,4 +1,4 @@
-import {E, ShallowChanged, emptyArray, CE, WaitXThenRun, Assert} from "js-vextensions";
+import {E, ShallowChanged, emptyArray, CE, WaitXThenRun, Assert, StringCE} from "js-vextensions";
 import {ObservableMap, autorun, when, runInAction, reaction} from "mobx";
 import {DBShape} from "../UserTypes";
 import {Filter} from "../Filters";
@@ -93,7 +93,7 @@ export async GetDocField_Async<DocT, FieldT>(docGetterFunc: (dbRoot: DBShape)=>D
 
 export class GetAsync_Options {
 	static default = new GetAsync_Options();
-	maxIterations? = 100; // pretty arbitrary; just meant to alert us for infinite-loop-like calls/getter-funcs
+	maxIterations? = 50; // pretty arbitrary; just meant to alert us for infinite-loop-like calls/getter-funcs
 	errorHandling? = "none" as "none" | "log" | "ignore";
 }
 
@@ -175,7 +175,11 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, options?: Partial<FireO
 			}
 
 			if (iterationIndex + 1 > opt.maxIterations!) {
-				reject(`GetAsync exceeded the maxIterations (${opt.maxIterations}).`);
+				reject(StringCE(`
+					GetAsync exceeded the maxIterations (${opt.maxIterations}).
+					
+					Setting "window.logTypes.subscriptions = true" in console may help with debugging.
+				`).AsMultiline(0));
 			}
 
 			return {result, nodesRequested_array, done};
