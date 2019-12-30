@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { DeepSet, IsNumberString, Assert, Clone, ObjectCE, ArrayCE, GetTreeNodesInObjTree, E, CE } from "js-vextensions";
 import u from "updeep";
 import { MaybeLog_Base } from "./General";
+import { SplitStringBySlash_Cached } from "..";
 import { defaultFireOptions } from "../Firelink";
 import firebase from "firebase";
 import { GetPathParts } from "./PathHelpers";
@@ -102,23 +103,22 @@ export function AssertValidatePath(path) {
     Assert(!path.endsWith("/"), "Path cannot end with a slash. (This may mean a path parameter is missing)");
     Assert(!path.includes("//"), "Path cannot contain a double-slash. (This may mean a path parameter is missing)");
 }
-export function ConvertDataToValidDBUpdates(versionPath, versionData, dbUpdatesRelativeToRootPath = true) {
-    /*const result = {};
-    for (const {key: pathFromRoot, value: data} of rootData.Pairs()) {
-        const fullPath = `${rootPath}/${pathFromRoot}`;
-        const pathForDBUpdates = dbUpdatesRelativeToRootPath ? pathFromRoot : fullPath;
-
+export function ConvertDataToValidDBUpdates(versionPath, versionData, dbUpdatesRelativeToVersionPath = true) {
+    const result = {};
+    for (const { key: pathFromVersion, value: data } of ObjectCE(versionData).Pairs()) {
+        const fullPath = `${versionPath}/${pathFromVersion}`;
+        const pathForDBUpdates = dbUpdatesRelativeToVersionPath ? pathFromVersion : fullPath;
         // if entry`s "path" has odd number of segments (ie. points to collection), extract the children data into separate set-doc updates
         if (SplitStringBySlash_Cached(fullPath).length % 2 !== 0) {
-            for (const {key, value} of data.Pairs()) {
+            for (const { key, value } of ObjectCE(data).Pairs()) {
                 result[`${pathForDBUpdates}/${key}`] = value;
             }
-        } else {
+        }
+        else {
             result[pathForDBUpdates] = data;
         }
     }
-    return result;*/
-    throw new Error("Not yet implemented.");
+    return result;
 }
 export function ApplyDBUpdates(options, dbUpdates, rootPath_override) {
     return __awaiter(this, void 0, void 0, function* () {

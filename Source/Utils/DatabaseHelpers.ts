@@ -1,7 +1,7 @@
 import {DeepSet, IsNumberString, Assert, StringCE, Clone, ObjectCE, ArrayCE, GetTreeNodesInObjTree, E, CE} from "js-vextensions";
 import u from "updeep";
 import {MaybeLog_Base} from "./General";
-import {FireOptions} from "..";
+import {FireOptions, SplitStringBySlash_Cached} from "..";
 import {defaultFireOptions} from "../Firelink";
 import firebase from "firebase";
 import {GetPathParts} from "./PathHelpers";
@@ -101,23 +101,22 @@ export function AssertValidatePath(path: string) {
 	Assert(!path.includes("//"), "Path cannot contain a double-slash. (This may mean a path parameter is missing)");
 }
 
-export function ConvertDataToValidDBUpdates(versionPath: string, versionData: any, dbUpdatesRelativeToRootPath = true) {
-	/*const result = {};
-	for (const {key: pathFromRoot, value: data} of rootData.Pairs()) {
-		const fullPath = `${rootPath}/${pathFromRoot}`;
-		const pathForDBUpdates = dbUpdatesRelativeToRootPath ? pathFromRoot : fullPath;
+export function ConvertDataToValidDBUpdates(versionPath: string, versionData: any, dbUpdatesRelativeToVersionPath = true) {
+	const result = {};
+	for (const {key: pathFromVersion, value: data} of ObjectCE(versionData).Pairs()) {
+		const fullPath = `${versionPath}/${pathFromVersion}`;
+		const pathForDBUpdates = dbUpdatesRelativeToVersionPath ? pathFromVersion : fullPath;
 
 		// if entry`s "path" has odd number of segments (ie. points to collection), extract the children data into separate set-doc updates
 		if (SplitStringBySlash_Cached(fullPath).length % 2 !== 0) {
-			for (const {key, value} of data.Pairs()) {
+			for (const {key, value} of ObjectCE(data).Pairs()) {
 				result[`${pathForDBUpdates}/${key}`] = value;
 			}
 		} else {
 			result[pathForDBUpdates] = data;
 		}
 	}
-	return result;*/
-	throw new Error("Not yet implemented.");
+	return result;
 }
 
 export async function ApplyDBUpdates(options: Partial<FireOptions>, dbUpdates: Object, rootPath_override?: string) {

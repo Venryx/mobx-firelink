@@ -175,7 +175,8 @@ export class TreeNode<DataShape> {
 	@observable docNodes = observable.map<string, TreeNode<any>>();
 	//docNodes = new Map<string, TreeNode<any>>();
 	get docDatas() {
-		let docNodes = Array.from(this.docNodes.values()).filter(a=>a.status == DataStatus.Received_Full);
+		// (we need to filter for nodes where data is not undefined, since such entries get added by GetDoc(...) calls for non-existent paths, but shouldn't show in docDatas array)
+		let docNodes = Array.from(this.docNodes.values()).filter(a=>a.status == DataStatus.Received_Full && a.data !== undefined);
 		let docDatas = docNodes.map(docNode=>docNode.data);
 		//let docDatas = observable.array(docNodes.map(docNode=>docNode.data));
 		return docDatas;
