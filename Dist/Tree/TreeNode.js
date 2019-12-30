@@ -148,6 +148,10 @@ export class TreeNode {
         this.docNodes.forEach(a => a.UnsubscribeAll());
     }
     SetData(data, fromCache) {
+        // this.data being "undefined" is used to signify that it's still loading; so if firebase-given value is "undefined", change it to "null"
+        if (data === undefined) {
+            data = null;
+        }
         //data = data ? observable(data_raw) as any : null;
         ProcessDBData(data, true, true, CE(this.pathSegments).Last()); // maybe rework
         this.data = data;
@@ -161,8 +165,8 @@ export class TreeNode {
     }
     //docNodes = new Map<string, TreeNode<any>>();
     get docDatas() {
-        // (we need to filter for nodes where data is not undefined, since such entries get added by GetDoc(...) calls for non-existent paths, but shouldn't show in docDatas array)
-        let docNodes = Array.from(this.docNodes.values()).filter(a => a.status == DataStatus.Received_Full && a.data !== undefined);
+        // (we need to filter for nodes where data is not nully, since such entries get added by GetDoc(...) calls for non-existent paths, but shouldn't show in docDatas array)
+        let docNodes = Array.from(this.docNodes.values()).filter(a => a.status == DataStatus.Received_Full && a.data != null);
         let docDatas = docNodes.map(docNode => docNode.data);
         //let docDatas = observable.array(docNodes.map(docNode=>docNode.data));
         return docDatas;
