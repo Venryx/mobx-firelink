@@ -8,7 +8,7 @@ export abstract class Filter {
 	abstract Apply(collection: firebase.firestore.CollectionReference);
 }
 export class WhereFilter extends Filter {
-	constructor(fieldPath: string, comparison: firebase.firestore.WhereFilterOp, value: string) {
+	constructor(fieldPath: string, comparison: firebase.firestore.WhereFilterOp, value: any) {
 		super();
 		this.type = "where";
 		this.fieldPath = fieldPath;
@@ -17,7 +17,7 @@ export class WhereFilter extends Filter {
 	}
 	fieldPath: string;
 	comparison: firebase.firestore.WhereFilterOp;
-	value: string;
+	value: any;
 
 	Apply(collection: firebase.firestore.CollectionReference) {
 		return collection.where(this.fieldPath, this.comparison, this.value);
