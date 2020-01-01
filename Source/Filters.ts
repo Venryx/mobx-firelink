@@ -20,7 +20,8 @@ export class WhereFilter extends Filter {
 	value: any;
 
 	Apply(collection: firebase.firestore.CollectionReference) {
-		return collection.where(this.fieldPath, this.comparison, this.value);
+		// collection.where complains if value is undefined, so use null instead
+		return collection.where(this.fieldPath, this.comparison, this.value ?? null);
 	}
 }
 export const Where = (...args: ConstructorParameters<typeof WhereFilter>)=> {

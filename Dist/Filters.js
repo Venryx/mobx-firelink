@@ -14,7 +14,9 @@ export class WhereFilter extends Filter {
         this.value = value;
     }
     Apply(collection) {
-        return collection.where(this.fieldPath, this.comparison, this.value);
+        var _a;
+        // collection.where complains if value is undefined, so use null instead
+        return collection.where(this.fieldPath, this.comparison, (_a = this.value, (_a !== null && _a !== void 0 ? _a : null)));
     }
 }
 export const Where = (...args) => {
