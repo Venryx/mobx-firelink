@@ -162,7 +162,7 @@ export class TreeNode<DataShape> {
 		}
 
 		//data = data ? observable(data_raw) as any : null;
-		ProcessDBData(data, true, true, CE(this.pathSegments).Last()); // maybe rework
+		ProcessDBData(data, true, CE(this.pathSegments).Last()); // maybe rework
 		this.data = data;
 		//if (data != null) {
 		//ProcessDBData(this.data, true, true, CE(this.pathSegments).Last()); // also add to proxy (since the mobx proxy doesn't expose non-enumerable props) // maybe rework

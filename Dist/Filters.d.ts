@@ -8,6 +8,6 @@ export declare class WhereFilter extends Filter {
     fieldPath: string;
     comparison: firebase.firestore.WhereFilterOp;
     value: any;
-    Apply(collection: firebase.firestore.CollectionReference): import("firebase").firestore.Query;
+    Apply(collection: firebase.firestore.CollectionReference): import("firebase").firestore.Query<import("firebase").firestore.DocumentData>;
 }
 export declare const Where: (fieldPath: string, comparison: import("firebase").firestore.WhereFilterOp, value: any) => WhereFilter;

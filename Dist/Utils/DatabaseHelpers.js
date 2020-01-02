@@ -7,14 +7,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { DeepSet, IsNumberString, Assert, Clone, ObjectCE, ArrayCE, GetTreeNodesInObjTree, E, CE } from "js-vextensions";
+import { DeepSet, IsNumberString, Assert, Clone, ObjectCE, GetTreeNodesInObjTree, E, CE } from "js-vextensions";
 import u from "updeep";
 import { MaybeLog_Base } from "./General";
 import { SplitStringBySlash_Cached } from "..";
 import { defaultFireOptions } from "../Firelink";
 import firebase from "firebase";
 import { GetPathParts } from "./PathHelpers";
-import { nil } from "./Nil";
 export function IsAuthValid(auth) {
     return auth && !auth.isEmpty;
 }
@@ -22,7 +21,7 @@ export function IsAuthValid(auth) {
     const finalPath = DBPath(path, inVersionRoot);
     return this.ref(finalPath);
 }; */
-export function ProcessDBData(data, standardizeForm, addHelpers, rootKey) {
+export function ProcessDBData(data, addHelpers, rootKey = "_root") {
     if (data == null)
         return;
     var treeNodes = GetTreeNodesInObjTree(data, true);
@@ -32,7 +31,7 @@ export function ProcessDBData(data, standardizeForm, addHelpers, rootKey) {
         // turn the should-not-have-been-array arrays (the ones without a "0" property) into objects
         //if (standardizeForm && treeNode.Value instanceof Array && treeNode.Value[0] === undefined) {
         // turn the should-not-have-been-array arrays (the ones with non-number property) into objects
-        if (standardizeForm && treeNode.Value instanceof Array && ArrayCE(ObjectCE(treeNode.Value).VKeys(true)).Any(a => !IsNumberString(a))) {
+        /*if (standardizeForm && treeNode.Value instanceof Array && ArrayCE(ObjectCE(treeNode.Value).VKeys(true)).Any(a=>!IsNumberString(a))) {
             // if changing root, we have to actually modify the prototype of the passed-in "data" object
             /*if (treeNode.Value == data) {
                 Object.setPrototypeOf(data, Object.getPrototypeOf({}));
@@ -41,20 +40,19 @@ export function ProcessDBData(data, standardizeForm, addHelpers, rootKey) {
                         delete data[key];
                 }
                 continue;
-            }*/
-            const valueAsObject = Object.assign({}, treeNode.Value);
+            }*#/
+
+            const valueAsObject = Object.assign({}, treeNode.Value) as any;
             for (const key in valueAsObject) {
                 // if fake array-item added by Firebase/js (just so the array would have no holes), remove it
                 //if (valueAsObject[key] == null)
-                if (valueAsObject[key] === nil) {
-                    delete valueAsObject[key];
-                }
+                if (valueAsObject[key] === nil) { delete valueAsObject[key]; }
             }
-            if (treeNode.Value == data)
-                treeNode.obj[treeNode.prop] = valueAsObject; // if changing root, we need to modify wrapper.data
-            else
-                DeepSet(data, treeNode.PathStr, valueAsObject); // else, we need to use deep-set, because ancestors may have already changed during this transform/processing
+
+            if (treeNode.Value == data) treeNode.obj[treeNode.prop] = valueAsObject; // if changing root, we need to modify wrapper.data
+            else DeepSet(data, treeNode.PathStr, valueAsObject); // else, we need to use deep-set, because ancestors may have already changed during this transform/processing
         }
+
         // turn the should-have-been-array objects (the ones with a "0" property) into arrays
         if (standardizeForm && typeof treeNode.Value == "object" && !(treeNode.Value instanceof Array) && treeNode.Value[0] !== nil) {
             // if changing root, we have to actually modify the prototype of the passed-in "data" object
@@ -62,13 +60,13 @@ export function ProcessDBData(data, standardizeForm, addHelpers, rootKey) {
                 Object.setPrototypeOf(data, Object.getPrototypeOf([]));
                 data.length = data.VKeys(true).filter(a=>IsNumberString(a));
                 continue;
-            }*/
-            const valueAsArray = Object.assign([], treeNode.Value);
-            if (treeNode.Value == data)
-                treeNode.obj[treeNode.prop] = valueAsArray; // if changing root, we need to modify wrapper.data
-            else
-                DeepSet(data, treeNode.PathStr, valueAsArray); // else, we need to use deep-set, because ancestors may have already changed during this transform/processing
-        }
+            }*#/
+
+            const valueAsArray = Object.assign([], treeNode.Value) as any;
+
+            if (treeNode.Value == data) treeNode.obj[treeNode.prop] = valueAsArray; // if changing root, we need to modify wrapper.data
+            else DeepSet(data, treeNode.PathStr, valueAsArray); // else, we need to use deep-set, because ancestors may have already changed during this transform/processing
+        }*/
         // add special _key or _id prop
         if (addHelpers && typeof treeNode.Value == "object") {
             const key = treeNode.prop == "_root" ? rootKey : treeNode.prop;

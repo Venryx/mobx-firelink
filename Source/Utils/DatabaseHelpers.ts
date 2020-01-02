@@ -16,7 +16,7 @@ export function IsAuthValid(auth) {
 	return this.ref(finalPath);
 }; */
 
-export function ProcessDBData(data, standardizeForm: boolean, addHelpers: boolean, rootKey: string) {
+export function ProcessDBData(data, addHelpers: boolean, rootKey = "_root") {
 	if (data == null) return;
 	var treeNodes = GetTreeNodesInObjTree(data, true);
 	for (const treeNode of treeNodes) {
@@ -26,7 +26,7 @@ export function ProcessDBData(data, standardizeForm: boolean, addHelpers: boolea
 		//if (standardizeForm && treeNode.Value instanceof Array && treeNode.Value[0] === undefined) {
 
 		// turn the should-not-have-been-array arrays (the ones with non-number property) into objects
-		if (standardizeForm && treeNode.Value instanceof Array && ArrayCE(ObjectCE(treeNode.Value).VKeys(true)).Any(a=>!IsNumberString(a))) {
+		/*if (standardizeForm && treeNode.Value instanceof Array && ArrayCE(ObjectCE(treeNode.Value).VKeys(true)).Any(a=>!IsNumberString(a))) {
 			// if changing root, we have to actually modify the prototype of the passed-in "data" object
 			/*if (treeNode.Value == data) {
 				Object.setPrototypeOf(data, Object.getPrototypeOf({}));
@@ -35,7 +35,7 @@ export function ProcessDBData(data, standardizeForm: boolean, addHelpers: boolea
 						delete data[key];
 				}
 				continue;
-			}*/
+			}*#/
 
 			const valueAsObject = Object.assign({}, treeNode.Value) as any;
 			for (const key in valueAsObject) {
@@ -55,13 +55,13 @@ export function ProcessDBData(data, standardizeForm: boolean, addHelpers: boolea
 				Object.setPrototypeOf(data, Object.getPrototypeOf([]));
 				data.length = data.VKeys(true).filter(a=>IsNumberString(a));
 				continue;
-			}*/
+			}*#/
 
 			const valueAsArray = Object.assign([], treeNode.Value) as any;
 
 			if (treeNode.Value == data) treeNode.obj[treeNode.prop] = valueAsArray; // if changing root, we need to modify wrapper.data
 			else DeepSet(data, treeNode.PathStr, valueAsArray); // else, we need to use deep-set, because ancestors may have already changed during this transform/processing
-		}
+		}*/
 
 		// add special _key or _id prop
 		if (addHelpers && typeof treeNode.Value == "object") {

@@ -22,7 +22,7 @@ export declare class QueryRequest {
     static ParseData(data: any): QueryRequest;
     constructor(initialData?: Partial<QueryRequest>);
     filters: Filter[];
-    Apply(collection: firebase.firestore.CollectionReference): import("firebase").firestore.CollectionReference;
+    Apply(collection: firebase.firestore.CollectionReference): import("firebase").firestore.CollectionReference<import("firebase").firestore.DocumentData>;
     toString(): string;
 }
 export declare class TreeNode<DataShape> {
