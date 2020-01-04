@@ -184,6 +184,9 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, options?: Partial<FireO
 
 			return {result, nodesRequested_array, done};
 		}, data=> {
+			 // if data is null, it means an error occured in the computation-func above
+			if (data == null) return;
+
 			let {result, nodesRequested_array, done} = data;
 			if (!done) return;
 
