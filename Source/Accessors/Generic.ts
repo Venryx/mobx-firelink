@@ -36,7 +36,7 @@ export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<a
 	} else {
 		// we can't change observables from within computations, so do it in a moment (out of computation call-stack)
 		DoX_ComputationSafe(()=>runInAction("GetDocs_Request", ()=> {
-			opt.fire.tree.Get(pathSegments, queryRequest, true).Request();
+			opt.fire.tree.Get(pathSegments, queryRequest, true)!.Request();
 		}));
 	}
 	
@@ -73,11 +73,11 @@ export function GetDoc<DB = DBShape, DocT = any>(options: Partial<FireOptions<an
 	} else {
 		// we can't change observables from within computations, so do it in a moment (out of computation call-stack)
 		DoX_ComputationSafe(()=>runInAction("GetDoc_Request", ()=> {
-			opt.fire.tree.Get(pathSegments, nil, true).Request();
+			opt.fire.tree.Get(pathSegments, nil, true)!.Request();
 		}));
 	}
 
-	if (opt.undefinedForLoading && treeNode.status != DataStatus.Received_Full) {
+	if (opt.undefinedForLoading && treeNode?.status != DataStatus.Received_Full) {
 		return undefined;
 	}
 	return treeNode?.data;

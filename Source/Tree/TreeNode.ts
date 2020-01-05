@@ -188,7 +188,7 @@ export class TreeNode<DataShape> {
 	}
 
 	// default createTreeNodesIfMissing to false, so that it's safe to call this from a computation (which includes store-accessors)
-	Get(subpathOrGetterFunc: string | string[] | ((data: DataShape)=>any), query?: QueryRequest, createTreeNodesIfMissing = false) {
+	Get(subpathOrGetterFunc: string | string[] | ((data: DataShape)=>any), query?: QueryRequest, createTreeNodesIfMissing = false): TreeNode<any>|null {
 		let subpathSegments = PathOrPathGetterToPathSegments(subpathOrGetterFunc);
 		let currentNode: TreeNode<any> = this;
 

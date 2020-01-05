@@ -46,7 +46,7 @@ export declare class TreeNode<DataShape> {
     query?: QueryRequest;
     docNodes: ObservableMap<string, TreeNode<any>>;
     get docDatas(): any[];
-    Get(subpathOrGetterFunc: string | string[] | ((data: DataShape) => any), query?: QueryRequest, createTreeNodesIfMissing?: boolean): TreeNode<any>;
+    Get(subpathOrGetterFunc: string | string[] | ((data: DataShape) => any), query?: QueryRequest, createTreeNodesIfMissing?: boolean): TreeNode<any> | null;
     get raw(): DataShape;
     AsRawData(addTreeLink?: boolean): DataShape;
     UploadRawData(rawData: DataShape): void;

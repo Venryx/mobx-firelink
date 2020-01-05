@@ -68,7 +68,7 @@ export class GetDoc_Options {
 }
 GetDoc_Options.default = new GetDoc_Options();
 export function GetDoc(options, docPathOrGetterFunc) {
-    var _a;
+    var _a, _b;
     const opt = E(defaultFireOptions, GetDoc_Options.default, options);
     let subpathSegments = PathOrPathGetterToPathSegments(docPathOrGetterFunc);
     let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
@@ -85,10 +85,10 @@ export function GetDoc(options, docPathOrGetterFunc) {
             opt.fire.tree.Get(pathSegments, nil, true).Request();
         }));
     }
-    if (opt.undefinedForLoading && treeNode.status != DataStatus.Received_Full) {
+    if (opt.undefinedForLoading && ((_a = treeNode) === null || _a === void 0 ? void 0 : _a.status) != DataStatus.Received_Full) {
         return undefined;
     }
-    return (_a = treeNode) === null || _a === void 0 ? void 0 : _a.data;
+    return (_b = treeNode) === null || _b === void 0 ? void 0 : _b.data;
 }
 /*export async function GetDoc_Async<DocT>(opt: FireOptions & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>DocT)): Promise<DocT> {
     opt = E(defaultFireOptions, opt);
