@@ -155,15 +155,22 @@ export class TreeNode<DataShape> {
 	@observable collectionNodes = observable.map<string, TreeNode<any>>();
 	//collectionNodes = new Map<string, TreeNode<any>>();
 	@observable.ref data: DataShape;
+	dataJSON: string;
 	SetData(data: DataShape, fromCache: boolean) {
 		// this.data being "undefined" is used to signify that it's still loading; so if firebase-given value is "undefined", change it to "null"
 		if (data === undefined) {
 			data = null as any;
 		}
 
-		//data = data ? observable(data_raw) as any : null;
-		ProcessDBData(data, true, CE(this.pathSegments).Last()); // maybe rework
-		this.data = data;
+		let dataJSON = ToJSON(data);
+		// only replace this.data, if new data differs by deep-comparison (Firestore apparently re-pushes db-content to listeners every 30m or so, which otherwise causes unnecessary cache-breaking and UI updating)
+		if (dataJSON != this.dataJSON) {
+			//data = data ? observable(data_raw) as any : null;
+			ProcessDBData(data, true, CE(this.pathSegments).Last()); // maybe rework
+			this.data = data;
+			this.dataJSON = dataJSON;
+		}
+
 		//if (data != null) {
 		//ProcessDBData(this.data, true, true, CE(this.pathSegments).Last()); // also add to proxy (since the mobx proxy doesn't expose non-enumerable props) // maybe rework
 		this.status = fromCache ? DataStatus.Received_Cache : DataStatus.Received_Full;

@@ -41,6 +41,7 @@ export declare class TreeNode<DataShape> {
     subscription: PathSubscription | null;
     collectionNodes: ObservableMap<string, TreeNode<any>>;
     data: DataShape;
+    dataJSON: string;
     SetData(data: DataShape, fromCache: boolean): void;
     queryNodes: ObservableMap<string, TreeNode<any>>;
     query?: QueryRequest;
