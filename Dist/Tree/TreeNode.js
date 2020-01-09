@@ -155,6 +155,7 @@ export class TreeNode {
         let dataJSON = ToJSON(data);
         // only replace this.data, if new data differs by deep-comparison (Firestore apparently re-pushes db-content to listeners every 30m or so, which otherwise causes unnecessary cache-breaking and UI updating)
         if (dataJSON != this.dataJSON) {
+            //console.log("Data changed from:", this.data, " to:", data, " @node:", this);
             //data = data ? observable(data_raw) as any : null;
             ProcessDBData(data, true, CE(this.pathSegments).Last()); // maybe rework
             this.data = data;
