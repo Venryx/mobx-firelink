@@ -40,7 +40,8 @@ export class Command {
         //this.userInfo = opt.fire.userInfo; // temp (needs rework to be server-compatible in future)
         this.type = this.constructor.name;
         this.options = opt;
-        this.payload = E(this.constructor["defaultPayload"], payload);
+        //this.payload = E(this.constructor["defaultPayload"], payload);
+        this.payload = E(Clone(this.constructor["defaultPayload"]), Clone(payload));
     }
     //userInfo: FireUserInfo;
     get userInfo() { return this.options.fire.userInfo; }
