@@ -119,8 +119,50 @@ export function ConvertDataToValidDBUpdates(versionPath: string, versionData: an
 	return result;
 }
 
-export async function ApplyDBUpdates(options: Partial<FireOptions>, dbUpdates: Object, rootPath_override?: string) {
+export function ConvertDBUpdatesToBatch(options: Partial<FireOptions>, dbUpdates: Object) {
 	const opt = E(defaultFireOptions, options) as FireOptions;
+	const updateEntries = Object.entries(dbUpdates);
+	Assert(updateEntries.length <= maxDBUpdatesPerBatch, `Cannot have more than ${maxDBUpdatesPerBatch} db-updates per batch.`);
+
+	const batch = opt.fire.subs.firestoreDB.batch();
+	for (let [path, value] of updateEntries) {
+		const [docPath, fieldPathInDoc] = GetPathParts(path, true);
+		value = Clone(value); // picky firestore library demands "simple JSON objects"
+
+		// [fieldPathInDoc, value] = FixSettingPrimitiveValueDirectly(fieldPathInDoc, value);
+
+		const docRef = opt.fire.subs.firestoreDB.doc(docPath);
+		if (fieldPathInDoc) {
+			value = value != null ? value : firebase.firestore.FieldValue.delete();
+
+			// batch.update(docRef, { [fieldPathInDoc]: value });
+			// set works even if the document doesn't exist yet, so use set instead of update
+			const nestedSetHelper = {};
+			DeepSet(nestedSetHelper, fieldPathInDoc, value, ".", true);
+			batch.set(docRef, nestedSetHelper, {merge: true});
+		} else {
+			if (value) {
+				batch.set(docRef, value);
+			} else {
+				batch.delete(docRef);
+			}
+		}
+		/* let path_final = DBPath(path);
+		let dbRef_parent = firestoreDB.doc(path_final.split("/").slice(0, -1).join("/"));
+		let value_final = Clone(value); // clone value, since update() rejects values with a prototype/type
+		batch.update(dbRef_parent, {[path_final.split("/").Last()]: value_final}); */
+	}
+	return batch;
+}
+
+export const maxDBUpdatesPerBatch = 500;
+export class ApplyDBUpdates_Options {
+	static default = new ApplyDBUpdates_Options();
+	updatesPerChunk = maxDBUpdatesPerBatch;
+}
+
+export async function ApplyDBUpdates(options: Partial<FireOptions & ApplyDBUpdates_Options>, dbUpdates: Object, rootPath_override?: string) {
+	const opt = E(defaultFireOptions, ApplyDBUpdates_Options.default, options) as FireOptions & ApplyDBUpdates_Options;
 	//dbUpdates = WithoutHelpers(Clone(dbUpdates));
 	dbUpdates = Clone(dbUpdates);
 	let rootPath = rootPath_override ?? opt.fire.rootPath;
@@ -132,8 +174,8 @@ export async function ApplyDBUpdates(options: Partial<FireOptions>, dbUpdates: O
 		}
 	}
 
-	// temp; if only updating one field, just do it directly (for some reason, a batch takes much longer)
-	const updateEntries = (Object as any).entries(dbUpdates);
+	// probably temp; if only updating one field, just do it directly (for some reason, a batch takes much longer)
+	const updateEntries = Object.entries(dbUpdates);
 	if (updateEntries.length == 1) {
 		let [path, value] = updateEntries[0];
 		const [docPath, fieldPathInDoc] = GetPathParts(path, true);
@@ -159,55 +201,23 @@ export async function ApplyDBUpdates(options: Partial<FireOptions>, dbUpdates: O
 		}
 	} else {
 		// await firestoreDB.runTransaction(async batch=> {
-		const batch = opt.fire.subs.firestoreDB.batch();
-		for (let [path, value] of updateEntries) {
-			const [docPath, fieldPathInDoc] = GetPathParts(path, true);
-			value = Clone(value); // picky firestore library demands "simple JSON objects"
 
-			// [fieldPathInDoc, value] = FixSettingPrimitiveValueDirectly(fieldPathInDoc, value);
-
-			const docRef = opt.fire.subs.firestoreDB.doc(docPath);
-			if (fieldPathInDoc) {
-				value = value != null ? value : firebase.firestore.FieldValue.delete();
-
-				// batch.update(docRef, { [fieldPathInDoc]: value });
-				// set works even if the document doesn't exist yet, so use set instead of update
-				const nestedSetHelper = {};
-				DeepSet(nestedSetHelper, fieldPathInDoc, value, ".", true);
-				batch.set(docRef, nestedSetHelper, {merge: true});
-			} else {
-				if (value) {
-					batch.set(docRef, value);
-				} else {
-					batch.delete(docRef);
-				}
+		const dbUpdates_pairs = ObjectCE(dbUpdates).Pairs();
+		const dbUpdates_pairs_chunks = [] as any[];
+		for (let offset = 0; offset < dbUpdates_pairs.length; offset += opt.updatesPerChunk) {
+			const chunk = dbUpdates_pairs.slice(offset, offset + opt.updatesPerChunk);
+			dbUpdates_pairs_chunks.push(chunk);
+		}
+	
+		for (const [index, dbUpdates_pairs_chunk] of dbUpdates_pairs_chunks.entries()) {
+			const dbUpdates_chunk = dbUpdates_pairs_chunk.ToMap(a=>a.key, a=>a.value);
+			if (dbUpdates_pairs_chunks.length > 1) {
+				MaybeLog_Base(a=>a.commands, l=>l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
 			}
-			/* let path_final = DBPath(path);
-			let dbRef_parent = firestoreDB.doc(path_final.split("/").slice(0, -1).join("/"));
-			let value_final = Clone(value); // clone value, since update() rejects values with a prototype/type
-			batch.update(dbRef_parent, {[path_final.split("/").Last()]: value_final}); */
+			//await ApplyDBUpdates_Base(opt, dbUpdates_chunk, rootPath_override);
+			let batch = ConvertDBUpdatesToBatch(opt, dbUpdates_chunk);
+			await batch.commit();
 		}
-		await batch.commit();
-	}
-}
-
-export const maxDBUpdatesPerBatch = 500;
-export async function ApplyDBUpdates_InChunks(options: Partial<FireOptions>, dbUpdates: Object, rootPath_override?: string, updatesPerChunk = maxDBUpdatesPerBatch) {
-	const opt = E(defaultFireOptions, options) as FireOptions;
-	const dbUpdates_pairs = ObjectCE(dbUpdates).Pairs();
-
-	const dbUpdates_pairs_chunks = [] as any[];
-	for (let offset = 0; offset < dbUpdates_pairs.length; offset += updatesPerChunk) {
-		const chunk = dbUpdates_pairs.slice(offset, offset + updatesPerChunk);
-		dbUpdates_pairs_chunks.push(chunk);
-	}
-
-	for (const [index, dbUpdates_pairs_chunk] of dbUpdates_pairs_chunks.entries()) {
-		const dbUpdates_chunk = dbUpdates_pairs_chunk.ToMap(a=>a.key, a=>a.value);
-		if (dbUpdates_pairs_chunks.length > 1) {
-			MaybeLog_Base(a=>a.commands, l=>l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
-		}
-		await ApplyDBUpdates(opt, dbUpdates_chunk, rootPath_override);
 	}
 }
 
