@@ -11,7 +11,7 @@ import { Clone, E, ArrayCE } from "js-vextensions";
 import { maxDBUpdatesPerBatch, ApplyDBUpdates, ApplyDBUpdates_Local } from "../Utils/DatabaseHelpers";
 import { MaybeLog_Base } from "../Utils/General";
 import { defaultFireOptions } from "../Firelink";
-import { GetAsync } from "../Accessors/Generic";
+import { GetAsync } from "../Accessors/Helpers";
 export const commandsWaitingToComplete_new = [];
 let currentCommandRun_listeners = [];
 function WaitTillCurrentCommandFinishes() {

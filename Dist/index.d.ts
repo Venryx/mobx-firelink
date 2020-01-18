@@ -2,6 +2,7 @@ export * from "./Firelink";
 export * from "./Filters";
 export * from "./Accessors/Custom";
 export * from "./Accessors/Generic";
+export * from "./Accessors/Helpers";
 export * from "./DBShape/Constructs";
 export * from "./Server/Command_Old";
 export * from "./Server/Command";

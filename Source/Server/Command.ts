@@ -3,7 +3,7 @@ import {maxDBUpdatesPerBatch, ApplyDBUpdates, ApplyDBUpdates_Local} from "../Uti
 import {MaybeLog_Base} from "../Utils/General";
 import {FireOptions, defaultFireOptions, FireUserInfo} from "../Firelink";
 import {DBPath} from "../Utils/PathHelpers";
-import {GetAsync} from "../Accessors/Generic";
+import {GetAsync} from "../Accessors/Helpers";
 
 export const commandsWaitingToComplete_new = [] as Command<any, any>[];
 

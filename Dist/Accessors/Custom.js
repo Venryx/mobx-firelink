@@ -1,7 +1,7 @@
 import { computedFn } from "mobx-utils";
 import { CE, E, Assert } from "js-vextensions";
 import { defaultFireOptions } from "../Firelink";
-import { storeAccessorCachingTempDisabled } from "./Generic";
+import { storeAccessorCachingTempDisabled, GetWait } from "./Helpers";
 // for profiling
 class StoreAccessorProfileData {
     constructor(name) {
@@ -175,6 +175,13 @@ export const StoreAccessor = (...args) => {
             CE(accessorStack).RemoveAt(accessorStack.length - 1);
         }
         return result;
+    };
+    // Func.Wait(thing) is shortcut for GetWait(()=>Func(thing))
+    wrapperAccessor.Wait = (...callArgs) => {
+        // initialize these in wrapper-accessor rather than root-func, because defaultFireOptions is usually not ready when root-func is called
+        const opt = E(StoreAccessorOptions.default, options);
+        let fireOpt = E(defaultFireOptions, CE(opt).Including("fire"));
+        return GetWait(() => wrapperAccessor(...callArgs), fireOpt);
     };
     //if (name) wrapperAccessor["displayName"] = name;
     //if (name) Object.defineProperty(wrapperAccessor, "name", {value: name});

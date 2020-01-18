@@ -2,7 +2,7 @@ import {computedFn} from "mobx-utils";
 import {CE, ObjectCE, E, Assert} from "js-vextensions";
 import {FireOptions, defaultFireOptions} from "../Firelink";
 import {RootStoreShape} from "../UserTypes";
-import {storeAccessorCachingTempDisabled} from "./Generic";
+import {storeAccessorCachingTempDisabled, GetWait} from "./Helpers";
 
 // for profiling
 class StoreAccessorProfileData {
@@ -58,10 +58,10 @@ export type CallArgToDependencyConvertorFunc = (callArgs: any[])=>any[];
 	<Func extends Function>(name: string, accessor: (s: RootState)=>Func, callArgToDependencyConvertorFunc?: CallArgToDependencyConvertorFunc): Func & {WS: (state: RootState)=>Func};
 }*/
 interface StoreAccessorFunc<RootState_PreSet = RootStoreShape> {
-	<Func extends Function, RootState = RootState_PreSet>(accessor: (s: RootState)=>Func): Func;
-	<Func extends Function, RootState = RootState_PreSet>(options: Partial<FireOptions<RootState> & StoreAccessorOptions>, accessor: (s: RootState)=>Func): Func;
-	<Func extends Function, RootState = RootState_PreSet>(name: string, accessor: (s: RootState)=>Func): Func;
-	<Func extends Function, RootState = RootState_PreSet>(name: string, options: Partial<FireOptions<RootState> & StoreAccessorOptions>, accessor: (s: RootState)=>Func): Func;
+	<Func extends Function, RootState = RootState_PreSet>(accessor: (s: RootState)=>Func): Func & {Wait: Func};
+	<Func extends Function, RootState = RootState_PreSet>(options: Partial<FireOptions<RootState> & StoreAccessorOptions>, accessor: (s: RootState)=>Func): Func & {Wait: Func};
+	<Func extends Function, RootState = RootState_PreSet>(name: string, accessor: (s: RootState)=>Func): Func & {Wait: Func};
+	<Func extends Function, RootState = RootState_PreSet>(name: string, options: Partial<FireOptions<RootState> & StoreAccessorOptions>, accessor: (s: RootState)=>Func): Func & {Wait: Func};
 }
 
 /**
@@ -194,6 +194,15 @@ export const StoreAccessor: StoreAccessorFunc = (...args)=> {
 		}
 
 		return result;
+	};
+
+	// Func.Wait(thing) is shortcut for GetWait(()=>Func(thing))
+	wrapperAccessor.Wait = (...callArgs)=>{
+		// initialize these in wrapper-accessor rather than root-func, because defaultFireOptions is usually not ready when root-func is called
+		const opt = E(StoreAccessorOptions.default, options!) as Partial<FireOptions> & StoreAccessorOptions;
+		let fireOpt = E(defaultFireOptions, CE(opt).Including("fire"));
+
+		return GetWait(()=>wrapperAccessor(...callArgs), fireOpt);
 	};
 
 	//if (name) wrapperAccessor["displayName"] = name;
