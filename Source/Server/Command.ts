@@ -1,9 +1,9 @@
-import {Clone, Assert, E, ObjectCE, ArrayCE, CE} from "js-vextensions";
+import {Clone, Assert, E, ObjectCE, ArrayCE, CE, OmitIfFalsy} from "js-vextensions";
 import {maxDBUpdatesPerBatch, ApplyDBUpdates, ApplyDBUpdates_Local} from "../Utils/DatabaseHelpers";
 import {MaybeLog_Base} from "../Utils/General";
 import {FireOptions, defaultFireOptions, FireUserInfo} from "../Firelink";
 import {DBPath} from "../Utils/PathHelpers";
-import {GetAsync} from "../Accessors/Helpers";
+import {GetAsync, GetAsync_Options} from "../Accessors/Helpers";
 
 export const commandsWaitingToComplete_new = [] as Command<any, any>[];
 
@@ -73,8 +73,10 @@ export abstract class Command<Payload, ReturnData = void> {
 			return ex;
 		}
 	}
-	async Validate_Async() {
-		await GetAsync(()=>this.Validate(), {errorHandling: "ignore"});
+	async Validate_Async(options?: Partial<FireOptions> & GetAsync_Options) {
+		//await GetAsync(()=>this.Validate(), E({errorHandling: "ignore"}, IsNumber(maxIterations) && {maxIterations}));
+		//await GetAsync(()=>this.Validate(), {errorHandling: "ignore", maxIterations: OmitIfFalsy(maxIterations)});
+		await GetAsync(()=>this.Validate(), E({errorHandling: "ignore"}, options));
 	}
 	/** Retrieves the actual database updates that are to be made. (so we can do it in one atomic call) */
 	abstract GetDBUpdates(): {}

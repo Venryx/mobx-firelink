@@ -61,9 +61,11 @@ export class Command {
             return ex;
         }
     }
-    Validate_Async() {
+    Validate_Async(options) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield GetAsync(() => this.Validate(), { errorHandling: "ignore" });
+            //await GetAsync(()=>this.Validate(), E({errorHandling: "ignore"}, IsNumber(maxIterations) && {maxIterations}));
+            //await GetAsync(()=>this.Validate(), {errorHandling: "ignore", maxIterations: OmitIfFalsy(maxIterations)});
+            yield GetAsync(() => this.Validate(), E({ errorHandling: "ignore" }, options));
         });
     }
     PreRun() {
