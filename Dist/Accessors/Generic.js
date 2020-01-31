@@ -1,4 +1,4 @@
-import { E, emptyArray, CE } from "js-vextensions";
+import { E, emptyArray, CE, emptyArray_forLoading } from "js-vextensions";
 import { runInAction } from "mobx";
 import { defaultFireOptions } from "../Firelink";
 import { DataStatus, QueryRequest } from "../Tree/TreeNode";
@@ -13,7 +13,8 @@ Why use explicit GetDocs, GetDoc, etc. calls instead of just Proxy's?
 export class GetDocs_Options {
     constructor() {
         this.inLinkRoot = true;
-        this.undefinedForLoading = false;
+        this.resultForLoading = emptyArray_forLoading;
+        //resultForEmpty? = emptyArray;
     }
 }
 GetDocs_Options.default = new GetDocs_Options();
@@ -36,9 +37,8 @@ export function GetDocs(options, collectionPathOrGetterFunc) {
             opt.fire.tree.Get(pathSegments, queryRequest, true).Request();
         }));
     }
-    if (opt.undefinedForLoading && ((_a = treeNode) === null || _a === void 0 ? void 0 : _a.status) != DataStatus.Received_Full) {
-        return undefined;
-    }
+    if (((_a = treeNode) === null || _a === void 0 ? void 0 : _a.status) != DataStatus.Received_Full)
+        return opt.resultForLoading;
     /*let docNodes = Array.from(treeNode.docNodes.values());
     let docDatas = docNodes.map(docNode=>docNode.data);
     return docDatas;*/
@@ -53,7 +53,9 @@ export function GetDocs(options, collectionPathOrGetterFunc) {
 export class GetDoc_Options {
     constructor() {
         this.inLinkRoot = true;
-        this.undefinedForLoading = false;
+        ///** If true, return undefined when loading. Else, return default (null) when loading. */
+        //undefinedForLoading? = false;
+        this.resultForLoading = undefined;
     }
 }
 GetDoc_Options.default = new GetDoc_Options();
@@ -75,9 +77,9 @@ export function GetDoc(options, docPathOrGetterFunc) {
             opt.fire.tree.Get(pathSegments, nil, true).Request();
         }));
     }
-    if (opt.undefinedForLoading && ((_a = treeNode) === null || _a === void 0 ? void 0 : _a.status) != DataStatus.Received_Full) {
-        return undefined;
-    }
+    //if (opt.undefinedForLoading && treeNode?.status != DataStatus.Received_Full) return undefined;
+    if (((_a = treeNode) === null || _a === void 0 ? void 0 : _a.status) != DataStatus.Received_Full)
+        return opt.resultForLoading;
     return (_b = treeNode) === null || _b === void 0 ? void 0 : _b.data;
 }
 /*export async function GetDoc_Async<DocT>(opt: FireOptions & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>DocT)): Promise<DocT> {

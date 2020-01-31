@@ -1,4 +1,4 @@
-import {E, ShallowChanged, emptyArray, CE, WaitXThenRun, Assert, StringCE} from "js-vextensions";
+import {E, ShallowChanged, emptyArray, CE, WaitXThenRun, Assert, StringCE, emptyArray_forLoading} from "js-vextensions";
 import {ObservableMap, autorun, when, runInAction, reaction} from "mobx";
 import {DBShape} from "../UserTypes";
 import {Filter} from "../Filters";
@@ -19,7 +19,8 @@ export class GetDocs_Options {
 	static default = new GetDocs_Options();
 	inLinkRoot? = true;
 	filters?: Filter[];
-	undefinedForLoading? = false;
+	resultForLoading? = emptyArray_forLoading;
+	//resultForEmpty? = emptyArray;
 }
 export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<any, DB>> & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>ObservableMap<any, DocT>)): DocT[]|undefined {
 	const opt = E(defaultFireOptions, GetDocs_Options.default, options) as FireOptions & GetDocs_Options;
@@ -40,9 +41,7 @@ export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<a
 		}));
 	}
 	
-	if (opt.undefinedForLoading && treeNode?.status != DataStatus.Received_Full) {
-		return undefined;
-	}
+	if (treeNode?.status != DataStatus.Received_Full) return opt.resultForLoading;
 	/*let docNodes = Array.from(treeNode.docNodes.values());
 	let docDatas = docNodes.map(docNode=>docNode.data);
 	return docDatas;*/
@@ -58,10 +57,12 @@ export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<a
 export class GetDoc_Options {
 	static default = new GetDoc_Options();
 	inLinkRoot? = true;
-	undefinedForLoading? = false;
+	///** If true, return undefined when loading. Else, return default (null) when loading. */
+	//undefinedForLoading? = false;
+	resultForLoading? = undefined;
 }
 export function GetDoc<DB = DBShape, DocT = any>(options: Partial<FireOptions<any, DB>> & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>DocT)): DocT|null|undefined {
-	const opt = E(defaultFireOptions, GetDoc_Options.default, options) as FireOptions & GetDocs_Options;
+	const opt = E(defaultFireOptions, GetDoc_Options.default, options) as FireOptions & GetDoc_Options;
 	let subpathSegments = PathOrPathGetterToPathSegments(docPathOrGetterFunc);
 	let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
 	if (CE(pathSegments).Any(a=>a == null)) return null;
@@ -77,9 +78,8 @@ export function GetDoc<DB = DBShape, DocT = any>(options: Partial<FireOptions<an
 		}));
 	}
 
-	if (opt.undefinedForLoading && treeNode?.status != DataStatus.Received_Full) {
-		return undefined;
-	}
+	//if (opt.undefinedForLoading && treeNode?.status != DataStatus.Received_Full) return undefined;
+	if (treeNode?.status != DataStatus.Received_Full) return opt.resultForLoading;
 	return treeNode?.data;
 }
 /*export async function GetDoc_Async<DocT>(opt: FireOptions & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>DocT)): Promise<DocT> {
