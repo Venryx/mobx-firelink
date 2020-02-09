@@ -136,4 +136,3 @@ export class Command {
     }
 }
 Command.defaultPayload = {};
-//# sourceMappingURL=Command.js.map

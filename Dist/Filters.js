@@ -22,4 +22,3 @@ export class WhereFilter extends Filter {
 export const Where = (...args) => {
     return new WhereFilter(...args);
 };
-//# sourceMappingURL=Filters.js.map

@@ -90,4 +90,3 @@ export function GetDoc(options, docPathOrGetterFunc) {
 }
 export async GetDocField_Async<DocT, FieldT>(docGetterFunc: (dbRoot: DBShape)=>DocT, fieldGetterFunc: (doc: DocT)=>FieldT, suboptions?: GetDocs_Options): Promise<FieldT> {
 } */ 
-//# sourceMappingURL=Generic.js.map

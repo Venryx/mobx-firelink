@@ -3,4 +3,3 @@ let splitCache_forwardSlash = {};
 export function SplitStringBySlash_Cached(str) {
     return splitCache_forwardSlash[str] || (splitCache_forwardSlash[str] = str.split("/"));
 }
-//# sourceMappingURL=StringSplitCache.js.map

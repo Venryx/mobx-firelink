@@ -95,4 +95,3 @@ __decorate([
 __decorate([
     observable
 ], Firelink.prototype, "userInfo", void 0);
-//# sourceMappingURL=Firelink.js.map

@@ -15,4 +15,3 @@ export class TreeRequestWatcher {
     let watcher = new TreeAccessWatcher(opt.fire);
     opt.fire.treeAccessWatchers.push(watcher);
 }*/ 
-//# sourceMappingURL=TreeRequestWatcher.js.map

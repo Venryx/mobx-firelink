@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
 		"rootDir": "Source",
-		"sourceMap": true,
+		//"sourceMap": true, // commented; doesn't work currently, so keeping Dist folder cleaner
 		"module": "ES2015",
 		"moduleResolution": "node",
 		"target": "ES2015",

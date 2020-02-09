@@ -61,4 +61,3 @@ export function MaybeLog_Base(shouldLogFunc, loggerFunc) {
     else
         loggerFunc(Log);
 }
-//# sourceMappingURL=General.js.map

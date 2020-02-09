@@ -198,4 +198,3 @@ export function GetInvalidPropPaths(data, schemaObject) {
         return { propPath, error };
     });
 }
-//# sourceMappingURL=SchemaHelpers.js.map

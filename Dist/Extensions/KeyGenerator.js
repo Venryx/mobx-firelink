@@ -18,4 +18,3 @@ export function GenerateUUID(avoidUnpleasantStartChars = true) {
     }
     return result;
 }
-//# sourceMappingURL=KeyGenerator.js.map

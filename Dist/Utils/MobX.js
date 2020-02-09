@@ -10,4 +10,3 @@ export function DoX_ComputationSafe(funcThatChangesObservables) {
         WaitXThenRun(0, funcThatChangesObservables);
     }
 }
-//# sourceMappingURL=MobX.js.map

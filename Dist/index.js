@@ -17,4 +17,3 @@ export * from "./Utils/DatabaseHelpers";
 export * from "./Utils/General";
 export * from "./Utils/PathHelpers";
 export * from "./Utils/StringSplitCache";
-//# sourceMappingURL=index.js.map

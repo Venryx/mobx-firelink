@@ -95,4 +95,3 @@ export function MobXPathGetterToPathSegments(pathGetterFunc) {
     pathGetterFunc(proxy);
     return pathSegments;
 }
-//# sourceMappingURL=PathHelpers.js.map

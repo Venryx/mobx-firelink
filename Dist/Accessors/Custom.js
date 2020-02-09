@@ -189,4 +189,3 @@ export const StoreAccessor = (...args) => {
         CE(wrapperAccessor).SetName(name);
     return wrapperAccessor;
 };
-//# sourceMappingURL=Custom.js.map

@@ -237,4 +237,3 @@ export function ApplyDBUpdates_Local(dbData, dbUpdates) {
     } while (emptyNodes.length);
     return result;
 }
-//# sourceMappingURL=DatabaseHelpers.js.map
