@@ -10,9 +10,15 @@ export declare class FireUserInfo {
     id: string;
     displayName: string;
 }
+export declare class FirelinkInitOptions<RootStoreShape> {
+    rootPathInDB: string | string[];
+    rootStore: RootStoreShape;
+}
 export declare class Firelink<RootStoreShape, DBShape> {
     static instances: Firelink<any, any>[];
-    constructor(rootPathInDB: string | string[], rootStore: RootStoreShape, initSubs?: boolean);
+    constructor(initOptions?: FirelinkInitOptions<RootStoreShape>);
+    initialized: boolean;
+    Initialize(initOptions: FirelinkInitOptions<RootStoreShape>): void;
     rootPathSegments: string[];
     rootPath: string;
     rootStore: RootStoreShape;

@@ -23,21 +23,30 @@ export function SetDefaultFireOptions(opt) {
 }
 export class FireUserInfo {
 }
+export class FirelinkInitOptions {
+}
 export class Firelink {
-    constructor(rootPathInDB, rootStore, initSubs = true) {
+    constructor(initOptions) {
+        this.initialized = false;
         this.storeOverridesStack = [];
         this.subs = {};
         this.treeRequestWatchers = new Set();
+        if (initOptions) {
+            this.Initialize(initOptions);
+        }
+    }
+    Initialize(initOptions) {
+        let { rootPathInDB, rootStore } = initOptions;
         Firelink.instances.push(this);
         /*this.versionPathSegments = ["versions", `v${dbVersion}-${dbEnv_short}`];
         this.versionPath = `versions/v${dbVersion}-${dbEnv_short}`;*/
         this.rootPathSegments = PathOrPathGetterToPathSegments(rootPathInDB);
         this.rootPath = PathOrPathGetterToPath(rootPathInDB);
         this.rootStore = rootStore;
-        if (initSubs) {
-            this.InitSubs();
-        }
+        //if (initSubs) {
+        this.InitSubs();
         this.tree = new TreeNode(this, []);
+        this.initialized = true;
     }
     InitSubs() {
         this.subs.firestoreDB = firebase.firestore();

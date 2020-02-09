@@ -17,20 +17,36 @@ export class FireUserInfo {
 	displayName: string;
 }
 
+export class FirelinkInitOptions<RootStoreShape> {
+	rootPathInDB: string | string[];
+	rootStore: RootStoreShape;
+	//initSubs = true;
+}
+
 export class Firelink<RootStoreShape, DBShape> {
 	static instances = [] as Firelink<any, any>[];
 
-	constructor(rootPathInDB: string | string[], rootStore: RootStoreShape, initSubs = true) {
+	constructor(initOptions?: FirelinkInitOptions<RootStoreShape>) {
+		if (initOptions) {
+			this.Initialize(initOptions);
+		}
+	}
+
+	initialized = false;
+	Initialize(initOptions: FirelinkInitOptions<RootStoreShape>) {
+		let {rootPathInDB, rootStore} = initOptions;
+
 		Firelink.instances.push(this);
 		/*this.versionPathSegments = ["versions", `v${dbVersion}-${dbEnv_short}`];
 		this.versionPath = `versions/v${dbVersion}-${dbEnv_short}`;*/
 		this.rootPathSegments = PathOrPathGetterToPathSegments(rootPathInDB);
 		this.rootPath = PathOrPathGetterToPath(rootPathInDB);
 		this.rootStore = rootStore;
-		if (initSubs) {
-			this.InitSubs();
-		}
+		//if (initSubs) {
+		this.InitSubs();
 		this.tree = new TreeNode(this, []);
+		
+		this.initialized = true;
 	}
 
 	rootPathSegments: string[];
