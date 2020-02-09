@@ -36,8 +36,11 @@
     "typescript": "^3.7.4"
   },
   "dependencies": {
+    "ajv": "^6.11.0",
+    "ajv-keywords": "^3.4.1",
     "js-vextensions": "^1.0.21",
     "mobx-utils": "^5.5.2",
+    "slugid": "^2.0.0",
     "updeep": "^1.2.0"
   }
 }

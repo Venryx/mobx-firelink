@@ -13,6 +13,10 @@ export * from "./Accessors/Helpers";
 
 export * from "./DBShape/Constructs";
 
+// these "extensions" are separable from mobx-firelink, but are included for convenience, since I use them everywhere I use mobx-firelink
+export * from "./Extensions/KeyGenerator";
+export * from "./Extensions/SchemaHelpers";
+
 export * from "./Server/Command_Old";
 export * from "./Server/Command";
 

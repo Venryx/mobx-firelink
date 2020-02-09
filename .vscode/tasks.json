@@ -5,7 +5,7 @@
 			"label": "npm run dev",
 			"type": "npm",
 			"script": "dev",
-			"problemMatcher": [],
+			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
 			"group": {
 				"kind": "build",

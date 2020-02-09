@@ -4,6 +4,8 @@ export * from "./Accessors/Custom";
 export * from "./Accessors/Generic";
 export * from "./Accessors/Helpers";
 export * from "./DBShape/Constructs";
+export * from "./Extensions/KeyGenerator";
+export * from "./Extensions/SchemaHelpers";
 export * from "./Server/Command_Old";
 export * from "./Server/Command";
 export * from "./Tree/TreeNode";
