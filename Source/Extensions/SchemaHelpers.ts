@@ -1,6 +1,6 @@
 import AJV from "ajv";
 import AJVKeywords from "ajv-keywords";
-import {Clone, ToJSON, IsString, Assert, IsObject, E, CE} from "js-vextensions";
+import {Clone, ToJSON, IsString, Assert, IsObject, E, CE, IsArray, DEL} from "js-vextensions";
 import {AssertV} from "../Accessors/Helpers";
 //import {RemoveHelpers, WithoutHelpers} from "./DatabaseHelpers";
 
@@ -65,6 +65,33 @@ export function WaitTillSchemaAdded(schemaName: string): Promise<void> {
 		}
 		schemaAddListeners[schemaName] = (schemaAddListeners[schemaName] || []).concat(resolve);
 	});
+}
+
+export type SchemaObject = {
+	[key: string]: any;
+	// this has the effect of excluding an array as a valid SchemaObject, which is what we want
+	[key: number]: never;
+};
+export type SchemaPropChange = "allow delete";
+
+export function DeriveSchema(baseSchemaNameOrJSON: string | Object, schemaPropsToInclude_withChanges: {[key: string]: SchemaPropChange[] | SchemaObject}) {
+	const baseSchemaName = IsString(baseSchemaNameOrJSON) ? baseSchemaNameOrJSON : null;
+	const baseSchemaObject = IsString(baseSchemaNameOrJSON) ? GetSchemaJSON(baseSchemaName!) : baseSchemaNameOrJSON;
+
+	let newSchema = {properties: {}};
+	for (let pair of CE(schemaPropsToInclude_withChanges).Pairs()) {
+		let change = pair.value;
+		if (IsArray(change)) {
+			let newPropSchema = baseSchemaObject.properties[pair.key];
+			if (change.includes("allow delete")) {
+				newPropSchema = {oneOf: [newPropSchema, {const: DEL.toString()}]};
+			}
+			newSchema.properties[pair.key] = newPropSchema;
+		} else {
+			newSchema.properties[pair.key] = change;
+		}
+	}
+	return newSchema;
 }
 
 type AJV_Extended = AJV.Ajv & {

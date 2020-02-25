@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import AJV from "ajv";
 import AJVKeywords from "ajv-keywords";
-import { Clone, ToJSON, IsString, Assert, E, CE } from "js-vextensions";
+import { Clone, ToJSON, IsString, Assert, E, CE, IsArray, DEL } from "js-vextensions";
 import { AssertV } from "../Accessors/Helpers";
 //import {RemoveHelpers, WithoutHelpers} from "./DatabaseHelpers";
 export const ajv = AJVKeywords(new AJV({ allErrors: true }));
@@ -67,6 +67,25 @@ export function WaitTillSchemaAdded(schemaName) {
         }
         schemaAddListeners[schemaName] = (schemaAddListeners[schemaName] || []).concat(resolve);
     });
+}
+export function DeriveSchema(baseSchemaNameOrJSON, schemaPropsToInclude_withChanges) {
+    const baseSchemaName = IsString(baseSchemaNameOrJSON) ? baseSchemaNameOrJSON : null;
+    const baseSchemaObject = IsString(baseSchemaNameOrJSON) ? GetSchemaJSON(baseSchemaName) : baseSchemaNameOrJSON;
+    let newSchema = { properties: {} };
+    for (let pair of CE(schemaPropsToInclude_withChanges).Pairs()) {
+        let change = pair.value;
+        if (IsArray(change)) {
+            let newPropSchema = baseSchemaObject.properties[pair.key];
+            if (change.includes("allow delete")) {
+                newPropSchema = { oneOf: [newPropSchema, { const: DEL.toString() }] };
+            }
+            newSchema.properties[pair.key] = newPropSchema;
+        }
+        else {
+            newSchema.properties[pair.key] = change;
+        }
+    }
+    return newSchema;
 }
 /* AJV.prototype.AddSchema = function(this: AJV_Extended, schema, name: string) {
     return `${this.errorsText()} (${ToJSON(this.errors)})`;

@@ -41,6 +41,7 @@ export class Command {
         this.type = this.constructor.name;
         this.options = opt;
         //this.payload = E(this.constructor["defaultPayload"], payload);
+        // use Clone on the payload, so that behavior is consistent whether called locally or over the network
         this.payload = E(Clone(this.constructor["defaultPayload"]), Clone(payload));
     }
     //userInfo: FireUserInfo;

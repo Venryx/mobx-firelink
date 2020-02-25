@@ -6,6 +6,16 @@ export declare function AddSchema(name: string, schemaOrGetter: Object | (() => 
 export declare function AddSchema(name: string, dependencySchemas: string[], schemaGetter: () => Object): any;
 export declare function GetSchemaJSON(name: string): any;
 export declare function WaitTillSchemaAdded(schemaName: string): Promise<void>;
+export declare type SchemaObject = {
+    [key: string]: any;
+    [key: number]: never;
+};
+export declare type SchemaPropChange = "allow delete";
+export declare function DeriveSchema(baseSchemaNameOrJSON: string | Object, schemaPropsToInclude_withChanges: {
+    [key: string]: SchemaPropChange[] | SchemaObject;
+}): {
+    properties: {};
+};
 declare type AJV_Extended = AJV.Ajv & {
     FullErrorsText(): string;
 };
