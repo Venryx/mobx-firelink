@@ -2,7 +2,7 @@
 // ==========
 
 export * from "./Firelink"; // main
-export * from "./Filters";
+export * from "./QueryOps";
 
 // subfolders
 // ==========

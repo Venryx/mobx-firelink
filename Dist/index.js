@@ -1,7 +1,7 @@
 // root
 // ==========
 export * from "./Firelink"; // main
-export * from "./Filters";
+export * from "./QueryOps";
 // subfolders
 // ==========
 export * from "./Accessors/Custom";

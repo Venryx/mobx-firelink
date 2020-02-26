@@ -1,5 +1,5 @@
 import { ObservableMap } from "mobx";
-import { Filter } from "../Filters";
+import { QueryOp } from "../QueryOps";
 import { Firelink } from "../Firelink";
 export declare enum TreeNodeType {
     Root = 0,
@@ -21,7 +21,7 @@ export declare class QueryRequest {
     static ParseString(dataStr: string): QueryRequest;
     static ParseData(data: any): QueryRequest;
     constructor(initialData?: Partial<QueryRequest>);
-    filters: Filter[];
+    queryOps: QueryOp[];
     Apply(collection: firebase.firestore.CollectionReference): import("firebase").firestore.CollectionReference<import("firebase").firestore.DocumentData>;
     toString(): string;
 }

@@ -6,7 +6,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 import { Assert, CE, ToJSON, FromJSON } from "js-vextensions";
 import { observable, runInAction } from "mobx";
-import { Filter } from "../Filters";
+import { QueryOp } from "../QueryOps";
 import { PathOrPathGetterToPath, PathOrPathGetterToPathSegments } from "../Utils/PathHelpers";
 import { ProcessDBData } from "../Utils/DatabaseHelpers";
 import { _getGlobalState } from "mobx";
@@ -33,7 +33,7 @@ export class PathSubscription {
 }
 export class QueryRequest {
     constructor(initialData) {
-        this.filters = [];
+        this.queryOps = [];
         CE(this).Extend(initialData);
     }
     static ParseString(dataStr) {
@@ -41,15 +41,15 @@ export class QueryRequest {
     }
     static ParseData(data) {
         let result = new QueryRequest({});
-        for (let filterData of data.filters) {
-            result.filters.push(Filter.ParseData(filterData));
+        for (let opData of data.queryOps) {
+            result.queryOps.push(QueryOp.ParseData(opData));
         }
         return result;
     }
     Apply(collection) {
         let result = collection;
-        for (let filter of this.filters) {
-            result = filter.Apply(result);
+        for (let op of this.queryOps) {
+            result = op.Apply(result);
         }
         return result;
     }

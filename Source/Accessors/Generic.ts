@@ -1,16 +1,15 @@
-import {E, ShallowChanged, emptyArray, CE, WaitXThenRun, Assert, StringCE, emptyArray_forLoading} from "js-vextensions";
-import {ObservableMap, autorun, when, runInAction, reaction} from "mobx";
-import {DBShape} from "../UserTypes";
-import {Filter} from "../Filters";
+import {CE, E, emptyArray, emptyArray_forLoading} from "js-vextensions";
+import {ObservableMap, runInAction} from "mobx";
 import {defaultFireOptions, FireOptions} from "../Firelink";
-import {TreeNode, DataStatus, QueryRequest} from "../Tree/TreeNode";
-import {PathOrPathGetterToPath, PathOrPathGetterToPathSegments} from "../Utils/PathHelpers";
-import {TreeRequestWatcher} from "../Tree/TreeRequestWatcher";
+import {QueryOp} from "../QueryOps";
+import {DataStatus, QueryRequest} from "../Tree/TreeNode";
+import {DBShape} from "../UserTypes";
 import {DoX_ComputationSafe} from "../Utils/MobX";
 import {nil} from "../Utils/Nil";
+import {PathOrPathGetterToPathSegments} from "../Utils/PathHelpers";
 
 /*
-Why use explicit GetDocs, GetDoc, etc. calls instead of just Proxy's?
+Why use explicit GetDocs, GetDoc, etc. calls instead of just Proxy's in mobx store fields?
 1) It lets you add options (like filters) in a consistent way. (consistent among sync db-accesses, and, old: consistent with async db-accesses, eg. GetDocAsync)
 2) It makes it visually clear where a db-access is taking place, as opposed to a mere store access.
 */ 
@@ -18,7 +17,7 @@ Why use explicit GetDocs, GetDoc, etc. calls instead of just Proxy's?
 export class GetDocs_Options {
 	static default = new GetDocs_Options();
 	inLinkRoot? = true;
-	filters?: Filter[];
+	queryOps?: QueryOp[];
 	resultForLoading? = emptyArray_forLoading;
 	//resultForEmpty? = emptyArray;
 }
@@ -28,7 +27,7 @@ export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<a
 	let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
 	if (CE(pathSegments).Any(a=>a == null)) return emptyArray;
 
-	let queryRequest = opt.filters ? new QueryRequest({filters: opt.filters}) : nil;
+	let queryRequest = opt.queryOps ? new QueryRequest({queryOps: opt.queryOps}) : nil;
 
 	const treeNode = opt.fire.tree.Get(pathSegments, queryRequest);
 	// if already subscribed, just mark requested (reduces action-spam of GetDocs_Request)

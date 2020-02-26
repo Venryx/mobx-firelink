@@ -1,11 +1,11 @@
 import { ObservableMap } from "mobx";
-import { DBShape } from "../UserTypes";
-import { Filter } from "../Filters";
 import { FireOptions } from "../Firelink";
+import { QueryOp } from "../QueryOps";
+import { DBShape } from "../UserTypes";
 export declare class GetDocs_Options {
     static default: GetDocs_Options;
     inLinkRoot?: boolean | undefined;
-    filters?: Filter[];
+    queryOps?: QueryOp[];
     resultForLoading?: any[] | undefined;
 }
 export declare function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<any, DB>> & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DB) => ObservableMap<any, DocT>)): DocT[] | undefined;

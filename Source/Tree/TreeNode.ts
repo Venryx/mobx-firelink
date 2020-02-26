@@ -1,6 +1,6 @@
 import {Assert, CE, ToJSON, WaitXThenRun, FromJSON, ObjectCE} from "js-vextensions";
 import {observable, ObservableMap, runInAction} from "mobx";
-import {Filter} from "../Filters";
+import {QueryOp} from "../QueryOps";
 import {Firelink} from "../Firelink";
 import {PathOrPathGetterToPath, PathOrPathGetterToPathSegments} from "../Utils/PathHelpers";
 import {ProcessDBData} from "../Utils/DatabaseHelpers";
@@ -35,8 +35,8 @@ export class QueryRequest {
 	}
 	static ParseData(data: any) {
 		let result = new QueryRequest({});
-		for (let filterData of data.filters) {
-			result.filters.push(Filter.ParseData(filterData));
+		for (let opData of data.queryOps) {
+			result.queryOps.push(QueryOp.ParseData(opData));
 		}
 		return result
 	}
@@ -44,11 +44,11 @@ export class QueryRequest {
 	constructor(initialData?: Partial<QueryRequest>) {
 		CE(this).Extend(initialData);
 	}
-	filters = [] as Filter[];
+	queryOps = [] as QueryOp[];
 	Apply(collection: firebase.firestore.CollectionReference) {
 		let result = collection;
-		for (let filter of this.filters) {
-			result = filter.Apply(result);
+		for (let op of this.queryOps) {
+			result = op.Apply(result);
 		}
 		return result;
 	}

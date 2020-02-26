@@ -1,5 +1,5 @@
 export * from "./Firelink";
-export * from "./Filters";
+export * from "./QueryOps";
 export * from "./Accessors/Custom";
 export * from "./Accessors/Generic";
 export * from "./Accessors/Helpers";
