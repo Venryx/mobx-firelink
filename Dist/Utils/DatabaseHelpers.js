@@ -124,17 +124,25 @@ export function ConvertDBUpdatesToBatch(options, dbUpdates) {
     Assert(updateEntries.length <= maxDBUpdatesPerBatch, `Cannot have more than ${maxDBUpdatesPerBatch} db-updates per batch.`);
     const batch = opt.fire.subs.firestoreDB.batch();
     for (let [path, value] of updateEntries) {
-        const [docPath, fieldPathInDoc] = GetPathParts(path, true);
+        let [docPath, fieldPathInDoc] = GetPathParts(path, true);
         value = Clone(value); // picky firestore library demands "simple JSON objects"
         // [fieldPathInDoc, value] = FixSettingPrimitiveValueDirectly(fieldPathInDoc, value);
         const docRef = opt.fire.subs.firestoreDB.doc(docPath);
         if (fieldPathInDoc) {
             value = value != null ? value : firebase.firestore.FieldValue.delete();
-            // batch.update(docRef, { [fieldPathInDoc]: value });
-            // set works even if the document doesn't exist yet, so use set instead of update
-            const nestedSetHelper = {};
-            DeepSet(nestedSetHelper, fieldPathInDoc, value, ".", true);
-            batch.set(docRef, nestedSetHelper, { merge: true });
+            // if db-update entry says to use the "merge" op for this field update, do so
+            if (fieldPathInDoc.endsWith("@merge")) {
+                fieldPathInDoc = fieldPathInDoc.slice(0, -"@merge".length);
+                // Set-with-merge differs from update in that:
+                // 1) It works even if the document doesn't exist yet.
+                // 2) This doesn't remove existing children entries: [`nodes/${nodeID}/.children`]: {newChild: true}
+                const nestedSetHelper = {};
+                DeepSet(nestedSetHelper, fieldPathInDoc, value, ".", true);
+                batch.set(docRef, nestedSetHelper, { merge: true });
+            }
+            else {
+                batch.update(docRef, { [fieldPathInDoc]: value });
+            }
         }
         else {
             if (value) {
@@ -172,47 +180,54 @@ export function ApplyDBUpdates(options, dbUpdates, rootPath_override) {
             }
         }
         // probably temp; if only updating one field, just do it directly (for some reason, a batch takes much longer)
-        const updateEntries = Object.entries(dbUpdates);
+        // update: nowadays batch updates have no discernable latency increase, so we always use batches now (to simplify the code-path)
+        /*const updateEntries = Object.entries(dbUpdates);
         if (updateEntries.length == 1) {
             let [path, value] = updateEntries[0];
-            const [docPath, fieldPathInDoc] = GetPathParts(path, true);
+            let [docPath, fieldPathInDoc] = GetPathParts(path, true);
             value = Clone(value); // picky firestore library demands "simple JSON objects"
+    
             // [fieldPathInDoc, value] = FixSettingPrimitiveValueDirectly(fieldPathInDoc, value);
+    
             const docRef = opt.fire.subs.firestoreDB.doc(docPath);
             if (fieldPathInDoc) {
                 value = value != null ? value : firebase.firestore.FieldValue.delete();
-                // await docRef.update({ [fieldPathInDoc]: value });
-                // set works even if the document doesn't exist yet, so use set instead of update
-                const nestedSetHelper = {};
-                DeepSet(nestedSetHelper, fieldPathInDoc, value, ".", true);
-                yield docRef.set(nestedSetHelper, { merge: true });
-            }
-            else {
+    
+                // if db-update entry says to use the "merge" op for this field update, do so
+                if (fieldPathInDoc.endsWith("@merge")) {
+                    fieldPathInDoc = fieldPathInDoc.slice(0, -"@merge".length);
+                    // Set-with-merge differs from update in that:
+                    // 1) It works even if the document doesn't exist yet.
+                    // 2) This doesn't remove existing children entries: [`nodes/${nodeID}/.children`]: {newChild: true}
+                    const nestedSetHelper = {};
+                    DeepSet(nestedSetHelper, fieldPathInDoc, value, ".", true);
+                    await docRef.set(nestedSetHelper, {merge: true});
+                } else {
+                    await docRef.update({[fieldPathInDoc]: value});
+                }
+            } else {
                 if (value) {
-                    yield docRef.set(value);
-                }
-                else {
-                    yield docRef.delete();
+                    await docRef.set(value);
+                } else {
+                    await docRef.delete();
                 }
             }
+        } else {*/
+        // await firestoreDB.runTransaction(async batch=> {
+        const dbUpdates_pairs = ObjectCE(dbUpdates).Pairs();
+        const dbUpdates_pairs_chunks = [];
+        for (let offset = 0; offset < dbUpdates_pairs.length; offset += opt.updatesPerChunk) {
+            const chunk = dbUpdates_pairs.slice(offset, offset + opt.updatesPerChunk);
+            dbUpdates_pairs_chunks.push(chunk);
         }
-        else {
-            // await firestoreDB.runTransaction(async batch=> {
-            const dbUpdates_pairs = ObjectCE(dbUpdates).Pairs();
-            const dbUpdates_pairs_chunks = [];
-            for (let offset = 0; offset < dbUpdates_pairs.length; offset += opt.updatesPerChunk) {
-                const chunk = dbUpdates_pairs.slice(offset, offset + opt.updatesPerChunk);
-                dbUpdates_pairs_chunks.push(chunk);
+        for (const [index, dbUpdates_pairs_chunk] of dbUpdates_pairs_chunks.entries()) {
+            const dbUpdates_chunk = dbUpdates_pairs_chunk.ToMap(a => a.key, a => a.value);
+            if (dbUpdates_pairs_chunks.length > 1) {
+                MaybeLog_Base(a => a.commands, l => l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
             }
-            for (const [index, dbUpdates_pairs_chunk] of dbUpdates_pairs_chunks.entries()) {
-                const dbUpdates_chunk = dbUpdates_pairs_chunk.ToMap(a => a.key, a => a.value);
-                if (dbUpdates_pairs_chunks.length > 1) {
-                    MaybeLog_Base(a => a.commands, l => l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
-                }
-                //await ApplyDBUpdates_Base(opt, dbUpdates_chunk, rootPath_override);
-                let batch = ConvertDBUpdatesToBatch(opt, dbUpdates_chunk);
-                yield batch.commit();
-            }
+            //await ApplyDBUpdates_Base(opt, dbUpdates_chunk, rootPath_override);
+            let batch = ConvertDBUpdatesToBatch(opt, dbUpdates_chunk);
+            yield batch.commit();
         }
     });
 }
