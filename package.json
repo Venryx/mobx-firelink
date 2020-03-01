@@ -3,8 +3,8 @@
   "description": "Integrate Firebase data into MobX and React with declarative path requests.",
   "version": "1.0.47",
   "main": "Dist/index.js",
-  "type": "module",
   "typings": "Dist/index.d.ts",
+  "type": "module",
   "license": "MIT",
   "author": {
     "name": "Venryx",
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "firebase": "^7.6.1",
-    "mobx": "^5.15.1",
+    "mobx": "^5.15.4",
     "typescript": "^3.7.4"
   },
   "dependencies": {
