@@ -1,3 +1,9 @@
+// warn about multiple lib instances
+let vLibCounts = (window["vLibCounts"] = window["vLibCounts"] || {});
+vLibCounts["mobx-firelink"] = (vLibCounts["mobx-firelink"] || 0) + 1;
+if (vLibCounts["mobx-firelink"] >= 2) {
+    console.warn("More than one instance of mobx-firelink loaded. This can cause issues, eg. with WrapDBValue.");
+}
 // root
 // ==========
 export * from "./Firelink"; // main

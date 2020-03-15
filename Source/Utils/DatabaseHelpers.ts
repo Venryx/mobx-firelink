@@ -164,6 +164,7 @@ export function ConvertDBUpdatesToBatch(options: Partial<FireOptions>, dbUpdates
 				batch.update(docRef, {[fieldPathInDoc]: value});
 			}
 		} else {
+			Assert(!useMerge, "Can only use merge flag for in-document paths.");
 			if (value) {
 				batch.set(docRef, value);
 			} else {
