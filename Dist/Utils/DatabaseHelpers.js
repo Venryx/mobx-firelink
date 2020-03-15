@@ -118,6 +118,17 @@ export function ConvertDataToValidDBUpdates(versionPath, versionData, dbUpdatesR
     }
     return result;
 }
+export class DBValueWrapper {
+    constructor() {
+        this.merge = false;
+    }
+}
+export function WrapDBValue(value, otherFlags) {
+    let result = new DBValueWrapper();
+    result.value = value;
+    CE(result).VSet(otherFlags);
+    return result;
+}
 export function ConvertDBUpdatesToBatch(options, dbUpdates) {
     const opt = E(defaultFireOptions, options);
     const updateEntries = Object.entries(dbUpdates);
@@ -125,14 +136,19 @@ export function ConvertDBUpdatesToBatch(options, dbUpdates) {
     const batch = opt.fire.subs.firestoreDB.batch();
     for (let [path, value] of updateEntries) {
         let [docPath, fieldPathInDoc] = GetPathParts(path, true);
+        let useMerge = false;
+        if (value instanceof DBValueWrapper) {
+            let wrapper = value;
+            if (wrapper.merge)
+                useMerge = true;
+            value = wrapper.value;
+        }
         value = Clone(value); // picky firestore library demands "simple JSON objects"
         // [fieldPathInDoc, value] = FixSettingPrimitiveValueDirectly(fieldPathInDoc, value);
         const docRef = opt.fire.subs.firestoreDB.doc(docPath);
         if (fieldPathInDoc) {
             value = value != null ? value : firebase.firestore.FieldValue.delete();
-            // if db-update entry says to use the "merge" op for this field update, do so
-            if (fieldPathInDoc.endsWith("@merge")) {
-                fieldPathInDoc = fieldPathInDoc.slice(0, -"@merge".length);
+            if (useMerge) {
                 // Set-with-merge differs from update in that:
                 // 1) It works even if the document doesn't exist yet.
                 // 2) This doesn't remove existing children entries: [`nodes/${nodeID}/.children`]: {newChild: true}

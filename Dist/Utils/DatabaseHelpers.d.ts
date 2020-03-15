@@ -4,6 +4,11 @@ export declare function IsAuthValid(auth: any): boolean;
 export declare function ProcessDBData(data: any, addHelpers: boolean, rootKey?: string): any;
 export declare function AssertValidatePath(path: string): void;
 export declare function ConvertDataToValidDBUpdates(versionPath: string, versionData: any, dbUpdatesRelativeToVersionPath?: boolean): {};
+export declare class DBValueWrapper {
+    value: any;
+    merge: boolean;
+}
+export declare function WrapDBValue(value: any, otherFlags: Partial<Omit<DBValueWrapper, "value">>): DBValueWrapper;
 export declare function ConvertDBUpdatesToBatch(options: Partial<FireOptions>, dbUpdates: Object): firebase.firestore.WriteBatch;
 export declare const maxDBUpdatesPerBatch = 500;
 export declare class ApplyDBUpdates_Options {
