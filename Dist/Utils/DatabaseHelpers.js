@@ -118,11 +118,16 @@ export function ConvertDataToValidDBUpdates(versionPath, versionData, dbUpdatesR
     }
     return result;
 }
+//export const DBValueWrapper_classSymbol = Symbol("DBValueWrapper_classSymbol");
 export class DBValueWrapper {
     constructor() {
         this.merge = false;
     }
 }
+/*export function IsDBValueWrapper(val: any) {
+    //return val[DBValueWrapper_classSymbol] === true;
+    return val instanceof DBValueWrapper;
+}*/
 export function WrapDBValue(value, otherFlags) {
     let result = new DBValueWrapper();
     result.value = value;
@@ -187,7 +192,8 @@ export function ApplyDBUpdates(options, dbUpdates, rootPath_override) {
     return __awaiter(this, void 0, void 0, function* () {
         const opt = E(defaultFireOptions, ApplyDBUpdates_Options.default, options);
         //dbUpdates = WithoutHelpers(Clone(dbUpdates));
-        dbUpdates = Clone(dbUpdates);
+        //dbUpdates = Clone(dbUpdates);
+        dbUpdates = Object.assign({}, dbUpdates); // shallow clone, so we preserve DBValueWrappers in entries
         let rootPath = (rootPath_override !== null && rootPath_override !== void 0 ? rootPath_override : opt.fire.rootPath);
         if (rootPath != null) {
             //for (const {key: localPath, value} of ObjectCE.Pairs(dbUpdates)) {

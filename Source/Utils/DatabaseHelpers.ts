@@ -119,10 +119,16 @@ export function ConvertDataToValidDBUpdates(versionPath: string, versionData: an
 	return result;
 }
 
+//export const DBValueWrapper_classSymbol = Symbol("DBValueWrapper_classSymbol");
 export class DBValueWrapper {
+	//[DBValueWrapper_classSymbol] = true;
 	value: any;
 	merge = false;
 }
+/*export function IsDBValueWrapper(val: any) {
+	//return val[DBValueWrapper_classSymbol] === true;
+	return val instanceof DBValueWrapper;
+}*/
 export function WrapDBValue(value: any, otherFlags: Partial<Omit<DBValueWrapper, "value">>) {
 	let result = new DBValueWrapper();
 	result.value = value;
@@ -188,7 +194,8 @@ export class ApplyDBUpdates_Options {
 export async function ApplyDBUpdates(options: Partial<FireOptions & ApplyDBUpdates_Options>, dbUpdates: Object, rootPath_override?: string) {
 	const opt = E(defaultFireOptions, ApplyDBUpdates_Options.default, options) as FireOptions & ApplyDBUpdates_Options;
 	//dbUpdates = WithoutHelpers(Clone(dbUpdates));
-	dbUpdates = Clone(dbUpdates);
+	//dbUpdates = Clone(dbUpdates);
+	dbUpdates = {...dbUpdates}; // shallow clone, so we preserve DBValueWrappers in entries
 	let rootPath = rootPath_override ?? opt.fire.rootPath;
 	if (rootPath != null) {
 		//for (const {key: localPath, value} of ObjectCE.Pairs(dbUpdates)) {
