@@ -42,7 +42,7 @@ export declare class TreeNode<DataShape> {
     collectionNodes: ObservableMap<string, TreeNode<any>>;
     data: DataShape;
     dataJSON: string;
-    SetData(data: DataShape, fromCache: boolean): void;
+    SetData(data: DataShape, fromCache: boolean): boolean;
     queryNodes: ObservableMap<string, TreeNode<any>>;
     query?: QueryRequest;
     docNodes: ObservableMap<string, TreeNode<any>>;

@@ -116,20 +116,27 @@ export class TreeNode<DataShape> {
 				}
 				this.data = observable(newData) as any;*/
 				runInAction("TreeNode.Subscribe.onSnapshot_collection", ()=> {
-					let deletedDocIDs = CE(Array.from(this.docNodes.keys())).Except(...snapshot.docs.map(a=>a.id));
-					for (let doc of snapshot.docs) {
+					const deletedDocIDs = CE(Array.from(this.docNodes.keys())).Except(...snapshot.docs.map(a=>a.id));
+					let dataChanged = false;
+					for (const doc of snapshot.docs) {
 						if (!this.docNodes.has(doc.id)) {
 							this.docNodes.set(doc.id, new TreeNode(this.fire, this.pathSegments.concat([doc.id])));
 						}
-						this.docNodes.get(doc.id)!.SetData(doc.data(), snapshot.metadata.fromCache);
+						dataChanged = this.docNodes.get(doc.id)!.SetData(doc.data(), snapshot.metadata.fromCache) || dataChanged;
 					}
-					for (let docID of deletedDocIDs) {
-						let docNode = this.docNodes.get(docID);
-						docNode?.SetData(null, snapshot.metadata.fromCache);
+					for (const docID of deletedDocIDs) {
+						const docNode = this.docNodes.get(docID);
+						dataChanged = docNode?.SetData(null, snapshot.metadata.fromCache) || dataChanged;
 						//docNode?.Unsubscribe(); // if someone subscribed directly, I guess we let them keep the detached subscription?
 						this.docNodes.delete(docID);
 					}
-					this.status = snapshot.metadata.fromCache ? DataStatus.Received_Cache : DataStatus.Received_Full;
+
+					const newStatus = snapshot.metadata.fromCache ? DataStatus.Received_Cache : DataStatus.Received_Full;
+					// see comment in SetData for why we ignore this case
+					const isIgnorableStatusChange = !dataChanged && newStatus == DataStatus.Received_Cache && this.status == DataStatus.Received_Full;
+					if (newStatus != this.status && !isIgnorableStatusChange) {
+						this.status = newStatus;
+					}
 				});
 			}));
 		}
@@ -162,9 +169,13 @@ export class TreeNode<DataShape> {
 			data = null as any;
 		}
 
-		let dataJSON = ToJSON(data);
-		// only replace this.data, if new data differs by deep-comparison (Firestore apparently re-pushes db-content to listeners every 30m or so, which otherwise causes unnecessary cache-breaking and UI updating)
-		if (dataJSON != this.dataJSON) {
+		// Note: with `includeMetadataChanges` enabled, firestore refreshes all subscriptions every half-hour or so. (first with fromCache:true, then with fromCache:false)
+		// The checks below are how we keep those refreshes from causing unnecesary subscription-listener triggers. (since that causes unnecessary cache-breaking and UI updating)
+		// (if needed, we could just *delay* the update: after X time passes, check if there was a subsequent from-server update that supersedes it -- only propogating the update if there wasn't one)
+
+		const dataJSON = ToJSON(data);
+		const dataChanged = dataJSON != this.dataJSON;
+		if (dataChanged) {
 			//console.log("Data changed from:", this.data, " to:", data, " @node:", this);
 			//data = data ? observable(data_raw) as any : null;
 			ProcessDBData(data, true, CE(this.pathSegments).Last()); // maybe rework
@@ -172,21 +183,19 @@ export class TreeNode<DataShape> {
 			this.dataJSON = dataJSON;
 		}
 
-		let newStatus = fromCache ? DataStatus.Received_Cache : DataStatus.Received_Full;
-		if (newStatus != this.status) {
-			// with `includeMetadataChanges`, firestore refreshes all subscriptions every half-hour or so (fromCache:true, then fromCache:false); we ignore these, if no data-changes
-			// (if needed, we could just *delay* the update: after X time passes, check if there was a subsequent from-server update that supersedes it -- only propogating the update if there wasn't one)
-			let isIgnorableStatusChange = dataJSON == this.dataJSON && newStatus == DataStatus.Received_Cache && this.status == DataStatus.Received_Full;
-			if (!isIgnorableStatusChange) {
-				//if (data != null) {
-				//ProcessDBData(this.data, true, true, CE(this.pathSegments).Last()); // also add to proxy (since the mobx proxy doesn't expose non-enumerable props) // maybe rework
-				this.status = newStatus;
-				/*} else {
-					// entry was deleted; reset status to "initial"
-					this.status = DataStatus.Initial;
-				}*/
-			}
+		const newStatus = fromCache ? DataStatus.Received_Cache : DataStatus.Received_Full;
+		const isIgnorableStatusChange = !dataChanged && newStatus == DataStatus.Received_Cache && this.status == DataStatus.Received_Full;
+		if (newStatus != this.status && !isIgnorableStatusChange) {
+			//if (data != null) {
+			//ProcessDBData(this.data, true, true, CE(this.pathSegments).Last()); // also add to proxy (since the mobx proxy doesn't expose non-enumerable props) // maybe rework
+			this.status = newStatus;
+			/*} else {
+				// entry was deleted; reset status to "initial"
+				this.status = DataStatus.Initial;
+			}*/
 		}
+
+		return dataChanged;
 	}
 
 	// for collection (and collection-query) nodes
