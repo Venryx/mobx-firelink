@@ -161,13 +161,21 @@ export class TreeNode {
             this.data = data;
             this.dataJSON = dataJSON;
         }
-        //if (data != null) {
-        //ProcessDBData(this.data, true, true, CE(this.pathSegments).Last()); // also add to proxy (since the mobx proxy doesn't expose non-enumerable props) // maybe rework
-        this.status = fromCache ? DataStatus.Received_Cache : DataStatus.Received_Full;
-        /*} else {
-            // entry was deleted; reset status to "initial"
-            this.status = DataStatus.Initial;
-        }*/
+        let newStatus = fromCache ? DataStatus.Received_Cache : DataStatus.Received_Full;
+        if (newStatus != this.status) {
+            // with `includeMetadataChanges`, firestore refreshes all subscriptions every half-hour or so (fromCache:true, then fromCache:false); we ignore these, if no data-changes
+            // (if needed, we could just *delay* the update: after X time passes, check if there was a subsequent from-server update that supersedes it -- only propogating the update if there wasn't one)
+            let isIgnorableStatusChange = dataJSON == this.dataJSON && newStatus == DataStatus.Received_Cache && this.status == DataStatus.Received_Full;
+            if (!isIgnorableStatusChange) {
+                //if (data != null) {
+                //ProcessDBData(this.data, true, true, CE(this.pathSegments).Last()); // also add to proxy (since the mobx proxy doesn't expose non-enumerable props) // maybe rework
+                this.status = newStatus;
+                /*} else {
+                    // entry was deleted; reset status to "initial"
+                    this.status = DataStatus.Initial;
+                }*/
+            }
+        }
     }
     //docNodes = new Map<string, TreeNode<any>>();
     get docDatas() {
