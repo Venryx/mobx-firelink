@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { DeepSet, IsNumberString, Assert, Clone, ObjectCE, GetTreeNodesInObjTree, E, CE } from "js-vextensions";
+import { DeepSet, IsNumberString, Assert, Clone, ObjectCE, GetTreeNodesInObjTree, E, CE, StartDownload } from "js-vextensions";
 import u from "updeep";
 import { MaybeLog_Base } from "./General";
 import { SplitStringBySlash_Cached } from "..";
@@ -188,54 +188,25 @@ export class ApplyDBUpdates_Options {
     }
 }
 ApplyDBUpdates_Options.default = new ApplyDBUpdates_Options();
+export function FinalizeDBUpdates(options, dbUpdates, rootPath_override) {
+    const opt = E(defaultFireOptions, ApplyDBUpdates_Options.default, options);
+    //dbUpdates = WithoutHelpers(Clone(dbUpdates));
+    //dbUpdates = Clone(dbUpdates);
+    dbUpdates = Object.assign({}, dbUpdates); // shallow clone, so we preserve DBValueWrappers in entries
+    let rootPath = (rootPath_override !== null && rootPath_override !== void 0 ? rootPath_override : opt.fire.rootPath);
+    if (rootPath != null && rootPath != "") {
+        //for (const {key: localPath, value} of ObjectCE.Pairs(dbUpdates)) {
+        for (const { key: localPath, value } of ObjectCE(dbUpdates).Pairs()) {
+            dbUpdates[`${rootPath}/${localPath}`] = value;
+            delete dbUpdates[localPath];
+        }
+    }
+    return dbUpdates;
+}
 export function ApplyDBUpdates(options, dbUpdates, rootPath_override) {
     return __awaiter(this, void 0, void 0, function* () {
         const opt = E(defaultFireOptions, ApplyDBUpdates_Options.default, options);
-        //dbUpdates = WithoutHelpers(Clone(dbUpdates));
-        //dbUpdates = Clone(dbUpdates);
-        dbUpdates = Object.assign({}, dbUpdates); // shallow clone, so we preserve DBValueWrappers in entries
-        let rootPath = (rootPath_override !== null && rootPath_override !== void 0 ? rootPath_override : opt.fire.rootPath);
-        if (rootPath != null) {
-            //for (const {key: localPath, value} of ObjectCE.Pairs(dbUpdates)) {
-            for (const { key: localPath, value } of ObjectCE(dbUpdates).Pairs()) {
-                dbUpdates[`${rootPath}/${localPath}`] = value;
-                delete dbUpdates[localPath];
-            }
-        }
-        // probably temp; if only updating one field, just do it directly (for some reason, a batch takes much longer)
-        // update: nowadays batch updates have no discernable latency increase, so we always use batches now (to simplify the code-path)
-        /*const updateEntries = Object.entries(dbUpdates);
-        if (updateEntries.length == 1) {
-            let [path, value] = updateEntries[0];
-            let [docPath, fieldPathInDoc] = GetPathParts(path, true);
-            value = Clone(value); // picky firestore library demands "simple JSON objects"
-    
-            // [fieldPathInDoc, value] = FixSettingPrimitiveValueDirectly(fieldPathInDoc, value);
-    
-            const docRef = opt.fire.subs.firestoreDB.doc(docPath);
-            if (fieldPathInDoc) {
-                value = value != null ? value : firebase.firestore.FieldValue.delete();
-    
-                // if db-update entry says to use the "merge" op for this field update, do so
-                if (fieldPathInDoc.endsWith("@merge")) {
-                    fieldPathInDoc = fieldPathInDoc.slice(0, -"@merge".length);
-                    // Set-with-merge differs from update in that:
-                    // 1) It works even if the document doesn't exist yet.
-                    // 2) This doesn't remove existing children entries: [`nodes/${nodeID}/.children`]: {newChild: true}
-                    const nestedSetHelper = {};
-                    DeepSet(nestedSetHelper, fieldPathInDoc, value, ".", true);
-                    await docRef.set(nestedSetHelper, {merge: true});
-                } else {
-                    await docRef.update({[fieldPathInDoc]: value});
-                }
-            } else {
-                if (value) {
-                    await docRef.set(value);
-                } else {
-                    await docRef.delete();
-                }
-            }
-        } else {*/
+        dbUpdates = FinalizeDBUpdates(options, dbUpdates, rootPath_override);
         // await firestoreDB.runTransaction(async batch=> {
         const dbUpdates_pairs = ObjectCE(dbUpdates).Pairs();
         const dbUpdates_pairs_chunks = [];
@@ -274,4 +245,46 @@ export function ApplyDBUpdates_Local(dbData, dbUpdates) {
         }
     } while (emptyNodes.length);
     return result;
+}
+export function MakeQuickBackupForDBUpdates(options, dbUpdates, rootPath_override, log = true, download = true) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const opt = E(defaultFireOptions, ApplyDBUpdates_Options.default, options);
+        dbUpdates = FinalizeDBUpdates(options, dbUpdates, rootPath_override);
+        const newDocValues_pairs = CE(dbUpdates).Pairs();
+        const oldDocValues = yield Promise.all(newDocValues_pairs.map(pair => {
+            let [docPath, fieldPathInDoc] = GetPathParts(pair.key, true);
+            let docRef = opt.fire.subs.firestoreDB.doc(docPath);
+            return docRef.get().then(data => data.data());
+        }));
+        /*const docValues_map = CE(docValues).ToMap((a, index)=>dbUpdateEntries[index].key, a=>a);
+        const backupData = {
+            oldValues: docValues_map,
+            newValues: docValues_map,
+        };*/
+        const quickBackup = CE(newDocValues_pairs).ToMap(pair => pair.key, pair => ({
+            oldData: oldDocValues[pair.index],
+            newData: pair.value,
+        }));
+        const quickBackupJSON = JSON.stringify(quickBackup);
+        if (log) {
+            console.log("QuickBackup:", quickBackup);
+        }
+        if (download) {
+            StartDownload(new Blob([quickBackupJSON]), "QuickBackup.json");
+        }
+        return quickBackup;
+    });
+}
+/**
+Restores the old-values for the paths listed in the quick-backup.
+Note: Uses the *absolute paths* listed; to restore to a different version-root, transform the quick-backup data.
+*/
+export function RestoreQuickBackup(options, quickBackup) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const oldDataAsDBUpdates = CE(CE(quickBackup).Pairs()).ToMap(a => a.key, a => a.value.oldData);
+        console.log("OldDataAsDBUpdates:", oldDataAsDBUpdates);
+        //await ApplyDBUpdates(options, oldDataAsDBUpdates, rootPath_override);
+        yield ApplyDBUpdates(options, oldDataAsDBUpdates, "");
+        console.log("Restored quick-backup. (Note: Used the *absolute paths* listed; to restore to a different version-root, transform the quick-backup data.)");
+    });
 }
