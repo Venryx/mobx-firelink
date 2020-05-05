@@ -10,6 +10,7 @@ export * from "./Server/Command_Old";
 export * from "./Server/Command";
 export * from "./Tree/TreeNode";
 export * from "./Utils/DatabaseHelpers";
+export * from "./Utils/DBUpdateMerging";
 export * from "./Utils/General";
 export * from "./Utils/PathHelpers";
 export * from "./Utils/StringSplitCache";

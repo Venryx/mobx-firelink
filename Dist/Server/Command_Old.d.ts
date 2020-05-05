@@ -24,5 +24,3 @@ export declare abstract class Command_Old<Payload, ReturnData = void> {
     Run(maxUpdatesPerChunk?: number): Promise<ReturnData>;
     Validate_LateHeavy(dbUpdates: any): Promise<void>;
 }
-export declare function MergeDBUpdates(baseUpdatesMap: Object, updatesToMergeMap: Object): {};
-export declare function MergeDBUpdates_Multi(...dbUpdateMaps: Object[]): {};

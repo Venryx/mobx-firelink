@@ -4,16 +4,18 @@ export class QueryOp {
             return new WhereOp(json.fieldPath, json.comparison, json.value);
         if (json.type == "orderBy")
             return new OrderByOp(json.fieldPath, json.direction);
+        if (json.type == "limit")
+            return new LimitOp(json.count);
         return null;
     }
 }
 export class WhereOp extends QueryOp {
     constructor(fieldPath, comparison, value) {
         super();
-        this.type = "where";
         this.fieldPath = fieldPath;
         this.comparison = comparison;
         this.value = value;
+        this.type = "where";
     }
     Apply(collection) {
         var _a;
@@ -27,11 +29,21 @@ export class WhereOp extends QueryOp {
 export class OrderByOp extends QueryOp {
     constructor(fieldPath, direction = "asc") {
         super();
-        this.type = "orderBy";
         this.fieldPath = fieldPath;
         this.direction = direction;
+        this.type = "orderBy";
     }
     Apply(collection) {
         return collection.orderBy(this.fieldPath, this.direction);
+    }
+}
+export class LimitOp extends QueryOp {
+    constructor(count) {
+        super();
+        this.count = count;
+        this.type = "limit";
+    }
+    Apply(collection) {
+        return collection.limit(this.count);
     }
 }

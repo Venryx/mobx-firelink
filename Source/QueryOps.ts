@@ -1,25 +1,21 @@
+export type QueryOpType = "where" | "orderBy" | "limit";
 export abstract class QueryOp {
 	static ParseData(json: any) {
 		if (json.type == "where") return new WhereOp(json.fieldPath, json.comparison, json.value);
 		if (json.type == "orderBy") return new OrderByOp(json.fieldPath, json.direction);
+		if (json.type == "limit") return new LimitOp(json.count);
 		return null as never;
 	}
 
-	type: "where" | "orderBy";
+	type: QueryOpType;
 	abstract Apply(collection: firebase.firestore.CollectionReference);
 }
 
 export class WhereOp extends QueryOp {
-	constructor(fieldPath: string, comparison: firebase.firestore.WhereFilterOp, value: any) {
+	constructor(public fieldPath: string, public comparison: firebase.firestore.WhereFilterOp, public value: any) {
 		super();
 		this.type = "where";
-		this.fieldPath = fieldPath;
-		this.comparison = comparison;
-		this.value = value;
 	}
-	fieldPath: string;
-	comparison: firebase.firestore.WhereFilterOp;
-	value: any;
 
 	Apply(collection: firebase.firestore.CollectionReference) {
 		// collection.where complains if value is undefined, so use null instead
@@ -31,16 +27,23 @@ export class WhereOp extends QueryOp {
 };*/
 
 export class OrderByOp extends QueryOp {
-	constructor(fieldPath: string, direction: firebase.firestore.OrderByDirection = "asc") {
+	constructor(public fieldPath: string, public direction: firebase.firestore.OrderByDirection = "asc") {
 		super();
 		this.type = "orderBy";
-		this.fieldPath = fieldPath;
-		this.direction = direction;
 	}
-	fieldPath: string;
-	direction: firebase.firestore.OrderByDirection;
 
 	Apply(collection: firebase.firestore.CollectionReference) {
 		return collection.orderBy(this.fieldPath, this.direction);
+	}
+}
+
+export class LimitOp extends QueryOp {
+	constructor(public count: number) {
+		super();
+		this.type = "limit";
+	}
+
+	Apply(collection: firebase.firestore.CollectionReference) {
+		return collection.limit(this.count);
 	}
 }
