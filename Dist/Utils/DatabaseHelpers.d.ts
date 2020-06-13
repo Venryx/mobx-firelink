@@ -1,6 +1,12 @@
 import { FireOptions } from "..";
 import { firestore } from "firebase";
 export declare function IsAuthValid(auth: any): boolean;
+/**
+Applies normalization of an object-tree to match how it would be stored (and thus returned) by Firestore.
+
+Currently, this consists of: sorting keys in alphabetical order.
+*/
+export declare function WithFirestoreNormalization(obj: any): any;
 export declare function ProcessDBData(data: any, addHelpers: boolean, rootKey?: string): any;
 export declare function AssertValidatePath(path: string): void;
 export declare function ConvertDataToValidDBUpdates(versionPath: string, versionData: any, dbUpdatesRelativeToVersionPath?: boolean): {};

@@ -1,4 +1,4 @@
-import {DeepSet, IsNumberString, Assert, StringCE, Clone, ObjectCE, ArrayCE, GetTreeNodesInObjTree, E, CE, StartDownload} from "js-vextensions";
+import {DeepSet, IsNumberString, Assert, StringCE, Clone, ObjectCE, ArrayCE, GetTreeNodesInObjTree, E, CE, StartDownload, IsObject} from "js-vextensions";
 import u from "updeep";
 import {MaybeLog_Base} from "./General";
 import {FireOptions, SplitStringBySlash_Cached} from "..";
@@ -9,6 +9,29 @@ import {nil} from "./Nil";
 
 export function IsAuthValid(auth) {
 	return auth && !auth.isEmpty;
+}
+
+/**
+Applies normalization of an object-tree to match how it would be stored (and thus returned) by Firestore.
+
+Currently, this consists of: sorting keys in alphabetical order.
+*/
+export function WithFirestoreNormalization(obj: any) {
+	if (obj == null) return obj;
+	const result = Clone(obj);
+	for (const treeNode of GetTreeNodesInObjTree(result)) {
+		if (IsObject(treeNode.Value) && treeNode.Value != null) {
+			const oldProps = CE(treeNode.Value).Pairs();
+			for (const prop of oldProps) {
+				delete treeNode.Value[prop.key];
+			}
+			// re-add props in alphabetical order (to match with ordering applied by firestore)
+			for (const prop of CE(oldProps).OrderBy(a=>a.key)) {
+				treeNode.Value[prop.key] = prop.value;
+			}
+		}
+	}
+	return result;
 }
 
 /* Object.prototype._AddFunction_Inline = function DBRef(path = "", inVersionRoot = true) {

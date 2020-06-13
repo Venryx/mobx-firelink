@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { DeepSet, IsNumberString, Assert, Clone, ObjectCE, GetTreeNodesInObjTree, E, CE, StartDownload } from "js-vextensions";
+import { DeepSet, IsNumberString, Assert, Clone, ObjectCE, GetTreeNodesInObjTree, E, CE, StartDownload, IsObject } from "js-vextensions";
 import u from "updeep";
 import { MaybeLog_Base } from "./General";
 import { SplitStringBySlash_Cached } from "..";
@@ -16,6 +16,29 @@ import firebase from "firebase";
 import { GetPathParts } from "./PathHelpers";
 export function IsAuthValid(auth) {
     return auth && !auth.isEmpty;
+}
+/**
+Applies normalization of an object-tree to match how it would be stored (and thus returned) by Firestore.
+
+Currently, this consists of: sorting keys in alphabetical order.
+*/
+export function WithFirestoreNormalization(obj) {
+    if (obj == null)
+        return obj;
+    const result = Clone(obj);
+    for (const treeNode of GetTreeNodesInObjTree(result)) {
+        if (IsObject(treeNode.Value) && treeNode.Value != null) {
+            const oldProps = CE(treeNode.Value).Pairs();
+            for (const prop of oldProps) {
+                delete treeNode.Value[prop.key];
+            }
+            // re-add props in alphabetical order (to match with ordering applied by firestore)
+            for (const prop of CE(oldProps).OrderBy(a => a.key)) {
+                treeNode.Value[prop.key] = prop.value;
+            }
+        }
+    }
+    return result;
 }
 /* Object.prototype._AddFunction_Inline = function DBRef(path = "", inVersionRoot = true) {
     const finalPath = DBPath(path, inVersionRoot);
