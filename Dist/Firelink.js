@@ -62,20 +62,26 @@ export class Firelink {
     }
     LogIn(opt) {
         return __awaiter(this, void 0, void 0, function* () {
-            let provider;
-            if (opt.provider == "google")
-                provider = new firebase.auth.GoogleAuthProvider();
-            else if (opt.provider == "facebook")
-                provider = new firebase.auth.FacebookAuthProvider();
-            else if (opt.provider == "twitter")
-                provider = new firebase.auth.TwitterAuthProvider();
-            else /*if (opt.provider == "github")*/
-                provider = new firebase.auth.GithubAuthProvider();
+            const providerClass = GetProviderClassForName(opt.provider);
+            let provider = new providerClass();
+            let credential;
             if (opt.type == "popup") {
-                let rawUserInfo = yield firebase.auth().signInWithPopup(provider);
-                // we don't need to do anything with the user-info; it's handled by the listener in InitSubs()
-                //console.log("Raw user info:", rawUserInfo);
+                credential = yield firebase.auth().signInWithPopup(provider);
             }
+            else if (opt.type == "redirect") {
+                yield firebase.auth().signInWithRedirect(provider);
+                //credential = await firebase.auth().getRedirectResult(); // not sure if this works
+            }
+            // we don't need to do anything with the user-info; it's handled by the listener in InitSubs()
+            //console.log("Raw user info:", rawUserInfo);
+            return credential;
+        });
+    }
+    LogIn_WithCredential(opt) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const providerClass = GetProviderClassForName(opt.provider);
+            let credential = yield firebase.auth().signInWithCredential(providerClass.credential(opt.idToken || null, opt.accessToken));
+            return credential;
         });
     }
     LogOut() {
@@ -95,3 +101,11 @@ __decorate([
 __decorate([
     observable
 ], Firelink.prototype, "userInfo", void 0);
+const providerClasses = {
+    google: firebase.auth.GoogleAuthProvider,
+    facebook: firebase.auth.FacebookAuthProvider,
+    twitter: firebase.auth.TwitterAuthProvider,
+};
+function GetProviderClassForName(providerName) {
+    return providerClasses[providerName];
+}

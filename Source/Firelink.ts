@@ -76,18 +76,25 @@ export class Firelink<RootStoreShape, DBShape> {
 	//@observable userInfo_raw: firebase.auth.UserCredential;
 	@observable userInfo_raw: firebase.User|null;
 	@observable userInfo: FireUserInfo|null;
-	async LogIn(opt: {provider: "google" | "facebook" | "twitter" | "github", type: "popup"}) {
-		let provider: firebase.auth.AuthProvider;
-		if (opt.provider == "google") provider = new firebase.auth.GoogleAuthProvider();
-		else if (opt.provider == "facebook") provider = new firebase.auth.FacebookAuthProvider();
-		else if (opt.provider == "twitter") provider = new firebase.auth.TwitterAuthProvider();
-		else /*if (opt.provider == "github")*/ provider = new firebase.auth.GithubAuthProvider();
+	async LogIn(opt: {provider: ProviderName, type: "popup" | "redirect"}) {
+		const providerClass = GetProviderClassForName(opt.provider);
+		let provider = new (providerClass as any)();
 		
+		let credential: firebase.auth.UserCredential|undefined;
 		if (opt.type == "popup") {
-			let rawUserInfo = await firebase.auth().signInWithPopup(provider);
-			// we don't need to do anything with the user-info; it's handled by the listener in InitSubs()
-			//console.log("Raw user info:", rawUserInfo);
+			credential = await firebase.auth().signInWithPopup(provider);
+		} else if (opt.type == "redirect") {
+			await firebase.auth().signInWithRedirect(provider);
+			//credential = await firebase.auth().getRedirectResult(); // not sure if this works
 		}
+		// we don't need to do anything with the user-info; it's handled by the listener in InitSubs()
+		//console.log("Raw user info:", rawUserInfo);
+		return credential;
+	}
+	async LogIn_WithCredential(opt: {provider: ProviderName, idToken?: string, accessToken?: string}) {
+		const providerClass = GetProviderClassForName(opt.provider);
+		let credential = await firebase.auth().signInWithCredential(providerClass.credential(opt.idToken || null, opt.accessToken));
+		return credential;
 	}
 	async LogOut() {
 		await firebase.auth().signOut();
@@ -101,4 +108,15 @@ export class Firelink<RootStoreShape, DBShape> {
 	}
 
 	ValidateDBData?: (dbData: DBShape)=>void;
+}
+
+export type ProviderName = "google" | "facebook" | "twitter" | "github";
+const providerClasses = {
+	google: firebase.auth.GoogleAuthProvider,
+	facebook: firebase.auth.FacebookAuthProvider,
+	twitter: firebase.auth.TwitterAuthProvider,
+	//github: firebase.auth.GithubAuthProvider,
+};
+function GetProviderClassForName(providerName: ProviderName): firebase.auth.OAuthProvider {
+	return providerClasses[providerName];
 }

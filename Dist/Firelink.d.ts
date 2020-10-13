@@ -30,12 +30,18 @@ export declare class Firelink<RootStoreShape, DBShape> {
     userInfo_raw: firebase.User | null;
     userInfo: FireUserInfo | null;
     LogIn(opt: {
-        provider: "google" | "facebook" | "twitter" | "github";
-        type: "popup";
-    }): Promise<void>;
+        provider: ProviderName;
+        type: "popup" | "redirect";
+    }): Promise<firebase.auth.UserCredential | undefined>;
+    LogIn_WithCredential(opt: {
+        provider: ProviderName;
+        idToken?: string;
+        accessToken?: string;
+    }): Promise<firebase.auth.UserCredential>;
     LogOut(): Promise<void>;
     tree: TreeNode<DBShape>;
     treeRequestWatchers: Set<TreeRequestWatcher>;
     UnsubscribeAll(): void;
     ValidateDBData?: (dbData: DBShape) => void;
 }
+export declare type ProviderName = "google" | "facebook" | "twitter" | "github";
