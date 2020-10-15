@@ -114,7 +114,6 @@ export class TreeNode {
                 }
                 this.data = observable(newData) as any;*/
                 runInAction("TreeNode.Subscribe.onSnapshot_collection", () => {
-                    var _a;
                     const deletedDocIDs = CE(Array.from(this.docNodes.keys())).Except(...snapshot.docs.map(a => a.id));
                     let dataChanged = false;
                     for (const doc of snapshot.docs) {
@@ -125,7 +124,7 @@ export class TreeNode {
                     }
                     for (const docID of deletedDocIDs) {
                         const docNode = this.docNodes.get(docID);
-                        dataChanged = ((_a = docNode) === null || _a === void 0 ? void 0 : _a.SetData(null, snapshot.metadata.fromCache)) || dataChanged;
+                        dataChanged = (docNode === null || docNode === void 0 ? void 0 : docNode.SetData(null, snapshot.metadata.fromCache)) || dataChanged;
                         //docNode?.Unsubscribe(); // if someone subscribed directly, I guess we let them keep the detached subscription?
                         this.docNodes.delete(docID);
                     }

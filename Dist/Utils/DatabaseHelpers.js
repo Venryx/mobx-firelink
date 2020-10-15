@@ -216,7 +216,7 @@ export function FinalizeDBUpdates(options, dbUpdates, rootPath_override) {
     //dbUpdates = WithoutHelpers(Clone(dbUpdates));
     //dbUpdates = Clone(dbUpdates);
     dbUpdates = Object.assign({}, dbUpdates); // shallow clone, so we preserve DBValueWrappers in entries
-    let rootPath = (rootPath_override !== null && rootPath_override !== void 0 ? rootPath_override : opt.fire.rootPath);
+    let rootPath = rootPath_override !== null && rootPath_override !== void 0 ? rootPath_override : opt.fire.rootPath;
     if (rootPath != null && rootPath != "") {
         //for (const {key: localPath, value} of ObjectCE.Pairs(dbUpdates)) {
         for (const { key: localPath, value } of ObjectCE(dbUpdates).Pairs()) {

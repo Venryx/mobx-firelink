@@ -42,7 +42,7 @@ export function DBPath(options, path = "", inLinkRoot = true) {
 }
 export function DBPathSegments(options, pathSegments, inLinkRoot = true) {
     const opt = E(defaultFireOptions, options);
-    let result = pathSegments.map(a => { var _a; return (_a = a) === null || _a === void 0 ? void 0 : _a.toString(); });
+    let result = pathSegments.map(a => a === null || a === void 0 ? void 0 : a.toString());
     if (inLinkRoot) {
         result = opt.fire.rootPathSegments.concat(result);
     }
@@ -60,7 +60,7 @@ export function PathOrPathGetterToPath(pathOrPathSegmentsOrPathGetter) {
     if (IsString(pathOrPathSegmentsOrPathGetter))
         return pathOrPathSegmentsOrPathGetter;
     if (IsArray(pathOrPathSegmentsOrPathGetter))
-        return pathOrPathSegmentsOrPathGetter.map(a => { var _a; return (_a = a) === null || _a === void 0 ? void 0 : _a.toString(); }).join("/");
+        return pathOrPathSegmentsOrPathGetter.map(a => a === null || a === void 0 ? void 0 : a.toString()).join("/");
     if (IsFunction(pathOrPathSegmentsOrPathGetter))
         return MobXPathGetterToPath(pathOrPathSegmentsOrPathGetter);
     return null;
@@ -69,7 +69,7 @@ export function PathOrPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter) {
     if (IsString(pathOrPathSegmentsOrPathGetter))
         return pathOrPathSegmentsOrPathGetter.split("/");
     if (IsArray(pathOrPathSegmentsOrPathGetter))
-        return pathOrPathSegmentsOrPathGetter.map(a => { var _a; return (_a = a) === null || _a === void 0 ? void 0 : _a.toString(); });
+        return pathOrPathSegmentsOrPathGetter.map(a => a === null || a === void 0 ? void 0 : a.toString());
     if (IsFunction(pathOrPathSegmentsOrPathGetter))
         return MobXPathGetterToPathSegments(pathOrPathSegmentsOrPathGetter);
     return [];
@@ -81,14 +81,13 @@ export function MobXPathGetterToPathSegments(pathGetterFunc) {
     let pathSegments = [];
     let proxy = new Proxy({}, {
         get: (target, key) => {
-            var _a;
             if (key == "get") {
                 return (realKey) => {
                     pathSegments.push(realKey);
                     return proxy;
                 };
             }
-            pathSegments.push((_a = key) === null || _a === void 0 ? void 0 : _a.toString());
+            pathSegments.push(key === null || key === void 0 ? void 0 : key.toString());
             return proxy;
         },
     });

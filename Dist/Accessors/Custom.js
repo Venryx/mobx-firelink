@@ -71,7 +71,7 @@ export const StoreAccessor = (...args) => {
         [name, accessorGetter] = args;
     else
         [name, options, accessorGetter] = args;
-    name = (_a = name, (_a !== null && _a !== void 0 ? _a : "[name missing]"));
+    name = (_a = name) !== null && _a !== void 0 ? _a : "[name missing]";
     //let addProfiling = manager.devEnv; // manager isn't populated yet
     const addProfiling = window["DEV"];
     //const needsWrapper = addProfiling || options.cache;
@@ -82,7 +82,7 @@ export const StoreAccessor = (...args) => {
         const opt = E(StoreAccessorOptions.default, options);
         let fireOpt = E(defaultFireOptions, CE(opt).Including("fire"));
         if (addProfiling) {
-            accessorStack.push((name !== null && name !== void 0 ? name : "n/a"));
+            accessorStack.push(name !== null && name !== void 0 ? name : "n/a");
             var startTime = performance.now();
             //return accessor.apply(this, callArgs);
         }

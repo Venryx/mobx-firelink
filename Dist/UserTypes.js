@@ -24,3 +24,4 @@ export const GetPerson = StoreAccessor({fire}, ...);
 export const person = GetDoc({fire}, ...);
 ==========
 */
+export {};
