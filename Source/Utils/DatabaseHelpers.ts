@@ -3,7 +3,7 @@ import u from "updeep";
 import {MaybeLog_Base} from "./General";
 import {FireOptions, SplitStringBySlash_Cached} from "..";
 import {defaultFireOptions} from "../Firelink";
-import firebase, {firestore} from "firebase";
+import firebase from "firebase";
 import {GetPathParts} from "./PathHelpers";
 import {nil} from "./Nil";
 
@@ -286,7 +286,7 @@ export async function MakeQuickBackupForDBUpdates(options: Partial<FireOptions &
 	const newDocValues_pairs = CE(dbUpdates).Pairs();
 	const oldDocValues = await Promise.all(newDocValues_pairs.map(pair=> {
 		let [docPath, fieldPathInDoc] = GetPathParts(pair.key, true);
-		let docRef = opt.fire.subs.firestoreDB.doc(docPath) as firestore.DocumentReference;
+		let docRef = opt.fire.subs.firestoreDB.doc(docPath) as firebase.firestore.DocumentReference;
 		return docRef.get().then(data=>data.data());
 	}));
 

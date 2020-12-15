@@ -7,6 +7,7 @@ import {ProcessDBData} from "../Utils/DatabaseHelpers";
 import {_getGlobalState} from "mobx";
 import {nil} from "../Utils/Nil";
 import {MaybeLog_Base} from "../Utils/General";
+import firebase from "firebase";
 
 export enum TreeNodeType {
 	Root,

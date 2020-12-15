@@ -1,3 +1,5 @@
+import firebase from "firebase";
+
 export type QueryOpType = "where" | "orderBy" | "limit";
 export abstract class QueryOp {
 	static ParseData(json: any) {

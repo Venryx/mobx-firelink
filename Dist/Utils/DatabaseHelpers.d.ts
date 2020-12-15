@@ -1,6 +1,6 @@
 import { FireOptions } from "..";
-import { firestore } from "firebase";
-export declare function IsAuthValid(auth: any): boolean;
+import firebase from "firebase";
+export declare function IsAuthValid(auth: any): any;
 /**
 Applies normalization of an object-tree to match how it would be stored (and thus returned) by Firestore.
 
@@ -15,7 +15,7 @@ export declare class DBValueWrapper {
     merge: boolean;
 }
 export declare function WrapDBValue(value: any, otherFlags: Partial<Omit<DBValueWrapper, "value">>): DBValueWrapper;
-export declare function ConvertDBUpdatesToBatch(options: Partial<FireOptions>, dbUpdates: Object): firestore.WriteBatch;
+export declare function ConvertDBUpdatesToBatch(options: Partial<FireOptions>, dbUpdates: Object): firebase.firestore.WriteBatch;
 export declare const maxDBUpdatesPerBatch = 500;
 export declare class ApplyDBUpdates_Options {
     static default: ApplyDBUpdates_Options;
