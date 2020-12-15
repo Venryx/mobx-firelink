@@ -23,7 +23,7 @@
     "dist": "tsc"
   },
   "peerDependencies": {
-    "firebase": "^7.5.0",
+    "firebase": "^8.2.0",
     "mobx": "^5.0.0"
   },
   "devDependencies": {
