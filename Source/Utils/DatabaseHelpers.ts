@@ -1,4 +1,4 @@
-import {DeepSet, IsNumberString, Assert, StringCE, Clone, ObjectCE, ArrayCE, GetTreeNodesInObjTree, E, CE, StartDownload, IsObject} from "js-vextensions";
+import {DeepSet, IsNumberString, Assert, StringCE, Clone, ObjectCE, ArrayCE, GetTreeNodesInObjTree, E, CE, StartDownload, IsObject, Pair} from "js-vextensions";
 import u from "updeep";
 import {MaybeLog_Base} from "./General";
 import {FireOptions, SplitStringBySlash_Cached} from "..";
@@ -159,7 +159,7 @@ export function WrapDBValue(value: any, otherFlags: Partial<Omit<DBValueWrapper,
 	return result;
 }
 
-export function ConvertDBUpdatesToBatch(options: Partial<FireOptions>, dbUpdates: Object) {
+export function ConvertDBUpdatesToBatch(options: Partial<FireOptions>, dbUpdates: {[key: string]: any}) {
 	const opt = E(defaultFireOptions, options) as FireOptions;
 	const updateEntries = Object.entries(dbUpdates);
 	Assert(updateEntries.length <= maxDBUpdatesPerBatch, `Cannot have more than ${maxDBUpdatesPerBatch} db-updates per batch.`);
@@ -237,14 +237,14 @@ export async function ApplyDBUpdates(options: Partial<FireOptions & ApplyDBUpdat
 	// await firestoreDB.runTransaction(async batch=> {
 
 	const dbUpdates_pairs = ObjectCE(dbUpdates).Pairs();
-	const dbUpdates_pairs_chunks = [] as any[];
+	const dbUpdates_pairs_chunks = [] as Pair<string, any>[][];
 	for (let offset = 0; offset < dbUpdates_pairs.length; offset += opt.updatesPerChunk) {
 		const chunk = dbUpdates_pairs.slice(offset, offset + opt.updatesPerChunk);
 		dbUpdates_pairs_chunks.push(chunk);
 	}
 
 	for (const [index, dbUpdates_pairs_chunk] of dbUpdates_pairs_chunks.entries()) {
-		const dbUpdates_chunk = dbUpdates_pairs_chunk.ToMap(a=>a.key, a=>a.value);
+		const dbUpdates_chunk = CE(dbUpdates_pairs_chunk).ToMapObj(a=>a.key, a=>a.value);
 		if (dbUpdates_pairs_chunks.length > 1) {
 			MaybeLog_Base(a=>a.commands, l=>l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
 		}
@@ -290,13 +290,13 @@ export async function MakeQuickBackupForDBUpdates(options: Partial<FireOptions &
 		return docRef.get().then(data=>data.data());
 	}));
 
-	/*const docValues_map = CE(docValues).ToMap((a, index)=>dbUpdateEntries[index].key, a=>a);
+	/*const docValues_map = CE(docValues).ToMapObj((a, index)=>dbUpdateEntries[index].key, a=>a);
 	const backupData = {
 		oldValues: docValues_map,
 		newValues: docValues_map,
 	};*/
 
-	const quickBackup: QuickBackup = CE(newDocValues_pairs).ToMap(pair=>pair.key, pair=>({
+	const quickBackup: QuickBackup = CE(newDocValues_pairs).ToMapObj(pair=>pair.key, pair=>({
 		oldData: oldDocValues[pair.index],
 		newData: pair.value,
 	}));
@@ -315,7 +315,7 @@ Restores the old-values for the paths listed in the quick-backup.
 Note: Uses the *absolute paths* listed; to restore to a different version-root, transform the quick-backup data.
 */
 export async function RestoreQuickBackup(options: Partial<FireOptions & ApplyDBUpdates_Options>, quickBackup: QuickBackup) {
-	const oldDataAsDBUpdates = CE(CE(quickBackup).Pairs()).ToMap(a=>a.key, a=>a.value.oldData);
+	const oldDataAsDBUpdates = CE(CE(quickBackup).Pairs()).ToMapObj(a=>a.key, a=>a.value.oldData);
 	console.log("OldDataAsDBUpdates:", oldDataAsDBUpdates);
 	//await ApplyDBUpdates(options, oldDataAsDBUpdates, rootPath_override);
 	await ApplyDBUpdates(options, oldDataAsDBUpdates, "");

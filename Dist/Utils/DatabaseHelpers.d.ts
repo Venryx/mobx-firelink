@@ -15,7 +15,7 @@ export declare class DBValueWrapper {
     merge: boolean;
 }
 export declare function WrapDBValue(value: any, otherFlags: Partial<Omit<DBValueWrapper, "value">>): DBValueWrapper;
-export declare function ConvertDBUpdatesToBatch(options: Partial<FireOptions>, dbUpdates: Object): firebase.firestore.WriteBatch;
+export declare function ConvertDBUpdatesToBatch(options: Partial<FireOptions>, dbUpdates: Map<string, any>): firebase.firestore.WriteBatch;
 export declare const maxDBUpdatesPerBatch = 500;
 export declare class ApplyDBUpdates_Options {
     static default: ApplyDBUpdates_Options;

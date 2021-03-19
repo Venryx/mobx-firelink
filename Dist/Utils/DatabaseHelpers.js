@@ -238,7 +238,7 @@ export function ApplyDBUpdates(options, dbUpdates, rootPath_override) {
             dbUpdates_pairs_chunks.push(chunk);
         }
         for (const [index, dbUpdates_pairs_chunk] of dbUpdates_pairs_chunks.entries()) {
-            const dbUpdates_chunk = dbUpdates_pairs_chunk.ToMap(a => a.key, a => a.value);
+            const dbUpdates_chunk = CE(dbUpdates_pairs_chunk).ToMap(a => a.key, a => a.value);
             if (dbUpdates_pairs_chunks.length > 1) {
                 MaybeLog_Base(a => a.commands, l => l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
             }
