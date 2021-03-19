@@ -62,7 +62,7 @@ export function GetAsync(dataGetterFunc, options) {
             watcher.Stop();
     
             const nodesRequested_array = Array.from(watcher.nodesRequested);
-            nodesRequested_obj = CE(nodesRequested_array).ToMap(a=>a.path, a=>true);
+            nodesRequested_obj = CE(nodesRequested_array).ToMapObj(a=>a.path, a=>true);
     
             // wait till all requested nodes have their data received
             await Promise.all(nodesRequested_array.map(node=> {

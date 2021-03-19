@@ -238,7 +238,7 @@ export function ApplyDBUpdates(options, dbUpdates, rootPath_override) {
             dbUpdates_pairs_chunks.push(chunk);
         }
         for (const [index, dbUpdates_pairs_chunk] of dbUpdates_pairs_chunks.entries()) {
-            const dbUpdates_chunk = CE(dbUpdates_pairs_chunk).ToMap(a => a.key, a => a.value);
+            const dbUpdates_chunk = CE(dbUpdates_pairs_chunk).ToMapObj(a => a.key, a => a.value);
             if (dbUpdates_pairs_chunks.length > 1) {
                 MaybeLog_Base(a => a.commands, l => l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
             }
@@ -279,12 +279,12 @@ export function MakeQuickBackupForDBUpdates(options, dbUpdates, rootPath_overrid
             let docRef = opt.fire.subs.firestoreDB.doc(docPath);
             return docRef.get().then(data => data.data());
         }));
-        /*const docValues_map = CE(docValues).ToMap((a, index)=>dbUpdateEntries[index].key, a=>a);
+        /*const docValues_map = CE(docValues).ToMapObj((a, index)=>dbUpdateEntries[index].key, a=>a);
         const backupData = {
             oldValues: docValues_map,
             newValues: docValues_map,
         };*/
-        const quickBackup = CE(newDocValues_pairs).ToMap(pair => pair.key, pair => ({
+        const quickBackup = CE(newDocValues_pairs).ToMapObj(pair => pair.key, pair => ({
             oldData: oldDocValues[pair.index],
             newData: pair.value,
         }));
@@ -304,7 +304,7 @@ Note: Uses the *absolute paths* listed; to restore to a different version-root, 
 */
 export function RestoreQuickBackup(options, quickBackup) {
     return __awaiter(this, void 0, void 0, function* () {
-        const oldDataAsDBUpdates = CE(CE(quickBackup).Pairs()).ToMap(a => a.key, a => a.value.oldData);
+        const oldDataAsDBUpdates = CE(CE(quickBackup).Pairs()).ToMapObj(a => a.key, a => a.value.oldData);
         console.log("OldDataAsDBUpdates:", oldDataAsDBUpdates);
         //await ApplyDBUpdates(options, oldDataAsDBUpdates, rootPath_override);
         yield ApplyDBUpdates(options, oldDataAsDBUpdates, "");
