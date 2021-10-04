@@ -1,45 +1,35 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import AJV from "ajv";
 import AJVKeywords from "ajv-keywords";
 import { Clone, ToJSON, IsString, Assert, E, CE, IsArray, DEL } from "js-vextensions";
-import { AssertV } from "../Accessors/Helpers";
-//import {RemoveHelpers, WithoutHelpers} from "./DatabaseHelpers";
+import { AssertV } from "../Accessors/Helpers.js";
+import { UUID_regex } from "./KeyGenerator.js";
+//import {RemoveHelpers, WithoutHelpers} from "./DatabaseHelpers.js";
 export const ajv = AJVKeywords(new AJV({ allErrors: true }));
 export function Schema(schema) {
     schema = E({ additionalProperties: false }, schema);
     return schema;
 }
 export const schemaEntryJSONs = {};
-export function AddSchema(...args) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let name, dependencySchemas, schemaOrGetter;
-        if (args.length == 2)
-            [name, schemaOrGetter] = args;
-        else
-            [name, dependencySchemas, schemaOrGetter] = args;
-        if (dependencySchemas != null)
-            yield Promise.all(dependencySchemas.map(schemaName => WaitTillSchemaAdded(schemaName)));
-        let schema = schemaOrGetter instanceof Function ? schemaOrGetter() : schemaOrGetter;
-        schema = Schema(schema);
-        schemaEntryJSONs[name] = schema;
-        ajv.removeSchema(name); // for hot-reloading
-        const result = ajv.addSchema(schema, name);
-        if (schemaAddListeners[name]) {
-            for (const listener of schemaAddListeners[name]) {
-                listener();
-            }
-            delete schemaAddListeners[name];
+export async function AddSchema(...args) {
+    let name, dependencySchemas, schemaOrGetter;
+    if (args.length == 2)
+        [name, schemaOrGetter] = args;
+    else
+        [name, dependencySchemas, schemaOrGetter] = args;
+    if (dependencySchemas != null)
+        await Promise.all(dependencySchemas.map(schemaName => WaitTillSchemaAdded(schemaName)));
+    let schema = schemaOrGetter instanceof Function ? schemaOrGetter() : schemaOrGetter;
+    schema = Schema(schema);
+    schemaEntryJSONs[name] = schema;
+    ajv.removeSchema(name); // for hot-reloading
+    const result = ajv.addSchema(schema, name);
+    if (schemaAddListeners[name]) {
+        for (const listener of schemaAddListeners[name]) {
+            listener();
         }
-        return result;
-    });
+        delete schemaAddListeners[name];
+    }
+    return result;
 }
 export function GetSchemaJSON(name) {
     return Clone(schemaEntryJSONs[name]);
@@ -128,11 +118,36 @@ export function Validate_Full(schemaObject, schemaName, data) {
 }
 export class AssertValidateOptions {
     constructor() {
-        this.addErrorsText = true;
-        this.addSchemaName = true;
-        this.addDataStr = true;
-        this.allowOptionalPropsToBeNull = true;
-        this.useAssertV = true;
+        Object.defineProperty(this, "addErrorsText", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: true
+        });
+        Object.defineProperty(this, "addSchemaName", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: true
+        });
+        Object.defineProperty(this, "addDataStr", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: true
+        });
+        Object.defineProperty(this, "allowOptionalPropsToBeNull", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: true
+        });
+        Object.defineProperty(this, "useAssertV", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: true
+        });
     }
 }
 export function AssertValidate(schemaNameOrJSON, data, failureMessageOrGetter, opt = new AssertValidateOptions()) {
@@ -217,3 +232,6 @@ export function GetInvalidPropPaths(data, schemaObject) {
         return { propPath, error };
     });
 }
+// hoisted schema definitions (eg. so other files, eg. KeyGenerator.ts, can be imported standalone)
+// ==========
+AddSchema("UUID", { type: "string", pattern: UUID_regex });

@@ -4,33 +4,128 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-import firebase from "firebase/app";
-import { TreeNode } from "./Tree/TreeNode";
-import { PathOrPathGetterToPath, PathOrPathGetterToPathSegments } from "./Utils/PathHelpers";
-import { observable, runInAction } from "mobx";
+import firebase from "firebase/compat/app";
+import { signInWithPopup, signInWithRedirect, signInWithCredential, signOut, GoogleAuthProvider, FacebookAuthProvider, TwitterAuthProvider, getAuth } from "firebase/auth";
+import { TreeNode } from "./Tree/TreeNode.js";
+import { PathOrPathGetterToPath, PathOrPathGetterToPathSegments } from "./Utils/PathHelpers.js";
+import { makeObservable, observable } from "mobx";
+import { RunInAction } from "./Utils/MobX.js";
 export let defaultFireOptions;
 export function SetDefaultFireOptions(opt) {
     defaultFireOptions = opt;
 }
 export class FireUserInfo {
+    constructor() {
+        Object.defineProperty(this, "id", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "displayName", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+    }
 }
 export class FirelinkInitOptions {
+    constructor() {
+        Object.defineProperty(this, "rootPathInDB", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "rootStore", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        //initSubs = true;
+    }
 }
 export class Firelink {
     constructor(initOptions) {
-        this.initialized = false;
-        this.storeOverridesStack = [];
-        this.subs = {};
-        this.treeRequestWatchers = new Set();
+        Object.defineProperty(this, "initialized", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: false
+        });
+        Object.defineProperty(this, "rootPathSegments", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "rootPath", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        /*versionPathSegments: string[];
+        versionPath: string;*/
+        //versionData: DBShape;
+        Object.defineProperty(this, "rootStore", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "storeOverridesStack", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: []
+        });
+        Object.defineProperty(this, "storeAccessorCachingTempDisabled", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: false
+        });
+        Object.defineProperty(this, "subs", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: {}
+        });
+        //@observable userInfo_raw: firebase.auth.UserCredential;
+        Object.defineProperty(this, "userInfo_raw", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "userInfo", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "tree", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "treeRequestWatchers", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: new Set()
+        });
+        Object.defineProperty(this, "ValidateDBData", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        makeObservable(this);
         if (initOptions) {
             this.Initialize(initOptions);
         }
@@ -51,7 +146,7 @@ export class Firelink {
     InitSubs() {
         this.subs.firestoreDB = firebase.firestore();
         firebase.auth().onAuthStateChanged((rawUserInfo) => {
-            runInAction("Firelink.onAuthStateChanged", () => {
+            RunInAction("Firelink.onAuthStateChanged", () => {
                 this.userInfo_raw = rawUserInfo;
                 this.userInfo = rawUserInfo == null ? null : {
                     id: rawUserInfo.uid,
@@ -60,51 +155,52 @@ export class Firelink {
             });
         });
     }
-    LogIn(opt) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const providerClass = GetProviderClassForName(opt.provider);
-            let provider = new providerClass();
-            let credential;
-            if (opt.type == "popup") {
-                credential = yield firebase.auth().signInWithPopup(provider);
-            }
-            else if (opt.type == "redirect") {
-                yield firebase.auth().signInWithRedirect(provider);
-                //credential = await firebase.auth().getRedirectResult(); // not sure if this works
-            }
-            // we don't need to do anything with the user-info; it's handled by the listener in InitSubs()
-            //console.log("Raw user info:", rawUserInfo);
-            return credential;
-        });
+    //@observable test1 = 1;
+    async LogIn(opt) {
+        const providerClass = GetProviderClassForName(opt.provider);
+        let provider = new providerClass();
+        let credential;
+        if (opt.type == "popup") {
+            credential = await signInWithPopup(getAuth(), provider);
+        }
+        else if (opt.type == "redirect") {
+            await signInWithRedirect(getAuth(), provider);
+            //credential = await firebase.auth().getRedirectResult(); // not sure if this works
+        }
+        // we don't need to do anything with the user-info; it's handled by the listener in InitSubs()
+        console.log("Raw user info:", credential);
+        return credential;
     }
-    LogIn_WithCredential(opt) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const providerClass = GetProviderClassForName(opt.provider);
-            let credential = yield firebase.auth().signInWithCredential(providerClass.credential(opt.idToken || null, opt.accessToken));
-            return credential;
-        });
+    async LogIn_WithCredential(opt) {
+        const providerClass = GetProviderClassForName(opt.provider);
+        let credential = await signInWithCredential(getAuth(), providerClass.credential(opt.idToken, opt.accessToken));
+        return credential;
     }
-    LogOut() {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield firebase.auth().signOut();
-        });
+    async LogOut() {
+        await signOut(getAuth());
     }
     //pathSubscriptions: Map<string, PathSubscription>;
     UnsubscribeAll() {
         this.tree.UnsubscribeAll();
     }
 }
-Firelink.instances = [];
+Object.defineProperty(Firelink, "instances", {
+    enumerable: true,
+    configurable: true,
+    writable: true,
+    value: []
+});
 __decorate([
-    observable
+    observable.ref
 ], Firelink.prototype, "userInfo_raw", void 0);
 __decorate([
-    observable
+    observable.ref
 ], Firelink.prototype, "userInfo", void 0);
 const providerClasses = {
-    google: firebase.auth.GoogleAuthProvider,
-    facebook: firebase.auth.FacebookAuthProvider,
-    twitter: firebase.auth.TwitterAuthProvider,
+    google: GoogleAuthProvider,
+    facebook: FacebookAuthProvider,
+    twitter: TwitterAuthProvider,
+    //github: GithubAuthProvider,
 };
 function GetProviderClassForName(providerName) {
     return providerClasses[providerName];

@@ -1,8 +1,8 @@
-import {computedFn} from "mobx-utils";
 import {CE, ObjectCE, E, Assert} from "js-vextensions";
-import {FireOptions, defaultFireOptions} from "../Firelink";
-import {RootStoreShape} from "../UserTypes";
-import {storeAccessorCachingTempDisabled, GetWait} from "./Helpers";
+import {FireOptions, defaultFireOptions} from "../Firelink.js";
+import {RootStoreShape} from "../UserTypes.js";
+import {computedFn} from "../Utils/MobXUtils/ComputedFn.js";
+import {GetWait} from "./Helpers.js";
 
 // for profiling
 class StoreAccessorProfileData {
@@ -98,7 +98,7 @@ export const StoreAccessor: StoreAccessorFunc = (...args)=> {
 	const wrapperAccessor = (...callArgs)=>{
 		// initialize these in wrapper-accessor rather than root-func, because defaultFireOptions is usually not ready when root-func is called
 		const opt = E(StoreAccessorOptions.default, options!) as Partial<FireOptions> & StoreAccessorOptions;
-		let fireOpt = E(defaultFireOptions, CE(opt).Including("fire"));
+		let fireOpt = E(defaultFireOptions, CE(opt).IncludeKeys("fire"));
 
 		if (addProfiling) {
 			accessorStack.push(name ?? "n/a");
@@ -121,7 +121,7 @@ export const StoreAccessor: StoreAccessorFunc = (...args)=> {
 		if (name) CE(accessor).SetName(name);
 
 		let result;
-		if (opt.cache && usingMainStore && !storeAccessorCachingTempDisabled) {
+		if (opt.cache && usingMainStore && !fireOpt.fire.storeAccessorCachingTempDisabled) {
 			let callArgs_unwrapped = callArgs;
 			//const callArg_unwrapLengths = {};
 			if (opt.cache_unwrapArrays) {
@@ -200,7 +200,7 @@ export const StoreAccessor: StoreAccessorFunc = (...args)=> {
 	wrapperAccessor.Wait = (...callArgs)=>{
 		// initialize these in wrapper-accessor rather than root-func, because defaultFireOptions is usually not ready when root-func is called
 		const opt = E(StoreAccessorOptions.default, options!) as Partial<FireOptions> & StoreAccessorOptions;
-		let fireOpt = E(defaultFireOptions, CE(opt).Including("fire"));
+		let fireOpt = E(defaultFireOptions, CE(opt).IncludeKeys("fire"));
 
 		return GetWait(()=>wrapperAccessor(...callArgs), fireOpt);
 	};

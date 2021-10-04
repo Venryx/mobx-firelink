@@ -1,4 +1,4 @@
-import { FireOptions, FireUserInfo } from "../Firelink";
+import { FireOptions, FireUserInfo } from "../Firelink.js";
 export declare const commandsWaitingToComplete: Command_Old<any, any>[];
 export declare abstract class Command_Old<Payload, ReturnData = void> {
     static defaultPayload: {};

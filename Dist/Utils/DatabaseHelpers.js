@@ -1,19 +1,10 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import { DeepSet, IsNumberString, Assert, Clone, ObjectCE, GetTreeNodesInObjTree, E, CE, StartDownload, IsObject } from "js-vextensions";
 import u from "updeep";
-import { MaybeLog_Base } from "./General";
-import { SplitStringBySlash_Cached } from "..";
-import { defaultFireOptions } from "../Firelink";
-import firebase from "firebase";
-import { GetPathParts } from "./PathHelpers";
+import { MaybeLog_Base } from "./General.js";
+import { SplitStringBySlash_Cached } from "../index.js";
+import { defaultFireOptions } from "../Firelink.js";
+import firebase from "firebase/compat";
+import { GetPathParts } from "./PathHelpers.js";
 export function IsAuthValid(auth) {
     return auth && !auth.isEmpty;
 }
@@ -144,7 +135,19 @@ export function ConvertDataToValidDBUpdates(versionPath, versionData, dbUpdatesR
 //export const DBValueWrapper_classSymbol = Symbol("DBValueWrapper_classSymbol");
 export class DBValueWrapper {
     constructor() {
-        this.merge = false;
+        //[DBValueWrapper_classSymbol] = true;
+        Object.defineProperty(this, "value", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "merge", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: false
+        });
     }
 }
 /*export function IsDBValueWrapper(val: any) {
@@ -207,15 +210,25 @@ export function ConvertDBUpdatesToBatch(options, dbUpdates) {
 export const maxDBUpdatesPerBatch = 500;
 export class ApplyDBUpdates_Options {
     constructor() {
-        this.updatesPerChunk = maxDBUpdatesPerBatch;
+        Object.defineProperty(this, "updatesPerChunk", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: maxDBUpdatesPerBatch
+        });
     }
 }
-ApplyDBUpdates_Options.default = new ApplyDBUpdates_Options();
+Object.defineProperty(ApplyDBUpdates_Options, "default", {
+    enumerable: true,
+    configurable: true,
+    writable: true,
+    value: new ApplyDBUpdates_Options()
+});
 export function FinalizeDBUpdates(options, dbUpdates, rootPath_override) {
     const opt = E(defaultFireOptions, ApplyDBUpdates_Options.default, options);
     //dbUpdates = WithoutHelpers(Clone(dbUpdates));
     //dbUpdates = Clone(dbUpdates);
-    dbUpdates = Object.assign({}, dbUpdates); // shallow clone, so we preserve DBValueWrappers in entries
+    dbUpdates = { ...dbUpdates }; // shallow clone, so we preserve DBValueWrappers in entries
     let rootPath = rootPath_override !== null && rootPath_override !== void 0 ? rootPath_override : opt.fire.rootPath;
     if (rootPath != null && rootPath != "") {
         //for (const {key: localPath, value} of ObjectCE.Pairs(dbUpdates)) {
@@ -226,27 +239,25 @@ export function FinalizeDBUpdates(options, dbUpdates, rootPath_override) {
     }
     return dbUpdates;
 }
-export function ApplyDBUpdates(options, dbUpdates, rootPath_override) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const opt = E(defaultFireOptions, ApplyDBUpdates_Options.default, options);
-        dbUpdates = FinalizeDBUpdates(options, dbUpdates, rootPath_override);
-        // await firestoreDB.runTransaction(async batch=> {
-        const dbUpdates_pairs = ObjectCE(dbUpdates).Pairs();
-        const dbUpdates_pairs_chunks = [];
-        for (let offset = 0; offset < dbUpdates_pairs.length; offset += opt.updatesPerChunk) {
-            const chunk = dbUpdates_pairs.slice(offset, offset + opt.updatesPerChunk);
-            dbUpdates_pairs_chunks.push(chunk);
+export async function ApplyDBUpdates(options, dbUpdates, rootPath_override) {
+    const opt = E(defaultFireOptions, ApplyDBUpdates_Options.default, options);
+    dbUpdates = FinalizeDBUpdates(options, dbUpdates, rootPath_override);
+    // await firestoreDB.runTransaction(async batch=> {
+    const dbUpdates_pairs = ObjectCE(dbUpdates).Pairs();
+    const dbUpdates_pairs_chunks = [];
+    for (let offset = 0; offset < dbUpdates_pairs.length; offset += opt.updatesPerChunk) {
+        const chunk = dbUpdates_pairs.slice(offset, offset + opt.updatesPerChunk);
+        dbUpdates_pairs_chunks.push(chunk);
+    }
+    for (const [index, dbUpdates_pairs_chunk] of dbUpdates_pairs_chunks.entries()) {
+        const dbUpdates_chunk = CE(dbUpdates_pairs_chunk).ToMapObj(a => a.key, a => a.value);
+        if (dbUpdates_pairs_chunks.length > 1) {
+            MaybeLog_Base(a => a.commands, l => l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
         }
-        for (const [index, dbUpdates_pairs_chunk] of dbUpdates_pairs_chunks.entries()) {
-            const dbUpdates_chunk = CE(dbUpdates_pairs_chunk).ToMapObj(a => a.key, a => a.value);
-            if (dbUpdates_pairs_chunks.length > 1) {
-                MaybeLog_Base(a => a.commands, l => l(`Applying db-updates chunk #${index + 1} of ${dbUpdates_pairs_chunks.length}...`));
-            }
-            //await ApplyDBUpdates_Base(opt, dbUpdates_chunk, rootPath_override);
-            let batch = ConvertDBUpdatesToBatch(opt, dbUpdates_chunk);
-            yield batch.commit();
-        }
-    });
+        //await ApplyDBUpdates_Base(opt, dbUpdates_chunk, rootPath_override);
+        let batch = ConvertDBUpdatesToBatch(opt, dbUpdates_chunk);
+        await batch.commit();
+    }
 }
 export function ApplyDBUpdates_Local(dbData, dbUpdates) {
     let result = dbData;
@@ -269,45 +280,41 @@ export function ApplyDBUpdates_Local(dbData, dbUpdates) {
     } while (emptyNodes.length);
     return result;
 }
-export function MakeQuickBackupForDBUpdates(options, dbUpdates, rootPath_override, log = true, download = true) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const opt = E(defaultFireOptions, ApplyDBUpdates_Options.default, options);
-        dbUpdates = FinalizeDBUpdates(options, dbUpdates, rootPath_override);
-        const newDocValues_pairs = CE(dbUpdates).Pairs();
-        const oldDocValues = yield Promise.all(newDocValues_pairs.map(pair => {
-            let [docPath, fieldPathInDoc] = GetPathParts(pair.key, true);
-            let docRef = opt.fire.subs.firestoreDB.doc(docPath);
-            return docRef.get().then(data => data.data());
-        }));
-        /*const docValues_map = CE(docValues).ToMapObj((a, index)=>dbUpdateEntries[index].key, a=>a);
-        const backupData = {
-            oldValues: docValues_map,
-            newValues: docValues_map,
-        };*/
-        const quickBackup = CE(newDocValues_pairs).ToMapObj(pair => pair.key, pair => ({
-            oldData: oldDocValues[pair.index],
-            newData: pair.value,
-        }));
-        const quickBackupJSON = JSON.stringify(quickBackup);
-        if (log) {
-            console.log("QuickBackup:", quickBackup);
-        }
-        if (download) {
-            StartDownload(new Blob([quickBackupJSON]), "QuickBackup.json");
-        }
-        return quickBackup;
-    });
+export async function MakeQuickBackupForDBUpdates(options, dbUpdates, rootPath_override, log = true, download = true) {
+    const opt = E(defaultFireOptions, ApplyDBUpdates_Options.default, options);
+    dbUpdates = FinalizeDBUpdates(options, dbUpdates, rootPath_override);
+    const newDocValues_pairs = CE(dbUpdates).Pairs();
+    const oldDocValues = await Promise.all(newDocValues_pairs.map(pair => {
+        let [docPath, fieldPathInDoc] = GetPathParts(pair.key, true);
+        let docRef = opt.fire.subs.firestoreDB.doc(docPath);
+        return docRef.get().then(data => data.data());
+    }));
+    /*const docValues_map = CE(docValues).ToMapObj((a, index)=>dbUpdateEntries[index].key, a=>a);
+    const backupData = {
+        oldValues: docValues_map,
+        newValues: docValues_map,
+    };*/
+    const quickBackup = CE(newDocValues_pairs).ToMapObj(pair => pair.key, pair => ({
+        oldData: oldDocValues[pair.index],
+        newData: pair.value,
+    }));
+    const quickBackupJSON = JSON.stringify(quickBackup);
+    if (log) {
+        console.log("QuickBackup:", quickBackup);
+    }
+    if (download) {
+        StartDownload(new Blob([quickBackupJSON]), "QuickBackup.json");
+    }
+    return quickBackup;
 }
 /**
 Restores the old-values for the paths listed in the quick-backup.
 Note: Uses the *absolute paths* listed; to restore to a different version-root, transform the quick-backup data.
 */
-export function RestoreQuickBackup(options, quickBackup) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const oldDataAsDBUpdates = CE(CE(quickBackup).Pairs()).ToMapObj(a => a.key, a => a.value.oldData);
-        console.log("OldDataAsDBUpdates:", oldDataAsDBUpdates);
-        //await ApplyDBUpdates(options, oldDataAsDBUpdates, rootPath_override);
-        yield ApplyDBUpdates(options, oldDataAsDBUpdates, "");
-        console.log("Restored quick-backup. (Note: Used the *absolute paths* listed; to restore to a different version-root, transform the quick-backup data.)");
-    });
+export async function RestoreQuickBackup(options, quickBackup) {
+    const oldDataAsDBUpdates = CE(CE(quickBackup).Pairs()).ToMapObj(a => a.key, a => a.value.oldData);
+    console.log("OldDataAsDBUpdates:", oldDataAsDBUpdates);
+    //await ApplyDBUpdates(options, oldDataAsDBUpdates, rootPath_override);
+    await ApplyDBUpdates(options, oldDataAsDBUpdates, "");
+    console.log("Restored quick-backup. (Note: Used the *absolute paths* listed; to restore to a different version-root, transform the quick-backup data.)");
 }

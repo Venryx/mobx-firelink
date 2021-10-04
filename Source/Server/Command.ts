@@ -1,9 +1,10 @@
 import {Clone, Assert, E, ObjectCE, ArrayCE, CE, OmitIfFalsy} from "js-vextensions";
-import {maxDBUpdatesPerBatch, ApplyDBUpdates, ApplyDBUpdates_Local} from "../Utils/DatabaseHelpers";
-import {MaybeLog_Base} from "../Utils/General";
-import {FireOptions, defaultFireOptions, FireUserInfo} from "../Firelink";
-import {DBPath} from "../Utils/PathHelpers";
-import {GetAsync, GetAsync_Options} from "../Accessors/Helpers";
+import {maxDBUpdatesPerBatch, ApplyDBUpdates, ApplyDBUpdates_Local} from "../Utils/DatabaseHelpers.js";
+import {MaybeLog_Base} from "../Utils/General.js";
+import {FireOptions, defaultFireOptions, FireUserInfo} from "../Firelink.js";
+import {DBPath} from "../Utils/PathHelpers.js";
+import {GetAsync, GetAsync_Options} from "../Accessors/Helpers.js";
+import {AssertValidate} from "../Extensions/SchemaHelpers.js";
 
 export const commandsWaitingToComplete_new = [] as Command<any, any>[];
 
@@ -61,24 +62,53 @@ export abstract class Command<Payload, ReturnData = void> {
 	}
 
 	/** Transforms the payload data (eg. combining it with existing db-data) in preparation for constructing the db-updates-map, while also validating user permissions and such along the way. */
-	abstract Validate(): void;
-	/** Last validation error, from calling Validate_Safe(). */
-	validateError: string|null;
-	Validate_Safe() {
+	protected abstract Validate(): void;
+
+	/** Last validation error, from passing "catchAndStoreError=true" to Validate_Full() or Validate_Async(). */
+	validateError?: Error|string|undefined;
+	get ValidateErrorStr(): string|undefined {
+		const err = this.validateError;
+		return err?.["message"] ?? err?.toString();
+	}
+
+	/** Same as the command-provided Validate() function, except also validating the payload and return-data against their schemas. *#/
+	/*Validate_Full() {
+		const meta = GetCommandClassMetadata(this.constructor.name);
+		AssertValidate(meta.payloadSchema, this.payload, "Payload is invalid.", {addSchemaObject: true});
+		this.Validate();
+		/*if (Command.augmentValidate) {
+			Command.augmentValidate(this);
+		}*#/
+		AssertValidate(meta.returnSchema, this.returnData, "Return-data is invalid.", {addSchemaObject: true});
+	}*/
+	Validate_Safe(): string|undefined {
 		try {
+			//this.Validate_Full();
 			this.Validate();
-			this.validateError = null;
-			return null;
+			this.validateError = undefined;
 		} catch (ex) {
 			this.validateError = ex;
-			return ex;
+			//return ex;
+			return ex?.message ?? ex?.toString();
 		}
 	}
 	async Validate_Async(options?: Partial<FireOptions> & GetAsync_Options) {
 		//await GetAsync(()=>this.Validate(), E({errorHandling: "ignore"}, IsNumber(maxIterations) && {maxIterations}));
 		//await GetAsync(()=>this.Validate(), {errorHandling: "ignore", maxIterations: OmitIfFalsy(maxIterations)});
-		await GetAsync(()=>this.Validate(), E({errorHandling: "ignore"}, options));
+		//await GetAsync(()=>this.Validate_Full(), E({throwImmediatelyOnDBWait: true} as Partial<GetAsync_Options>, options));
+		await GetAsync(()=>this.Validate(), E({throwImmediatelyOnDBWait: true} as Partial<GetAsync_Options>, options));
 	}
+	async Validate_Async_Safe(options?: Partial<FireOptions> & GetAsync_Options): Promise<string|undefined> {
+		try {
+			await this.Validate_Async(options);
+			this.validateError = undefined;
+		} catch (ex) {
+			this.validateError = ex;
+			//return ex;
+			return ex?.message ?? ex?.toString();
+		}
+	}
+
 	/** Retrieves the actual database updates that are to be made. (so we can do it in one atomic call) */
 	abstract GetDBUpdates(): {}
 
@@ -88,7 +118,7 @@ export abstract class Command<Payload, ReturnData = void> {
 	}
 
 	/** [async] Validates the data, prepares it, and executes it -- thus applying it into the database. */
-	async Run(maxUpdatesPerChunk = maxDBUpdatesPerBatch): Promise<ReturnData> {
+	async Run(): Promise<ReturnData> {
 		if (commandsWaitingToComplete_new.length > 0) {
 			MaybeLog_Base(a=>a.commands, l=>l(`Queing command, since ${commandsWaitingToComplete_new.length} ${commandsWaitingToComplete_new.length == 1 ? "is" : "are"} already waiting for completion.${""
 				}@type:`, this.constructor.name, " @payload(", this.payload, ")"));
@@ -105,17 +135,24 @@ export abstract class Command<Payload, ReturnData = void> {
 			//this.runStartTime = Date.now();
 			await this.PreRun();
 
+			//const helper = new DBHelper(undefined);
+			//const dbUpdates = this.GetDBUpdates(helper);
 			const dbUpdates = this.GetDBUpdates();
 			if (this.options.fire.ValidateDBData) {
 				await this.Validate_LateHeavy(dbUpdates);
 			}
 			// FixDBUpdates(dbUpdates);
 			// await store.firebase.helpers.DBRef().update(dbUpdates);
+			//await ApplyDBUpdates(dbUpdates, true, helper.DeferConstraints);
 			await ApplyDBUpdates(this.options, dbUpdates);
+
+			// todo: make sure the db-changes we just made are reflected in our mobx store, *before* current command is marked as "completed" (else next command may start operating on not-yet-refreshed data)
 
 			// MaybeLog(a=>a.commands, ()=>`Finishing command. @type:${this.constructor.name} @payload(${ToJSON(this.payload)}) @dbUpdates(${ToJSON(dbUpdates)})`);
 			MaybeLog_Base(a=>a.commands, l=>l("Finishing command. @type:", this.constructor.name, " @command(", this, ") @dbUpdates(", dbUpdates, ")"));
-		} finally {
+		} /*catch (ex) {
+			console.error(`Hit error while executing command of type "${this.constructor.name}". @error:`, ex, "@payload:", this.payload);
+		}*/ finally {
 			//const areOtherCommandsBuffered = currentCommandRun_listeners.length > 0;
 			ArrayCE(commandsWaitingToComplete_new).Remove(this);
 			NotifyListenersThatCurrentCommandFinished();

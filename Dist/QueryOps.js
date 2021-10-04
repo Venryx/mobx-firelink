@@ -1,4 +1,12 @@
 export class QueryOp {
+    constructor() {
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+    }
     static ParseData(json) {
         if (json.type == "where")
             return new WhereOp(json.fieldPath, json.comparison, json.value);
@@ -12,9 +20,24 @@ export class QueryOp {
 export class WhereOp extends QueryOp {
     constructor(fieldPath, comparison, value) {
         super();
-        this.fieldPath = fieldPath;
-        this.comparison = comparison;
-        this.value = value;
+        Object.defineProperty(this, "fieldPath", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: fieldPath
+        });
+        Object.defineProperty(this, "comparison", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: comparison
+        });
+        Object.defineProperty(this, "value", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: value
+        });
         this.type = "where";
     }
     Apply(collection) {
@@ -29,8 +52,18 @@ export class WhereOp extends QueryOp {
 export class OrderByOp extends QueryOp {
     constructor(fieldPath, direction = "asc") {
         super();
-        this.fieldPath = fieldPath;
-        this.direction = direction;
+        Object.defineProperty(this, "fieldPath", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: fieldPath
+        });
+        Object.defineProperty(this, "direction", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: direction
+        });
         this.type = "orderBy";
     }
     Apply(collection) {
@@ -40,7 +73,12 @@ export class OrderByOp extends QueryOp {
 export class LimitOp extends QueryOp {
     constructor(count) {
         super();
-        this.count = count;
+        Object.defineProperty(this, "count", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: count
+        });
         this.type = "limit";
     }
     Apply(collection) {

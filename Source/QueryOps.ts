@@ -1,4 +1,4 @@
-import firebase from "firebase";
+import firebase from "firebase/compat";
 
 export type QueryOpType = "where" | "orderBy" | "limit";
 export abstract class QueryOp {

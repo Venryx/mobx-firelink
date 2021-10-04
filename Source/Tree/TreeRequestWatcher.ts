@@ -1,5 +1,5 @@
-import {Firelink, FireOptions} from "../Firelink";
-import {TreeNode} from "./TreeNode";
+import {Firelink, FireOptions} from "../Firelink.js";
+import {TreeNode} from "./TreeNode.js";
 
 export class TreeRequestWatcher {
 	constructor(fire: Firelink<any ,any>) {

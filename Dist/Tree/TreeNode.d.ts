@@ -1,7 +1,7 @@
 import { ObservableMap } from "mobx";
-import { QueryOp } from "../QueryOps";
-import { Firelink } from "../Firelink";
-import firebase from "firebase";
+import { QueryOp } from "../QueryOps.js";
+import { Firelink } from "../Firelink.js";
+import firebase from "firebase/compat";
 export declare enum TreeNodeType {
     Root = 0,
     Collection = 1,

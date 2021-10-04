@@ -57,6 +57,12 @@ export function GetDocs(options, collectionPathOrGetterFunc) {
         DoX_ComputationSafe(() => RunInAction("GetDocs_Request", () => {
             opt.fire.tree.Get(pathSegments, queryRequest, true).Request();
         }));
+        // if tree-node still not created yet (due to waiting a tick so can start mobx action), add placeholder entry, so tree-request-watchers know there's still data being loaded
+        // todo: improve this (eg. make-so watchers know they may receive mere placeholder entries)
+        if (opt.fire.tree.Get(pathSegments, queryRequest) == null) {
+            const placeholder = { "_note": "This is a placeholder; data is still loading, but its tree-node hasn't been created yet, so this is its placeholder." };
+            opt.fire.treeRequestWatchers.forEach(a => a.nodesRequested.add(placeholder));
+        }
     }
     if ((treeNode === null || treeNode === void 0 ? void 0 : treeNode.status) != DataStatus.Received_Full) {
         NotifyWaitingForDB(pathSegments.join("/"));
@@ -113,6 +119,12 @@ export function GetDoc(options, docPathOrGetterFunc) {
         DoX_ComputationSafe(() => RunInAction("GetDoc_Request", () => {
             opt.fire.tree.Get(pathSegments, nil, true).Request();
         }));
+        // if tree-node still not created yet (due to waiting a tick so can start mobx action), add placeholder entry, so tree-request-watchers know there's still data being loaded
+        // todo: improve this (eg. make-so watchers know they may receive mere placeholder entries)
+        if (opt.fire.tree.Get(pathSegments) == null) {
+            const placeholder = { "_note": "This is a placeholder; data is still loading, but its tree-node hasn't been created yet, so this is its placeholder." };
+            opt.fire.treeRequestWatchers.forEach(a => a.nodesRequested.add(placeholder));
+        }
     }
     //if (opt.undefinedForLoading && treeNode?.status != DataStatus.Received_Full) return undefined;
     if ((treeNode === null || treeNode === void 0 ? void 0 : treeNode.status) != DataStatus.Received_Full) {

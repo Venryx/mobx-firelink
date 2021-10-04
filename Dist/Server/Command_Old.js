@@ -1,23 +1,12 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import { Clone, E, ArrayCE } from "js-vextensions";
-import { maxDBUpdatesPerBatch, ApplyDBUpdates, ApplyDBUpdates_Local } from "../Utils/DatabaseHelpers";
-import { MaybeLog_Base } from "../Utils/General";
-import { defaultFireOptions } from "../Firelink";
+import { maxDBUpdatesPerBatch, ApplyDBUpdates, ApplyDBUpdates_Local } from "../Utils/DatabaseHelpers.js";
+import { MaybeLog_Base } from "../Utils/General.js";
+import { defaultFireOptions } from "../Firelink.js";
 export const commandsWaitingToComplete = [];
 let currentCommandRun_listeners = [];
-function WaitTillCurrentCommandFinishes() {
-    return __awaiter(this, void 0, void 0, function* () {
-        return new Promise((resolve, reject) => {
-            currentCommandRun_listeners.push({ resolve, reject });
-        });
+async function WaitTillCurrentCommandFinishes() {
+    return new Promise((resolve, reject) => {
+        currentCommandRun_listeners.push({ resolve, reject });
     });
 }
 function NotifyListenersThatCurrentCommandFinished() {
@@ -29,10 +18,41 @@ function NotifyListenersThatCurrentCommandFinished() {
 }
 export class Command_Old {
     constructor(...args) {
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "options", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "payload", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        //prepareStartTime: number;
+        //runStartTime: number;
+        Object.defineProperty(this, "returnData", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         // these methods are executed on the server (well, will be later)
         // ==========
         // parent commands should call MarkAsSubcommand() immediately after setting a subcommand's payload
-        this.asSubcommand = false;
+        Object.defineProperty(this, "asSubcommand", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: false
+        });
         let options, payload;
         if (args.length == 1)
             [payload] = args;
@@ -54,73 +74,72 @@ export class Command_Old {
     }
     /** [sync] Validates the payload data. (ie. the validation that doesn't require accessing the database) */
     Validate_Early() { }
-    PreRun() {
-        return __awaiter(this, void 0, void 0, function* () {
-            //RemoveHelpers(this.payload);
-            this.Validate_Early(); // have this run locally, before sending, to save on bandwidth
-            yield this.Prepare();
-            yield this.Validate();
-        });
+    async PreRun() {
+        //RemoveHelpers(this.payload);
+        this.Validate_Early(); // have this run locally, before sending, to save on bandwidth
+        await this.Prepare();
+        await this.Validate();
     }
     /** [async] Validates the data, prepares it, and executes it -- thus applying it into the database. */
-    Run(maxUpdatesPerChunk = maxDBUpdatesPerBatch) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (commandsWaitingToComplete.length > 0) {
-                MaybeLog_Base(a => a.commands, l => l(`Queing command, since ${commandsWaitingToComplete.length} ${commandsWaitingToComplete.length == 1 ? "is" : "are"} already waiting for completion.${""}@type:`, this.constructor.name, " @payload(", this.payload, ")"));
+    async Run(maxUpdatesPerChunk = maxDBUpdatesPerBatch) {
+        if (commandsWaitingToComplete.length > 0) {
+            MaybeLog_Base(a => a.commands, l => l(`Queing command, since ${commandsWaitingToComplete.length} ${commandsWaitingToComplete.length == 1 ? "is" : "are"} already waiting for completion.${""}@type:`, this.constructor.name, " @payload(", this.payload, ")"));
+        }
+        commandsWaitingToComplete.push(this);
+        while (commandsWaitingToComplete[0] != this) {
+            await WaitTillCurrentCommandFinishes();
+        }
+        currentCommandRun_listeners = [];
+        MaybeLog_Base(a => a.commands, l => l("Running command. @type:", this.constructor.name, " @payload(", this.payload, ")"));
+        try {
+            //this.runStartTime = Date.now();
+            await this.PreRun();
+            const dbUpdates = this.GetDBUpdates();
+            if (this.options.fire.ValidateDBData) {
+                await this.Validate_LateHeavy(dbUpdates);
             }
-            commandsWaitingToComplete.push(this);
-            while (commandsWaitingToComplete[0] != this) {
-                yield WaitTillCurrentCommandFinishes();
-            }
-            currentCommandRun_listeners = [];
-            MaybeLog_Base(a => a.commands, l => l("Running command. @type:", this.constructor.name, " @payload(", this.payload, ")"));
-            try {
-                //this.runStartTime = Date.now();
-                yield this.PreRun();
-                const dbUpdates = this.GetDBUpdates();
-                if (this.options.fire.ValidateDBData) {
-                    yield this.Validate_LateHeavy(dbUpdates);
-                }
-                // FixDBUpdates(dbUpdates);
-                // await store.firebase.helpers.DBRef().update(dbUpdates);
-                yield ApplyDBUpdates(this.options, dbUpdates);
-                // MaybeLog(a=>a.commands, ()=>`Finishing command. @type:${this.constructor.name} @payload(${ToJSON(this.payload)}) @dbUpdates(${ToJSON(dbUpdates)})`);
-                MaybeLog_Base(a => a.commands, l => l("Finishing command. @type:", this.constructor.name, " @command(", this, ") @dbUpdates(", dbUpdates, ")"));
-            }
-            finally {
-                //const areOtherCommandsBuffered = currentCommandRun_listeners.length > 0;
-                ArrayCE(commandsWaitingToComplete).Remove(this);
-                NotifyListenersThatCurrentCommandFinished();
-            }
-            // later on (once set up on server), this will send the data back to the client, rather than return it
-            return this.returnData;
-        });
+            // FixDBUpdates(dbUpdates);
+            // await store.firebase.helpers.DBRef().update(dbUpdates);
+            await ApplyDBUpdates(this.options, dbUpdates);
+            // MaybeLog(a=>a.commands, ()=>`Finishing command. @type:${this.constructor.name} @payload(${ToJSON(this.payload)}) @dbUpdates(${ToJSON(dbUpdates)})`);
+            MaybeLog_Base(a => a.commands, l => l("Finishing command. @type:", this.constructor.name, " @command(", this, ") @dbUpdates(", dbUpdates, ")"));
+        }
+        finally {
+            //const areOtherCommandsBuffered = currentCommandRun_listeners.length > 0;
+            ArrayCE(commandsWaitingToComplete).Remove(this);
+            NotifyListenersThatCurrentCommandFinished();
+        }
+        // later on (once set up on server), this will send the data back to the client, rather than return it
+        return this.returnData;
     }
     // standard validation of common paths/object-types; perhaps disable in production
-    Validate_LateHeavy(dbUpdates) {
-        return __awaiter(this, void 0, void 0, function* () {
-            // validate "nodes/X"
-            /* let nodesBeingUpdated = (dbUpdates.VKeys() as string[]).map(a=> {
-                let match = a.match(/^nodes\/([0-9]+).*#/);
-                return match ? match[1].ToInt() : null;
-            }).filter(a=>a).Distinct();
-            for (let nodeID of nodesBeingUpdated) {
-                let oldNodeData = await GetAsync_Raw(()=>GetNode(nodeID));
-                let updatesForNode = dbUpdates.Props().filter(a=>a.name.match(`^nodes/${nodeID}($|/)`));
-    
-                let newNodeData = oldNodeData;
-                for (let update of updatesForNode) {
-                    newNodeData = u.updateIn(update.name.replace(new RegExp(`^nodes/${nodeID}($|/)`), "").replace(/\//g, "."), u.constant(update.value), newNodeData);
-                }
-                if (newNodeData != null) { // (if null, means we're deleting it, which is fine)
-                    AssertValidate("MapNode", newNodeData, `New node-data is invalid.`);
-                }
-            } */
-            // locally-apply db-updates, then validate the result (for now, only works for already-loaded data paths)
-            const oldData = Clone(this.options.fire.tree.AsRawData());
-            const newData = ApplyDBUpdates_Local(oldData, dbUpdates);
-            this.options.fire.ValidateDBData(newData);
-        });
+    async Validate_LateHeavy(dbUpdates) {
+        // validate "nodes/X"
+        /* let nodesBeingUpdated = (dbUpdates.VKeys() as string[]).map(a=> {
+            let match = a.match(/^nodes\/([0-9]+).*#/);
+            return match ? match[1].ToInt() : null;
+        }).filter(a=>a).Distinct();
+        for (let nodeID of nodesBeingUpdated) {
+            let oldNodeData = await GetAsync_Raw(()=>GetNode(nodeID));
+            let updatesForNode = dbUpdates.Props().filter(a=>a.name.match(`^nodes/${nodeID}($|/)`));
+
+            let newNodeData = oldNodeData;
+            for (let update of updatesForNode) {
+                newNodeData = u.updateIn(update.name.replace(new RegExp(`^nodes/${nodeID}($|/)`), "").replace(/\//g, "."), u.constant(update.value), newNodeData);
+            }
+            if (newNodeData != null) { // (if null, means we're deleting it, which is fine)
+                AssertValidate("MapNode", newNodeData, `New node-data is invalid.`);
+            }
+        } */
+        // locally-apply db-updates, then validate the result (for now, only works for already-loaded data paths)
+        const oldData = Clone(this.options.fire.tree.AsRawData());
+        const newData = ApplyDBUpdates_Local(oldData, dbUpdates);
+        this.options.fire.ValidateDBData(newData);
     }
 }
-Command_Old.defaultPayload = {};
+Object.defineProperty(Command_Old, "defaultPayload", {
+    enumerable: true,
+    configurable: true,
+    writable: true,
+    value: {}
+});

@@ -1,11 +1,11 @@
 import {DeepSet, IsNumberString, Assert, StringCE, Clone, ObjectCE, ArrayCE, GetTreeNodesInObjTree, E, CE, StartDownload, IsObject, Pair} from "js-vextensions";
 import u from "updeep";
-import {MaybeLog_Base} from "./General";
-import {FireOptions, SplitStringBySlash_Cached} from "..";
-import {defaultFireOptions} from "../Firelink";
-import firebase from "firebase";
-import {GetPathParts} from "./PathHelpers";
-import {nil} from "./Nil";
+import {MaybeLog_Base} from "./General.js";
+import {FireOptions, SplitStringBySlash_Cached} from "../index.js";
+import {defaultFireOptions} from "../Firelink.js";
+import firebase from "firebase/compat";
+import {GetPathParts} from "./PathHelpers.js";
+import {nil} from "./Nil.js";
 
 export function IsAuthValid(auth) {
 	return auth && !auth.isEmpty;

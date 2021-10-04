@@ -1,5 +1,5 @@
-import { FireOptions } from "..";
-import firebase from "firebase";
+import { FireOptions } from "../index.js";
+import firebase from "firebase/compat";
 export declare function IsAuthValid(auth: any): any;
 /**
 Applies normalization of an object-tree to match how it would be stored (and thus returned) by Firestore.

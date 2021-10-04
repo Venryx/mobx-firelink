@@ -1,10 +1,10 @@
 import u from "updeep";
 import {Clone, Assert, E, ObjectCE, ArrayCE, CE} from "js-vextensions";
-import {maxDBUpdatesPerBatch, ApplyDBUpdates, ApplyDBUpdates_Local} from "../Utils/DatabaseHelpers";
-import {MaybeLog_Base} from "../Utils/General";
-import {FireOptions, defaultFireOptions, FireUserInfo} from "../Firelink";
-import {DBPath} from "../Utils/PathHelpers";
-import {Command} from "./Command";
+import {maxDBUpdatesPerBatch, ApplyDBUpdates, ApplyDBUpdates_Local} from "../Utils/DatabaseHelpers.js";
+import {MaybeLog_Base} from "../Utils/General.js";
+import {FireOptions, defaultFireOptions, FireUserInfo} from "../Firelink.js";
+import {DBPath} from "../Utils/PathHelpers.js";
+import {Command} from "./Command.js";
 
 export const commandsWaitingToComplete = [] as Command_Old<any, any>[];
 

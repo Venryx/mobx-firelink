@@ -1,6 +1,17 @@
 export class TreeRequestWatcher {
     constructor(fire) {
-        this.nodesRequested = new Set();
+        Object.defineProperty(this, "fire", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "nodesRequested", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: new Set()
+        });
         this.fire = fire;
     }
     Start() {

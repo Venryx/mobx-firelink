@@ -5,13 +5,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import { Assert, CE, ToJSON, FromJSON } from "js-vextensions";
-import { observable, runInAction } from "mobx";
-import { QueryOp } from "../QueryOps";
-import { PathOrPathGetterToPath, PathOrPathGetterToPathSegments } from "../Utils/PathHelpers";
-import { ProcessDBData } from "../Utils/DatabaseHelpers";
-import { _getGlobalState } from "mobx";
-import { nil } from "../Utils/Nil";
-import { MaybeLog_Base } from "../Utils/General";
+import { makeObservable, observable } from "mobx";
+import { QueryOp } from "../QueryOps.js";
+import { PathOrPathGetterToPath, PathOrPathGetterToPathSegments } from "../Utils/PathHelpers.js";
+import { ProcessDBData } from "../Utils/DatabaseHelpers.js";
+import { nil } from "../Utils/Nil.js";
+import { MaybeLog_Base } from "../Utils/General.js";
+import { MobX_AllowStateChanges, RunInAction } from "../Utils/MobX.js";
 export var TreeNodeType;
 (function (TreeNodeType) {
     TreeNodeType[TreeNodeType["Root"] = 0] = "Root";
@@ -28,12 +28,23 @@ export var DataStatus;
 })(DataStatus || (DataStatus = {}));
 export class PathSubscription {
     constructor(unsubscribe) {
+        Object.defineProperty(this, "unsubscribe", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         this.unsubscribe = unsubscribe;
     }
 }
 export class QueryRequest {
     constructor(initialData) {
-        this.queryOps = [];
+        Object.defineProperty(this, "queryOps", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: []
+        });
         CE(this).Extend(initialData);
     }
     static ParseString(dataStr) {
@@ -60,12 +71,95 @@ export class QueryRequest {
 export class TreeNode {
     constructor(fire, pathOrSegments) {
         var _a;
-        this.status = DataStatus.Initial;
+        Object.defineProperty(this, "fire", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "pathSegments", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "pathSegments_noQuery", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "path", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "path_noQuery", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "status", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: DataStatus.Initial
+        });
+        Object.defineProperty(this, "subscription", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         // for doc (and root) nodes
-        this.collectionNodes = observable.map();
+        Object.defineProperty(this, "collectionNodes", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: observable.map()
+        });
+        //collectionNodes = new Map<string, TreeNode<any>>();
+        Object.defineProperty(this, "data", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "dataJSON", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         // for collection (and collection-query) nodes
-        this.queryNodes = observable.map(); // for collection nodes
-        this.docNodes = observable.map();
+        Object.defineProperty(this, "queryNodes", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: observable.map()
+        }); // for collection nodes
+        //queryNodes = new Map<string, TreeNode<any>>(); // for collection nodes
+        Object.defineProperty(this, "query", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        }); // for collection-query nodes
+        Object.defineProperty(this, "docNodes", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: observable.map()
+        });
+        makeObservable(this);
         this.fire = fire;
         this.pathSegments = PathOrPathGetterToPathSegments(pathOrSegments);
         this.path = PathOrPathGetterToPath(pathOrSegments);
@@ -87,16 +181,17 @@ export class TreeNode {
         // old: wait till call-stack completes, so we don't violate "can't change observables from within computation" rule
         // we can't change observables from within computed values/funcs/store-accessors, so do it in a moment (out of computation call-stack)
         /*WaitXThenRun(0, ()=> {
-            runInAction("TreeNode.Subscribe_prep", ()=>this.status = DataStatus.Waiting);
+            RunInAction("TreeNode.Subscribe_prep", ()=>this.status = DataStatus.Waiting);
         });*/
-        Assert(_getGlobalState().computationDepth == 0, "Cannot call TreeNode.Subscribe from within a computation.");
-        runInAction("TreeNode.Subscribe_prep", () => this.status = DataStatus.Waiting);
+        //Assert(_getGlobalState().computationDepth == 0, "Cannot call TreeNode.Subscribe from within a computation.");
+        Assert(MobX_AllowStateChanges(), "Cannot call TreeNode.Subscribe from within a computation.");
+        RunInAction("TreeNode.Subscribe_prep", () => this.status = DataStatus.Waiting);
         MaybeLog_Base(a => a.subscriptions, () => `Subscribing to: ${this.path}`);
         if (this.type == TreeNodeType.Root || this.type == TreeNodeType.Document) {
             let docRef = this.fire.subs.firestoreDB.doc(this.path_noQuery);
             this.subscription = new PathSubscription(docRef.onSnapshot({ includeMetadataChanges: true }, (snapshot) => {
                 MaybeLog_Base(a => a.subscriptions, l => l(`Got doc snapshot. @path(${this.path}) @snapshot:`, snapshot));
-                runInAction("TreeNode.Subscribe.onSnapshot_doc", () => {
+                RunInAction("TreeNode.Subscribe.onSnapshot_doc", () => {
                     this.SetData(snapshot.data(), snapshot.metadata.fromCache);
                 });
             }));
@@ -113,8 +208,8 @@ export class TreeNode {
                     newData[doc.id] = doc.data();
                 }
                 this.data = observable(newData) as any;*/
-                runInAction("TreeNode.Subscribe.onSnapshot_collection", () => {
-                    const deletedDocIDs = CE(Array.from(this.docNodes.keys())).Except(...snapshot.docs.map(a => a.id));
+                RunInAction("TreeNode.Subscribe.onSnapshot_collection", () => {
+                    const deletedDocIDs = CE(Array.from(this.docNodes.keys())).Exclude(...snapshot.docs.map(a => a.id));
                     let dataChanged = false;
                     for (const doc of snapshot.docs) {
                         if (!this.docNodes.has(doc.id)) {
@@ -194,7 +289,7 @@ export class TreeNode {
     Get(subpathOrGetterFunc, query, createTreeNodesIfMissing = false) {
         let subpathSegments = PathOrPathGetterToPathSegments(subpathOrGetterFunc);
         let currentNode = this;
-        let proceed_inAction = () => runInAction(`TreeNode.Get @path(${this.path})`, () => proceed(true));
+        let proceed_inAction = () => RunInAction(`TreeNode.Get @path(${this.path})`, () => proceed(true));
         let proceed = (inAction) => {
             currentNode = this;
             for (let [index, segment] of subpathSegments.entries()) {

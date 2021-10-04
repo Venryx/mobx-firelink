@@ -1,8 +1,8 @@
 import {Assert, E, StringCE, WaitXThenRun} from "js-vextensions";
 import {reaction} from "mobx";
-import {defaultFireOptions, FireOptions} from "../Firelink";
-import {DataStatus} from "../Tree/TreeNode";
-import {TreeRequestWatcher} from "../Tree/TreeRequestWatcher";
+import {defaultFireOptions, FireOptions} from "../Firelink.js";
+import {DataStatus} from "../Tree/TreeNode.js";
+import {TreeRequestWatcher} from "../Tree/TreeRequestWatcher.js";
 
 /** Accessor wrapper which throws an error if one of the base db-requests is still loading. (to be used in Command.Validate functions) */
 // (one of the rare cases where opt is not the first argument; that's because GetWait may be called very frequently/in-sequences, and usually wraps nice user accessors, so could add too much visual clutter)
@@ -33,14 +33,27 @@ export function GetWait<T>(dataGetterFunc: ()=>T, options?: Partial<FireOptions>
 	return result;
 }
 
+/** reject: caller of "await GetAsync()" receives the error, log: catch error and log it, ignore: catch error */
+export type GetAsync_ErrorHandleType = "rejectAndLog" | "reject" | "log" | "ignore";
+
 export class GetAsync_Options {
 	static default = new GetAsync_Options();
-	maxIterations? = 50; // pretty arbitrary; just meant to alert us for infinite-loop-like calls/getter-funcs
-	errorHandling? = "none" as "none" | "log" | "ignore";
+	/** Just meant to alert us for infinite-loop-like calls/getter-funcs. Default: 50 [pretty arbitrary] */
+	maxIterations? = 50; // todo: maybe replace this with system that tracks the list of paths accessed, and which halts if it "senses no progression" [eg. max-iterations-without-change-to-access-paths]
+	/** How to handle errors that occur in accessor, when there are still db-requests in progress. (ie. when accessor is still progressing) */
+	errorHandling_during? = "ignore" as GetAsync_ErrorHandleType;
+	/** How to handle errors that occur in accessor, when no db-requests are still in progress. (ie. on final accessor call) */
+	errorHandling_final? = "reject" as GetAsync_ErrorHandleType;
+	/** If true, db requests within dataGetterFunc that find themselves waiting for remote db-data, with throw an error immediately. (avoiding higher-level processing) */
+	throwImmediatelyOnDBWait? = false;
+}
+export let GetAsync_throwImmediatelyOnDBWait_activeDepth = 0;
+export function NotifyWaitingForDB(dbPath: string) {
+	if (GetAsync_throwImmediatelyOnDBWait_activeDepth > 0) {
+		throw new Error(`DB tree-node for "${dbPath}" is waiting for database data that isn't ready yet. Throwing error now (to avoid higher-level processing) until data is ready.`);
+	}
 }
 
-// async helper
-// (one of the rare cases where opt is not the first argument; that's because GetAsync may be called very frequently/in-sequences, and usually wraps nice user accessors, so could add too much visual clutter)
 export async function GetAsync<T>(dataGetterFunc: ()=>T, options?: Partial<FireOptions> & GetAsync_Options): Promise<T> {
 	const opt = E(defaultFireOptions, GetAsync_Options.default, options) as FireOptions & GetAsync_Options;
 	let watcher = new TreeRequestWatcher(opt.fire);
@@ -59,7 +72,7 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, options?: Partial<FireO
 		watcher.Stop();
 
 		const nodesRequested_array = Array.from(watcher.nodesRequested);
-		nodesRequested_obj = CE(nodesRequested_array).ToMapObj(a=>a.path, a=>true);
+		nodesRequested_obj = CE(nodesRequested_array).ToMap(a=>a.path, a=>true);
 
 		// wait till all requested nodes have their data received
 		await Promise.all(nodesRequested_array.map(node=> {
@@ -76,61 +89,81 @@ export async function GetAsync<T>(dataGetterFunc: ()=>T, options?: Partial<FireO
 			
 			// prep for getter-func
 			watcher.Start();
+			if (options?.throwImmediatelyOnDBWait) GetAsync_throwImmediatelyOnDBWait_activeDepth++;
 			// flip some flag here to say, "don't use cached data -- re-request!"
-			storeAccessorCachingTempDisabled = true;
+			opt.fire.storeAccessorCachingTempDisabled = true;
 			let result;
 
-			// execute getter-func
-			let error;
-			// if last iteration, never catch -- we want to see the error, as it's likely the cause of the seemingly-infinite iteration
-			if (opt.errorHandling == "none" || iterationIndex >= opt.maxIterations! - 1) {
-				result = dataGetterFunc();
-			} else {
-				try {
-					result = dataGetterFunc();
-				} catch (ex) {
-					error = ex;
-					if (opt.errorHandling == "log") {
-						console.error(ex);
-					}
+			let accessor_lastError;
+			function HandleAccessorError(ex: Error, handling: GetAsync_ErrorHandleType) {
+				/*if (ex instanceof BailMessage) {
+					return; // always ignore bail-messages in GetAsync (is this the ideal behavior?)
+				}*/
+
+				accessor_lastError = ex;
+
+				// if last iteration, never catch -- we want to see the error, as it's likely the cause of the seemingly-infinite iteration
+				if (handling == "reject" || handling == "rejectAndLog") {
+					reject(ex); // call reject, so that caller of GetAsync() can receives/can-catch the error (rather than the global mobx "reaction()" catching it)
+
+					//throw ex; // also rethrow it, so reaction stops, and we see error message in server log // commented; caller of GetAsync() may want to catch it
+					if (handling == "rejectAndLog") console.error(ex); // also log error
+					// also end/dispose reaction (unless first iteration; attempting it then causes an error, and would be unnecesary anyway)
+					if (iterationIndex > 0) dispose();
+				} else if (handling == "log") {
+					console.error(ex);
 				}
+			}
+
+			// execute getter-func
+			try {
+				result = dataGetterFunc();
+			} catch (ex) {
+				HandleAccessorError(ex, opt.errorHandling_during!);
 			}
 			
 			// cleanup for getter-func
-			storeAccessorCachingTempDisabled = false;
+			opt.fire.storeAccessorCachingTempDisabled = false;
+			if (options?.throwImmediatelyOnDBWait) GetAsync_throwImmediatelyOnDBWait_activeDepth--;
 			watcher.Stop();
 			
 			let nodesRequested_array = Array.from(watcher.nodesRequested);
 			//let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status == DataStatus.Waiting);
 			//let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status != DataStatus.Received);
 			let requestsBeingWaitedFor = nodesRequested_array.filter(node=>node.status != DataStatus.Received_Full);
-			let done = requestsBeingWaitedFor.length == 0;
-			if (done && error != null) {
+			const dbRequestsAllResolved = requestsBeingWaitedFor.length == 0;
+			const maxIterationsReached = iterationIndex >= opt.maxIterations! - 1;
+			
+			let finalCall = dbRequestsAllResolved || maxIterationsReached;
+			if (finalCall && accessor_lastError != null) {
 				//Assert(error == null, `Error occurred during final GetAsync iteration: ${error}`);
 				AssertV_triggerDebugger = true;
 				try {
 					//result = dataGetterFunc();
+					//dataGetterFunc();
 					dataGetterFunc();
+				} catch (ex) {
+					HandleAccessorError(ex, opt.errorHandling_final!);
 				} finally {
 					AssertV_triggerDebugger = false;
 				}
 			}
 
-			if (iterationIndex + 1 > opt.maxIterations!) {
+			if (maxIterationsReached && !dbRequestsAllResolved) {
 				reject(StringCE(`
-					GetAsync exceeded the maxIterations (${opt.maxIterations}).
+					GetAsync reached the maxIterations (${opt.maxIterations}) without completely resolving. Call was cancelled/rejected.
 					
 					Setting "window.logTypes.subscriptions = true" in console may help with debugging.
 				`).AsMultiline(0));
 			}
 
-			return {result, nodesRequested_array, done};
+			return {result, nodesRequested_array, fullyResolved: dbRequestsAllResolved};
 		}, data=> {
 			 // if data is null, it means an error occured in the computation-func above
 			if (data == null) return;
 
-			let {result, nodesRequested_array, done} = data;
-			if (!done) return;
+			let {result, nodesRequested_array, fullyResolved} = data;
+			if (!fullyResolved) return;
 
 			//Assert(result != null, "GetAsync should not usually return null.");
 			WaitXThenRun(0, ()=>dispose()); // wait a bit, so dispose-func is ready (for when fired immediately)
@@ -168,4 +201,4 @@ class AVWrapper {
 	}
 }
 
-export let storeAccessorCachingTempDisabled = false;
+//export let storeAccessorCachingTempDisabled = false;

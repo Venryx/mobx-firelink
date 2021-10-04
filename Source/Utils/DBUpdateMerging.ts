@@ -1,7 +1,7 @@
 import {ObjectCE, CE, Assert} from "js-vextensions";
 import u from "updeep";
-import {Command_Old} from "../Server/Command_Old";
-import {Command} from "../Server/Command";
+import {Command_Old} from "../Server/Command_Old.js";
+import {Command} from "../Server/Command.js";
 
 /*
 Todo: Maybe expand the merging system to be able to merge "sibling-only" db-updates.

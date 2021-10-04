@@ -1,12 +1,13 @@
 import {CE, E, emptyArray, emptyArray_forLoading} from "js-vextensions";
 import {ObservableMap, runInAction} from "mobx";
-import {defaultFireOptions, FireOptions} from "../Firelink";
-import {QueryOp} from "../QueryOps";
-import {DataStatus, QueryRequest} from "../Tree/TreeNode";
-import {DBShape} from "../UserTypes";
-import {DoX_ComputationSafe} from "../Utils/MobX";
-import {nil} from "../Utils/Nil";
-import {PathOrPathGetterToPathSegments} from "../Utils/PathHelpers";
+import {defaultFireOptions, FireOptions} from "../Firelink.js";
+import {QueryOp} from "../QueryOps.js";
+import {DataStatus, QueryRequest} from "../Tree/TreeNode.js";
+import {DBShape} from "../UserTypes.js";
+import {DoX_ComputationSafe, RunInAction} from "../Utils/MobX.js";
+import {nil} from "../Utils/Nil.js";
+import {PathOrPathGetterToPathSegments} from "../Utils/PathHelpers.js";
+import {NotifyWaitingForDB} from "./Helpers.js";
 
 /*
 Why use explicit GetDocs, GetDoc, etc. calls instead of just Proxy's in mobx store fields?
@@ -35,12 +36,21 @@ export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<a
 		treeNode.Request();
 	} else {
 		// we can't change observables from within computations, so do it in a moment (out of computation call-stack)
-		DoX_ComputationSafe(()=>runInAction("GetDocs_Request", ()=> {
+		DoX_ComputationSafe(()=>RunInAction("GetDocs_Request", ()=> {
 			opt.fire.tree.Get(pathSegments, queryRequest, true)!.Request();
 		}));
+		// if tree-node still not created yet (due to waiting a tick so can start mobx action), add placeholder entry, so tree-request-watchers know there's still data being loaded
+		// todo: improve this (eg. make-so watchers know they may receive mere placeholder entries)
+		if (opt.fire.tree.Get(pathSegments, queryRequest) == null) {
+			const placeholder = {"_note": "This is a placeholder; data is still loading, but its tree-node hasn't been created yet, so this is its placeholder."} as any;
+			opt.fire.treeRequestWatchers.forEach(a=>a.nodesRequested.add(placeholder));
+		}
 	}
 	
-	if (treeNode?.status != DataStatus.Received_Full) return opt.resultForLoading;
+	if (treeNode?.status != DataStatus.Received_Full) {
+		NotifyWaitingForDB(pathSegments.join("/"));
+		return opt.resultForLoading;
+	}
 	/*let docNodes = Array.from(treeNode.docNodes.values());
 	let docDatas = docNodes.map(docNode=>docNode.data);
 	return docDatas;*/
@@ -72,13 +82,22 @@ export function GetDoc<DB = DBShape, DocT = any>(options: Partial<FireOptions<an
 		treeNode.Request();
 	} else {
 		// we can't change observables from within computations, so do it in a moment (out of computation call-stack)
-		DoX_ComputationSafe(()=>runInAction("GetDoc_Request", ()=> {
+		DoX_ComputationSafe(()=>RunInAction("GetDoc_Request", ()=> {
 			opt.fire.tree.Get(pathSegments, nil, true)!.Request();
 		}));
+		// if tree-node still not created yet (due to waiting a tick so can start mobx action), add placeholder entry, so tree-request-watchers know there's still data being loaded
+		// todo: improve this (eg. make-so watchers know they may receive mere placeholder entries)
+		if (opt.fire.tree.Get(pathSegments) == null) {
+			const placeholder = {"_note": "This is a placeholder; data is still loading, but its tree-node hasn't been created yet, so this is its placeholder."} as any;
+			opt.fire.treeRequestWatchers.forEach(a=>a.nodesRequested.add(placeholder));
+		}
 	}
 
 	//if (opt.undefinedForLoading && treeNode?.status != DataStatus.Received_Full) return undefined;
-	if (treeNode?.status != DataStatus.Received_Full) return opt.resultForLoading;
+	if (treeNode?.status != DataStatus.Received_Full) {
+		NotifyWaitingForDB(pathSegments.join("/"));
+		return opt.resultForLoading;
+	}
 	return treeNode?.data;
 }
 /*export async function GetDoc_Async<DocT>(opt: FireOptions & GetDoc_Options, docPathOrGetterFunc: string | string[] | ((dbRoot: DBShape)=>DocT)): Promise<DocT> {

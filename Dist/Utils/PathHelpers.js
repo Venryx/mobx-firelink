@@ -1,6 +1,6 @@
 import { Assert, IsString, E, CE, IsArray, IsFunction } from "js-vextensions";
-import { defaultFireOptions } from "../Firelink";
-import { SplitStringBySlash_Cached } from "./StringSplitCache";
+import { defaultFireOptions } from "../Firelink.js";
+import { SplitStringBySlash_Cached } from "./StringSplitCache.js";
 export function VPathToFBPath(vPath) {
     return vPath.replace(/\/\./g, ".");
 }

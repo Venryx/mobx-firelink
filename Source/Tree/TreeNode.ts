@@ -1,13 +1,14 @@
 import {Assert, CE, ToJSON, WaitXThenRun, FromJSON, ObjectCE} from "js-vextensions";
-import {observable, ObservableMap, runInAction} from "mobx";
-import {QueryOp} from "../QueryOps";
-import {Firelink} from "../Firelink";
-import {PathOrPathGetterToPath, PathOrPathGetterToPathSegments} from "../Utils/PathHelpers";
-import {ProcessDBData} from "../Utils/DatabaseHelpers";
+import {makeObservable, observable, ObservableMap, runInAction} from "mobx";
+import {QueryOp} from "../QueryOps.js";
+import {Firelink} from "../Firelink.js";
+import {PathOrPathGetterToPath, PathOrPathGetterToPathSegments} from "../Utils/PathHelpers.js";
+import {ProcessDBData} from "../Utils/DatabaseHelpers.js";
 import {_getGlobalState} from "mobx";
-import {nil} from "../Utils/Nil";
-import {MaybeLog_Base} from "../Utils/General";
-import firebase from "firebase";
+import {nil} from "../Utils/Nil.js";
+import {MaybeLog_Base} from "../Utils/General.js";
+import firebase from "firebase/compat";
+import {MobX_AllowStateChanges, RunInAction} from "../Utils/MobX.js";
 
 export enum TreeNodeType {
 	Root,
@@ -61,6 +62,7 @@ export class QueryRequest {
 
 export class TreeNode<DataShape> {
 	constructor(fire: Firelink<any, any>, pathOrSegments: string | string[]) {
+		makeObservable(this);
 		this.fire = fire;
 		this.pathSegments = PathOrPathGetterToPathSegments(pathOrSegments);
 		this.path = PathOrPathGetterToPath(pathOrSegments)!;
@@ -90,17 +92,18 @@ export class TreeNode<DataShape> {
 		// old: wait till call-stack completes, so we don't violate "can't change observables from within computation" rule
 		// we can't change observables from within computed values/funcs/store-accessors, so do it in a moment (out of computation call-stack)
 		/*WaitXThenRun(0, ()=> {
-			runInAction("TreeNode.Subscribe_prep", ()=>this.status = DataStatus.Waiting);
+			RunInAction("TreeNode.Subscribe_prep", ()=>this.status = DataStatus.Waiting);
 		});*/
-		Assert(_getGlobalState().computationDepth == 0, "Cannot call TreeNode.Subscribe from within a computation.");
-		runInAction("TreeNode.Subscribe_prep", ()=>this.status = DataStatus.Waiting);
+		//Assert(_getGlobalState().computationDepth == 0, "Cannot call TreeNode.Subscribe from within a computation.");
+		Assert(MobX_AllowStateChanges(), "Cannot call TreeNode.Subscribe from within a computation.");
+		RunInAction("TreeNode.Subscribe_prep", ()=>this.status = DataStatus.Waiting);
 
 		MaybeLog_Base(a=>a.subscriptions, ()=>`Subscribing to: ${this.path}`);
 		if (this.type == TreeNodeType.Root || this.type == TreeNodeType.Document) {
 			let docRef = this.fire.subs.firestoreDB.doc(this.path_noQuery);
 			this.subscription = new PathSubscription(docRef.onSnapshot({includeMetadataChanges: true}, (snapshot)=> {
 				MaybeLog_Base(a=>a.subscriptions, l=>l(`Got doc snapshot. @path(${this.path}) @snapshot:`, snapshot));
-				runInAction("TreeNode.Subscribe.onSnapshot_doc", ()=> {
+				RunInAction("TreeNode.Subscribe.onSnapshot_doc", ()=> {
 					this.SetData(snapshot.data() as any, snapshot.metadata.fromCache);
 				});
 			}));
@@ -116,8 +119,8 @@ export class TreeNode<DataShape> {
 					newData[doc.id] = doc.data();
 				}
 				this.data = observable(newData) as any;*/
-				runInAction("TreeNode.Subscribe.onSnapshot_collection", ()=> {
-					const deletedDocIDs = CE(Array.from(this.docNodes.keys())).Except(...snapshot.docs.map(a=>a.id));
+				RunInAction("TreeNode.Subscribe.onSnapshot_collection", ()=> {
+					const deletedDocIDs = CE(Array.from(this.docNodes.keys())).Exclude(...snapshot.docs.map(a=>a.id));
 					let dataChanged = false;
 					for (const doc of snapshot.docs) {
 						if (!this.docNodes.has(doc.id)) {
@@ -218,7 +221,7 @@ export class TreeNode<DataShape> {
 		let subpathSegments = PathOrPathGetterToPathSegments(subpathOrGetterFunc);
 		let currentNode: TreeNode<any> = this;
 
-		let proceed_inAction = ()=>runInAction(`TreeNode.Get @path(${this.path})`, ()=>proceed(true));
+		let proceed_inAction = ()=>RunInAction(`TreeNode.Get @path(${this.path})`, ()=>proceed(true));
 		let proceed = (inAction: boolean)=> {
 			currentNode = this;
 			for (let [index, segment] of subpathSegments.entries()) {

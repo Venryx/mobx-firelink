@@ -1,6 +1,7 @@
-import firebase from "firebase/app";
-import { TreeNode } from "./Tree/TreeNode";
-import { TreeRequestWatcher } from "./Tree/TreeRequestWatcher";
+import firebase from "firebase/compat/app";
+import { UserCredential } from "firebase/auth";
+import { TreeNode } from "./Tree/TreeNode.js";
+import { TreeRequestWatcher } from "./Tree/TreeRequestWatcher.js";
 export declare let defaultFireOptions: FireOptions;
 export declare function SetDefaultFireOptions(opt: FireOptions): void;
 export interface FireOptions<RootStoreShape = any, DBShape = any> {
@@ -23,6 +24,7 @@ export declare class Firelink<RootStoreShape, DBShape> {
     rootPath: string;
     rootStore: RootStoreShape;
     storeOverridesStack: RootStoreShape[];
+    storeAccessorCachingTempDisabled: boolean;
     InitSubs(): void;
     subs: {
         firestoreDB: firebase.firestore.Firestore;
@@ -32,12 +34,12 @@ export declare class Firelink<RootStoreShape, DBShape> {
     LogIn(opt: {
         provider: ProviderName;
         type: "popup" | "redirect";
-    }): Promise<firebase.auth.UserCredential | undefined>;
+    }): Promise<UserCredential | undefined>;
     LogIn_WithCredential(opt: {
         provider: ProviderName;
         idToken?: string;
         accessToken?: string;
-    }): Promise<firebase.auth.UserCredential>;
+    }): Promise<UserCredential>;
     LogOut(): Promise<void>;
     tree: TreeNode<DBShape>;
     treeRequestWatchers: Set<TreeRequestWatcher>;
