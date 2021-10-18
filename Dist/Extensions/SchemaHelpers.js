@@ -3,36 +3,88 @@ import AJVKeywords from "ajv-keywords";
 import { Clone, ToJSON, IsString, Assert, E, CE, IsArray, DEL } from "js-vextensions";
 import { AssertV } from "../Accessors/Helpers.js";
 import { UUID_regex } from "./KeyGenerator.js";
-//import {RemoveHelpers, WithoutHelpers} from "./DatabaseHelpers.js";
 export const ajv = AJVKeywords(new AJV({ allErrors: true }));
-export function Schema(schema) {
+export function NewSchema(schema) {
     schema = E({ additionalProperties: false }, schema);
+    // temp; makes-so schemas are understandable by get-graphql-from-jsonschema
+    /*if (convertEnumToOneOfConst && schema.enum) {
+        schema.type = "string";
+        schema.oneOf = schema.enum.map(val=>({const: val}));
+        delete schema.enum;
+    }*/
     return schema;
 }
-export const schemaEntryJSONs = {};
-export async function AddSchema(...args) {
-    let name, dependencySchemas, schemaOrGetter;
+/*export function SimpleSchema(props: JSONSchemaProperties, required?: string[]) {
+    const schema: JSONSchema7 = {
+        properties: props,
+    };
+    if (required) schema.required = required;
+    return NewSchema(schema);
+}*/
+/** Specify required props by adding a "$" to the start of the prop name. */
+export function SimpleSchema(props) {
+    var _a;
+    const schema = {
+        properties: {},
+        required: [],
+    };
+    for (const [key, value] of Object.entries(props)) {
+        const key_final = key.replace("$", "");
+        schema.properties[key_final] = value;
+        if (key.startsWith("$")) {
+            (_a = schema.required) === null || _a === void 0 ? void 0 : _a.push(key_final);
+        }
+    }
+    return NewSchema(schema);
+}
+export const schemaEntryJSONs = new Map();
+export function AddSchema(...args) {
+    var _a;
+    let name, schemaDeps, schemaOrGetter;
     if (args.length == 2)
         [name, schemaOrGetter] = args;
     else
-        [name, dependencySchemas, schemaOrGetter] = args;
-    if (dependencySchemas != null)
-        await Promise.all(dependencySchemas.map(schemaName => WaitTillSchemaAdded(schemaName)));
-    let schema = schemaOrGetter instanceof Function ? schemaOrGetter() : schemaOrGetter;
-    schema = Schema(schema);
-    schemaEntryJSONs[name] = schema;
-    ajv.removeSchema(name); // for hot-reloading
-    const result = ajv.addSchema(schema, name);
-    if (schemaAddListeners[name]) {
-        for (const listener of schemaAddListeners[name]) {
-            listener();
+        [name, schemaDeps, schemaOrGetter] = args;
+    schemaDeps = (_a = schemaDeps) !== null && _a !== void 0 ? _a : [];
+    /*if (schemaDeps! != null) {
+        const schemaDep_waitPromises = schemaDeps.map(schemaName=>WaitTillSchemaAdded(schemaName));
+        // only await promises if there actually are schema-deps that need waiting for (avoid promises if possible, so AddSchema has chance to synchronously complete)
+        if (schemaDep_waitPromises.find(a=>a != null)) {
+            await Promise.all(schemaDep_waitPromises);
         }
-        delete schemaAddListeners[name];
+    }*/
+    let ajvResult;
+    const proceed = () => {
+        let schema = schemaOrGetter instanceof Function ? schemaOrGetter() : schemaOrGetter;
+        schema = NewSchema(schema);
+        schemaEntryJSONs.set(name, schema);
+        ajv.removeSchema(name); // for hot-reloading
+        ajvResult = ajv.addSchema(schema, name);
+        if (schemaAddListeners.has(name)) {
+            for (const listener of schemaAddListeners.get(name)) {
+                listener();
+            }
+            schemaAddListeners.delete(name);
+        }
+    };
+    // if schema cannot be added just yet (due to a schema-dependency not yet being added)
+    if (!schemaDeps.every(dep => schemaEntryJSONs.has(dep))) {
+        // set up schema-adding func to run as soon as possible (without even leaving call-stack)
+        RunXOnceSchemasAdded(schemaDeps, proceed);
+        // return promise that then provides the ajv instance as this func's return-value (this part can have slight delay)
+        return new Promise(async (resolve) => {
+            await WaitTillSchemaAdded(name);
+            resolve(ajvResult);
+        });
     }
-    return result;
+    // if schema *can* be completed added synchronously, then do so and return the ajv instance (no need for promise)
+    proceed();
+    return ajvResult;
 }
-export function GetSchemaJSON(name) {
-    return Clone(schemaEntryJSONs[name]);
+export function GetSchemaJSON(name, errorOnMissing = true) {
+    const schemaJSON = schemaEntryJSONs.get(name);
+    Assert(schemaJSON != null || !errorOnMissing, `Could not find schema "${name}".`);
+    return Clone(schemaJSON);
 }
 /*export type DataWrapper<T> = {data: T};
 export function DataWrapper(dataSchema: any) {
@@ -46,16 +98,29 @@ export function DataWrapper(dataSchema: any) {
 export function WrapData<T>(data: T) {
     return { data } as DataWrapper<T>;
 }*/
-var schemaAddListeners = {};
+var schemaAddListeners = new Map();
+export function RunXOnceSchemasAdded(schemaDeps, funcX) {
+    const schemasLeftToWaitFor = new Set(schemaDeps);
+    for (const schemaDep of schemaDeps) {
+        if (!schemaAddListeners.has(schemaDep))
+            schemaAddListeners.set(schemaDep, []);
+        schemaAddListeners.get(schemaDep).push(() => {
+            schemasLeftToWaitFor.delete(schemaDep);
+            if (schemasLeftToWaitFor.size == 0) {
+                funcX();
+            }
+        });
+    }
+}
+/*export function RunXOnceSchemaAdded(schemaName: string, funcX: ()=>void) {
+    RunXOnceSchemasAdded([schemaName], funcX);
+}*/
 export function WaitTillSchemaAdded(schemaName) {
+    // if schema is already added, return right away (avoid promises if possible, so AddSchema has chance to synchronously complete)
+    if (schemaEntryJSONs.has(schemaName))
+        return null;
     return new Promise((resolve, reject) => {
-        // if schema is already added, run right away (avoid ajv.getSchema, since it errors on not-yet-resolvable refs)
-        //if (ajv.getSchema(schemaName)) {
-        if (schemaEntryJSONs[schemaName] != null) {
-            resolve();
-            return;
-        }
-        schemaAddListeners[schemaName] = (schemaAddListeners[schemaName] || []).concat(resolve);
+        RunXOnceSchemasAdded([schemaName], resolve);
     });
 }
 export function DeriveSchema(baseSchemaNameOrJSON, schemaPropsToInclude_withChanges) {
@@ -159,7 +224,7 @@ export function AssertValidate_Full(schemaObject, schemaName, data, failureMessa
     var _a;
     opt = E(new AssertValidateOptions(), opt);
     AssertV(schemaObject, "schemaObject cannot be null.");
-    schemaObject = Schema(schemaObject); // make sure we apply schema-object defaults
+    schemaObject = NewSchema(schemaObject); // make sure we apply schema-object defaults
     if (opt.allowOptionalPropsToBeNull) {
         schemaObject = Schema_WithOptionalPropsAllowedNull(schemaObject);
     }

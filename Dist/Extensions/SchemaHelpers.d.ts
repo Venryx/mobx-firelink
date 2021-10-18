@@ -1,11 +1,18 @@
 import AJV from "ajv";
+import { JSONSchema7 } from "json-schema";
 export declare const ajv: AJV_Extended;
-export declare function Schema(schema: any): any;
-export declare const schemaEntryJSONs: {};
-export declare function AddSchema(name: string, schemaOrGetter: Object | (() => Object)): any;
-export declare function AddSchema(name: string, dependencySchemas: string[], schemaGetter: () => Object): any;
-export declare function GetSchemaJSON(name: string): any;
-export declare function WaitTillSchemaAdded(schemaName: string): Promise<void>;
+export declare function NewSchema(schema: any): any;
+declare type JSONSchemaProperties = {
+    [k: string]: JSONSchema7;
+};
+/** Specify required props by adding a "$" to the start of the prop name. */
+export declare function SimpleSchema(props: JSONSchemaProperties): any;
+export declare const schemaEntryJSONs: Map<string, JSONSchema7>;
+export declare function AddSchema(name: string, schemaOrGetter: JSONSchema7 | (() => JSONSchema7)): AJV.Ajv | Promise<AJV.Ajv>;
+export declare function AddSchema(name: string, schemaDeps: string[] | null | undefined, schemaGetter: () => JSONSchema7): AJV.Ajv | Promise<AJV.Ajv>;
+export declare function GetSchemaJSON(name: string, errorOnMissing?: boolean): JSONSchema7;
+export declare function RunXOnceSchemasAdded(schemaDeps: string[], funcX: () => void): void;
+export declare function WaitTillSchemaAdded(schemaName: string): Promise<void> | null;
 export declare type SchemaObject = {
     [key: string]: any;
     [key: number]: never;
