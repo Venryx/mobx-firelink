@@ -22,7 +22,7 @@ export class GetDocs_Options {
 	resultForLoading? = emptyArray_forLoading;
 	//resultForEmpty? = emptyArray;
 }
-export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<any, DB>> & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>ObservableMap<any, DocT>)): DocT[]|undefined {
+export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<any, DB>> & GetDocs_Options, collectionPathOrGetterFunc: string | string[] | ((dbRoot: DB)=>ObservableMap<any, DocT>)): DocT[] {
 	const opt = E(defaultFireOptions, GetDocs_Options.default, options) as FireOptions & GetDocs_Options;
 	let subpathSegments = PathOrPathGetterToPathSegments(collectionPathOrGetterFunc);
 	let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
@@ -49,7 +49,7 @@ export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<a
 	
 	if (treeNode?.status != DataStatus.Received_Full) {
 		NotifyWaitingForDB(pathSegments.join("/"));
-		return opt.resultForLoading;
+		return opt.resultForLoading as DocT[];
 	}
 	/*let docNodes = Array.from(treeNode.docNodes.values());
 	let docDatas = docNodes.map(docNode=>docNode.data);
