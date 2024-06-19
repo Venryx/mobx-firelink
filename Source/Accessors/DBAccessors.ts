@@ -2,7 +2,7 @@ import {CE, E, emptyArray, emptyArray_forLoading} from "js-vextensions";
 import {ObservableMap, runInAction} from "mobx";
 import {defaultFireOptions, FireOptions} from "../Firelink.js";
 import {QueryOp} from "../QueryOps.js";
-import {DataStatus, QueryRequest} from "../Tree/TreeNode.js";
+import {DataStatus, PathSegmentsAreValid, QueryRequest} from "../Tree/TreeNode.js";
 import {DBShape} from "../UserTypes.js";
 import {DoX_ComputationSafe, RunInAction} from "../Utils/MobX.js";
 import {nil} from "../Utils/Nil.js";
@@ -26,7 +26,7 @@ export function GetDocs<DB = DBShape, DocT = any>(options: Partial<FireOptions<a
 	const opt = E(defaultFireOptions, GetDocs_Options.default, options) as FireOptions & GetDocs_Options;
 	let subpathSegments = PathOrPathGetterToPathSegments(collectionPathOrGetterFunc);
 	let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
-	if (CE(pathSegments).Any(a=>a == null)) return emptyArray;
+	if (!PathSegmentsAreValid(pathSegments)) return emptyArray;
 
 	let queryRequest = opt.queryOps ? new QueryRequest({queryOps: opt.queryOps}) : nil;
 
@@ -74,7 +74,7 @@ export function GetDoc<DB = DBShape, DocT = any>(options: Partial<FireOptions<an
 	const opt = E(defaultFireOptions, GetDoc_Options.default, options) as FireOptions & GetDoc_Options;
 	let subpathSegments = PathOrPathGetterToPathSegments(docPathOrGetterFunc);
 	let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
-	if (CE(pathSegments).Any(a=>a == null)) return null;
+	if (!PathSegmentsAreValid(pathSegments)) return null;
 
 	let treeNode = opt.fire.tree.Get(pathSegments);
 	// if already subscribed, just mark requested (reduces action-spam of GetDoc_Request)

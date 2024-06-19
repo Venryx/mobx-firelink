@@ -1,6 +1,6 @@
-import { CE, E, emptyArray, emptyArray_forLoading } from "js-vextensions";
+import { E, emptyArray, emptyArray_forLoading } from "js-vextensions";
 import { defaultFireOptions } from "../Firelink.js";
-import { DataStatus, QueryRequest } from "../Tree/TreeNode.js";
+import { DataStatus, PathSegmentsAreValid, QueryRequest } from "../Tree/TreeNode.js";
 import { DoX_ComputationSafe, RunInAction } from "../Utils/MobX.js";
 import { nil } from "../Utils/Nil.js";
 import { PathOrPathGetterToPathSegments } from "../Utils/PathHelpers.js";
@@ -44,7 +44,7 @@ export function GetDocs(options, collectionPathOrGetterFunc) {
     const opt = E(defaultFireOptions, GetDocs_Options.default, options);
     let subpathSegments = PathOrPathGetterToPathSegments(collectionPathOrGetterFunc);
     let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
-    if (CE(pathSegments).Any(a => a == null))
+    if (!PathSegmentsAreValid(pathSegments))
         return emptyArray;
     let queryRequest = opt.queryOps ? new QueryRequest({ queryOps: opt.queryOps }) : nil;
     const treeNode = opt.fire.tree.Get(pathSegments, queryRequest);
@@ -107,7 +107,7 @@ export function GetDoc(options, docPathOrGetterFunc) {
     const opt = E(defaultFireOptions, GetDoc_Options.default, options);
     let subpathSegments = PathOrPathGetterToPathSegments(docPathOrGetterFunc);
     let pathSegments = opt.inLinkRoot ? opt.fire.rootPathSegments.concat(subpathSegments) : subpathSegments;
-    if (CE(pathSegments).Any(a => a == null))
+    if (!PathSegmentsAreValid(pathSegments))
         return null;
     let treeNode = opt.fire.tree.Get(pathSegments);
     // if already subscribed, just mark requested (reduces action-spam of GetDoc_Request)

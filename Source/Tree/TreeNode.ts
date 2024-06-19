@@ -60,6 +60,10 @@ export class QueryRequest {
 	}
 }
 
+export function PathSegmentsAreValid(pathSegments: string[]) {
+	return pathSegments.every(a=>a != null && a.trim().length > 0);
+}
+
 export class TreeNode<DataShape> {
 	constructor(fire: Firelink<any, any>, pathOrSegments: string | string[]) {
 		makeObservable(this);
@@ -69,7 +73,7 @@ export class TreeNode<DataShape> {
 		const queryStr = this.pathSegments.slice(-1)[0]?.startsWith("@query:") ? this.pathSegments.slice(-1)[0].substr("@query:".length) : null;
 		this.pathSegments_noQuery = this.pathSegments.filter(a=>!a.startsWith("@query:"));
 		this.path_noQuery = this.pathSegments_noQuery.join("/");
-		Assert(this.pathSegments.find(a=>a == null || a.trim().length == 0) == null, `Path segments cannot be null/empty. @pathSegments(${this.pathSegments})`);
+		Assert(PathSegmentsAreValid(this.pathSegments), `Path segments cannot be null/empty. @pathSegments(${this.pathSegments})`);
 		this.type = GetTreeNodeTypeForPath(this.pathSegments);
 		this.query = queryStr ? QueryRequest.ParseString(queryStr) : nil;
 	}

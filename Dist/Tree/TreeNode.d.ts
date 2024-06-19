@@ -26,6 +26,7 @@ export declare class QueryRequest {
     Apply(collection: firebase.firestore.CollectionReference): firebase.firestore.CollectionReference<firebase.firestore.DocumentData>;
     toString(): string;
 }
+export declare function PathSegmentsAreValid(pathSegments: string[]): boolean;
 export declare class TreeNode<DataShape> {
     constructor(fire: Firelink<any, any>, pathOrSegments: string | string[]);
     fire: Firelink<any, any>;
