@@ -46,4 +46,4 @@ export declare class Firelink<RootStoreShape, DBShape> {
     UnsubscribeAll(): void;
     ValidateDBData?: (dbData: DBShape) => void;
 }
-export declare type ProviderName = "google" | "facebook" | "twitter" | "github";
+export type ProviderName = "google" | "facebook" | "twitter" | "github";

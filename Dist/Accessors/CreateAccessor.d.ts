@@ -19,7 +19,7 @@ export declare class StoreAccessorOptions {
     cache_keepAlive: boolean;
     cache_unwrapArrays: boolean;
 }
-export declare type CallArgToDependencyConvertorFunc = (callArgs: any[]) => any[];
+export type CallArgToDependencyConvertorFunc = (callArgs: any[]) => any[];
 interface StoreAccessorFunc<RootState_PreSet = RootStoreShape> {
     <Func extends Function, RootState = RootState_PreSet>(accessor: (s: RootState) => Func): Func & {
         Wait: Func;

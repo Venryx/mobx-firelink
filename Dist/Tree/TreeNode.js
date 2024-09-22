@@ -38,15 +38,6 @@ export class PathSubscription {
     }
 }
 export class QueryRequest {
-    constructor(initialData) {
-        Object.defineProperty(this, "queryOps", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-        });
-        CE(this).Extend(initialData);
-    }
     static ParseString(dataStr) {
         return QueryRequest.ParseData(FromJSON(dataStr));
     }
@@ -56,6 +47,15 @@ export class QueryRequest {
             result.queryOps.push(QueryOp.ParseData(opData));
         }
         return result;
+    }
+    constructor(initialData) {
+        Object.defineProperty(this, "queryOps", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: []
+        });
+        CE(this).Extend(initialData);
     }
     Apply(collection) {
         let result = collection;

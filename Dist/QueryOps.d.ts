@@ -1,5 +1,5 @@
 import firebase from "firebase/compat";
-export declare type QueryOpType = "where" | "orderBy" | "limit";
+export type QueryOpType = "where" | "orderBy" | "limit";
 export declare abstract class QueryOp {
     static ParseData(json: any): WhereOp | OrderByOp | LimitOp;
     type: QueryOpType;

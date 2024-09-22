@@ -26,7 +26,7 @@ export declare class ApplyDBUpdates_Options {
 export declare function FinalizeDBUpdates(options: Partial<FireOptions & ApplyDBUpdates_Options>, dbUpdates: Object, rootPath_override?: string): Object;
 export declare function ApplyDBUpdates(options: Partial<FireOptions & ApplyDBUpdates_Options>, dbUpdates: Object, rootPath_override?: string): Promise<void>;
 export declare function ApplyDBUpdates_Local(dbData: any, dbUpdates: Object): any;
-export declare type QuickBackup = {
+export type QuickBackup = {
     [key: string]: {
         oldData: any;
         newData: any;
