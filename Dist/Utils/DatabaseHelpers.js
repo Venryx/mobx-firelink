@@ -3,8 +3,8 @@ import u from "updeep";
 import { MaybeLog_Base } from "./General.js";
 import { SplitStringBySlash_Cached } from "../index.js";
 import { defaultFireOptions } from "../Firelink.js";
-import firebase from "firebase/compat";
 import { GetPathParts } from "./PathHelpers.js";
+import { deleteField, doc, getDoc, getFirestore, writeBatch } from "firebase/firestore";
 export function IsAuthValid(auth) {
     return auth && !auth.isEmpty;
 }
@@ -164,7 +164,7 @@ export function ConvertDBUpdatesToBatch(options, dbUpdates) {
     const opt = E(defaultFireOptions, options);
     const updateEntries = Object.entries(dbUpdates);
     Assert(updateEntries.length <= maxDBUpdatesPerBatch, `Cannot have more than ${maxDBUpdatesPerBatch} db-updates per batch.`);
-    const batch = opt.fire.subs.firestoreDB.batch();
+    const batch = writeBatch(getFirestore());
     for (let [path, value] of updateEntries) {
         let [docPath, fieldPathInDoc] = GetPathParts(path, true);
         let useMerge = false;
@@ -176,9 +176,9 @@ export function ConvertDBUpdatesToBatch(options, dbUpdates) {
         }
         value = Clone(value); // picky firestore library demands "simple JSON objects"
         // [fieldPathInDoc, value] = FixSettingPrimitiveValueDirectly(fieldPathInDoc, value);
-        const docRef = opt.fire.subs.firestoreDB.doc(docPath);
+        const docRef = doc(getFirestore(), docPath);
         if (fieldPathInDoc) {
-            value = value != null ? value : firebase.firestore.FieldValue.delete();
+            value = value != null ? value : deleteField();
             if (useMerge) {
                 // Set-with-merge differs from update in that:
                 // 1) It works even if the document doesn't exist yet.
@@ -286,8 +286,8 @@ export async function MakeQuickBackupForDBUpdates(options, dbUpdates, rootPath_o
     const newDocValues_pairs = CE(dbUpdates).Pairs();
     const oldDocValues = await Promise.all(newDocValues_pairs.map(pair => {
         let [docPath, fieldPathInDoc] = GetPathParts(pair.key, true);
-        let docRef = opt.fire.subs.firestoreDB.doc(docPath);
-        return docRef.get().then(data => data.data());
+        let docRef = doc(getFirestore(), docPath);
+        return getDoc(docRef).then(data => data.data());
     }));
     /*const docValues_map = CE(docValues).ToMapObj((a, index)=>dbUpdateEntries[index].key, a=>a);
     const backupData = {

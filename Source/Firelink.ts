@@ -1,5 +1,5 @@
-import firebase from "firebase/compat/app";
-import {signInWithPopup, signInWithRedirect, signInWithCredential, signOut, GoogleAuthProvider, FacebookAuthProvider, TwitterAuthProvider, OAuthProvider, getAuth, UserCredential} from "firebase/auth";
+import {Firestore, getFirestore} from "firebase/firestore";
+import {signInWithPopup, signInWithRedirect, signInWithCredential, signOut, GoogleAuthProvider, FacebookAuthProvider, TwitterAuthProvider, OAuthProvider, getAuth, UserCredential, onAuthStateChanged, User} from "firebase/auth";
 import {TreeNode} from "./Tree/TreeNode.js";
 import {TreeRequestWatcher} from "./Tree/TreeRequestWatcher.js";
 import {PathOrPathGetterToPath, PathOrPathGetterToPathSegments} from "./Utils/PathHelpers.js";
@@ -62,8 +62,8 @@ export class Firelink<RootStoreShape, DBShape> {
 	storeAccessorCachingTempDisabled = false;
 
 	InitSubs() {
-		this.subs.firestoreDB = firebase.firestore();
-		firebase.auth().onAuthStateChanged((rawUserInfo)=> {
+		this.subs.firestoreDB = getFirestore();
+		onAuthStateChanged(getAuth(), (rawUserInfo)=> {
 			RunInAction("Firelink.onAuthStateChanged", ()=> {
 				this.userInfo_raw = rawUserInfo;
 				this.userInfo = rawUserInfo == null ? null : {
@@ -74,11 +74,11 @@ export class Firelink<RootStoreShape, DBShape> {
 		});
 	}
 	subs = {} as {
-		firestoreDB: firebase.firestore.Firestore;
+		firestoreDB: Firestore;
 	};
 
 	//@observable userInfo_raw: firebase.auth.UserCredential;
-	@observable.ref userInfo_raw: firebase.User|null;
+	@observable.ref userInfo_raw: User|null;
 	@observable.ref userInfo: FireUserInfo|null;
 	//@observable test1 = 1;
 	async LogIn(opt: {provider: ProviderName, type: "popup" | "redirect"}) {

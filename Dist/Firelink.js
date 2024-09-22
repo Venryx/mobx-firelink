@@ -4,8 +4,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import firebase from "firebase/compat/app";
-import { signInWithPopup, signInWithRedirect, signInWithCredential, signOut, GoogleAuthProvider, FacebookAuthProvider, TwitterAuthProvider, getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { signInWithPopup, signInWithRedirect, signInWithCredential, signOut, GoogleAuthProvider, FacebookAuthProvider, TwitterAuthProvider, getAuth, onAuthStateChanged } from "firebase/auth";
 import { TreeNode } from "./Tree/TreeNode.js";
 import { PathOrPathGetterToPath, PathOrPathGetterToPathSegments } from "./Utils/PathHelpers.js";
 import { makeObservable, observable } from "mobx";
@@ -144,8 +144,8 @@ export class Firelink {
         this.initialized = true;
     }
     InitSubs() {
-        this.subs.firestoreDB = firebase.firestore();
-        firebase.auth().onAuthStateChanged((rawUserInfo) => {
+        this.subs.firestoreDB = getFirestore();
+        onAuthStateChanged(getAuth(), (rawUserInfo) => {
             RunInAction("Firelink.onAuthStateChanged", () => {
                 this.userInfo_raw = rawUserInfo;
                 this.userInfo = rawUserInfo == null ? null : {

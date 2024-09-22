@@ -1,3 +1,4 @@
+import { limit, orderBy, query, where } from "firebase/firestore";
 export class QueryOp {
     constructor() {
         Object.defineProperty(this, "type", {
@@ -43,7 +44,7 @@ export class WhereOp extends QueryOp {
     Apply(collection) {
         var _a;
         // collection.where complains if value is undefined, so use null instead
-        return collection.where(this.fieldPath, this.comparison, (_a = this.value) !== null && _a !== void 0 ? _a : null);
+        return query(collection, where(this.fieldPath, this.comparison, (_a = this.value) !== null && _a !== void 0 ? _a : null));
     }
 }
 /*export const Where = (...args: ConstructorParameters<typeof WhereOp>)=> {
@@ -67,7 +68,7 @@ export class OrderByOp extends QueryOp {
         this.type = "orderBy";
     }
     Apply(collection) {
-        return collection.orderBy(this.fieldPath, this.direction);
+        return query(collection, orderBy(this.fieldPath, this.direction));
     }
 }
 export class LimitOp extends QueryOp {
@@ -82,6 +83,6 @@ export class LimitOp extends QueryOp {
         this.type = "limit";
     }
     Apply(collection) {
-        return collection.limit(this.count);
+        return query(collection, limit(this.count));
     }
 }

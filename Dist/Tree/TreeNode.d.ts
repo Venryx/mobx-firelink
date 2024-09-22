@@ -1,7 +1,7 @@
 import { ObservableMap } from "mobx";
 import { QueryOp } from "../QueryOps.js";
 import { Firelink } from "../Firelink.js";
-import firebase from "firebase/compat";
+import { CollectionReference } from "firebase/firestore";
 export declare enum TreeNodeType {
     Root = 0,
     Collection = 1,
@@ -23,7 +23,7 @@ export declare class QueryRequest {
     static ParseData(data: any): QueryRequest;
     constructor(initialData?: Partial<QueryRequest>);
     queryOps: QueryOp[];
-    Apply(collection: firebase.firestore.CollectionReference): firebase.firestore.CollectionReference<firebase.firestore.DocumentData>;
+    Apply(collection: CollectionReference): CollectionReference<import("@firebase/firestore").DocumentData, import("@firebase/firestore").DocumentData>;
     toString(): string;
 }
 export declare function PathSegmentsAreValid(pathSegments: string[]): boolean;

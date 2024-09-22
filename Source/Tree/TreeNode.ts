@@ -7,8 +7,8 @@ import {ProcessDBData} from "../Utils/DatabaseHelpers.js";
 import {_getGlobalState} from "mobx";
 import {nil} from "../Utils/Nil.js";
 import {MaybeLog_Base} from "../Utils/General.js";
-import firebase from "firebase/compat";
 import {MobX_AllowStateChanges, RunInAction} from "../Utils/MobX.js";
+import {CollectionReference, collection, doc, getDoc, getFirestore, onSnapshot, query} from "firebase/firestore";
 
 export enum TreeNodeType {
 	Root,
@@ -47,7 +47,7 @@ export class QueryRequest {
 		CE(this).Extend(initialData);
 	}
 	queryOps = [] as QueryOp[];
-	Apply(collection: firebase.firestore.CollectionReference) {
+	Apply(collection: CollectionReference) {
 		let result = collection;
 		for (let op of this.queryOps) {
 			result = op.Apply(result);
@@ -104,19 +104,19 @@ export class TreeNode<DataShape> {
 
 		MaybeLog_Base(a=>a.subscriptions, ()=>`Subscribing to: ${this.path}`);
 		if (this.type == TreeNodeType.Root || this.type == TreeNodeType.Document) {
-			let docRef = this.fire.subs.firestoreDB.doc(this.path_noQuery);
-			this.subscription = new PathSubscription(docRef.onSnapshot({includeMetadataChanges: true}, (snapshot)=> {
+			let docRef = doc(getFirestore(), this.path_noQuery);
+			this.subscription = new PathSubscription(onSnapshot(docRef, {includeMetadataChanges: true}, (snapshot)=> {
 				MaybeLog_Base(a=>a.subscriptions, l=>l(`Got doc snapshot. @path(${this.path}) @snapshot:`, snapshot));
 				RunInAction("TreeNode.Subscribe.onSnapshot_doc", ()=> {
 					this.SetData(snapshot.data() as any, snapshot.metadata.fromCache);
 				});
 			}));
 		} else {
-			let collectionRef = this.fire.subs.firestoreDB.collection(this.path_noQuery);
+			let collectionRef = collection(getFirestore(), this.path_noQuery);
 			if (this.query) {
 				collectionRef = this.query.Apply(collectionRef);
 			}
-			this.subscription = new PathSubscription(collectionRef.onSnapshot({includeMetadataChanges: true}, (snapshot)=> {
+			this.subscription = new PathSubscription(onSnapshot(collectionRef, {includeMetadataChanges: true}, (snapshot)=> {
 				MaybeLog_Base(a=>a.subscriptions, l=>l(`Got collection snapshot. @path(${this.path}) @snapshot:`, snapshot));
 				/*let newData = {};
 				for (let doc of snapshot.docs) {

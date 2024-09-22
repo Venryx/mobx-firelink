@@ -1,5 +1,5 @@
-import firebase from "firebase/compat/app";
-import { UserCredential } from "firebase/auth";
+import { Firestore } from "firebase/firestore";
+import { UserCredential, User } from "firebase/auth";
 import { TreeNode } from "./Tree/TreeNode.js";
 import { TreeRequestWatcher } from "./Tree/TreeRequestWatcher.js";
 export declare let defaultFireOptions: FireOptions;
@@ -27,9 +27,9 @@ export declare class Firelink<RootStoreShape, DBShape> {
     storeAccessorCachingTempDisabled: boolean;
     InitSubs(): void;
     subs: {
-        firestoreDB: firebase.firestore.Firestore;
+        firestoreDB: Firestore;
     };
-    userInfo_raw: firebase.User | null;
+    userInfo_raw: User | null;
     userInfo: FireUserInfo | null;
     LogIn(opt: {
         provider: ProviderName;

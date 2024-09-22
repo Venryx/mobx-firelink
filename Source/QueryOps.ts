@@ -1,4 +1,4 @@
-import firebase from "firebase/compat";
+import {CollectionReference, OrderByDirection, WhereFilterOp, limit, orderBy, query, where} from "firebase/firestore";
 
 export type QueryOpType = "where" | "orderBy" | "limit";
 export abstract class QueryOp {
@@ -10,18 +10,18 @@ export abstract class QueryOp {
 	}
 
 	type: QueryOpType;
-	abstract Apply(collection: firebase.firestore.CollectionReference);
+	abstract Apply(collection: CollectionReference);
 }
 
 export class WhereOp extends QueryOp {
-	constructor(public fieldPath: string, public comparison: firebase.firestore.WhereFilterOp, public value: any) {
+	constructor(public fieldPath: string, public comparison: WhereFilterOp, public value: any) {
 		super();
 		this.type = "where";
 	}
 
-	Apply(collection: firebase.firestore.CollectionReference) {
+	Apply(collection: CollectionReference) {
 		// collection.where complains if value is undefined, so use null instead
-		return collection.where(this.fieldPath, this.comparison, this.value ?? null);
+		return query(collection, where(this.fieldPath, this.comparison, this.value ?? null));
 	}
 }
 /*export const Where = (...args: ConstructorParameters<typeof WhereOp>)=> {
@@ -29,13 +29,13 @@ export class WhereOp extends QueryOp {
 };*/
 
 export class OrderByOp extends QueryOp {
-	constructor(public fieldPath: string, public direction: firebase.firestore.OrderByDirection = "asc") {
+	constructor(public fieldPath: string, public direction: OrderByDirection = "asc") {
 		super();
 		this.type = "orderBy";
 	}
 
-	Apply(collection: firebase.firestore.CollectionReference) {
-		return collection.orderBy(this.fieldPath, this.direction);
+	Apply(collection: CollectionReference) {
+		return query(collection, orderBy(this.fieldPath, this.direction));
 	}
 }
 
@@ -45,7 +45,7 @@ export class LimitOp extends QueryOp {
 		this.type = "limit";
 	}
 
-	Apply(collection: firebase.firestore.CollectionReference) {
-		return collection.limit(this.count);
+	Apply(collection: CollectionReference) {
+		return query(collection, limit(this.count));
 	}
 }
