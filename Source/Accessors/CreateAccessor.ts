@@ -126,9 +126,9 @@ export const StoreAccessor: StoreAccessorFunc = (...args)=> {
 			//const callArg_unwrapLengths = {};
 			if (opt.cache_unwrapArrays) {
 				//Assert(options.cache, "There is no point to unwrapping-args if caching is disabled.");
-				//for (const argIndex of options.cache_unwrapArgs.Pairs().map(a=>a.keyNum)) {
-				//callArgs_unwrapped = callArgs.slice();
-				for (const [argIndex, callArg] of callArgs.entries()) {
+				// iterate in reverse order, so that we can modify the array in-place without affecting the indexes of the items we still need to unwrap
+				for (let argIndex = callArgs.length - 1; argIndex >= 0; argIndex--) {
+					const callArg = callArgs[argIndex];
 					if (!Array.isArray(callArg)) continue;
 
 					// make sure we're not modifying the passed in callArgs array
