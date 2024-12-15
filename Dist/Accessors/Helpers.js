@@ -191,8 +191,8 @@ export function AssertV(condition, messageOrMessageFunc) {
 export const AV = ((propName) => {
     return new AVWrapper(propName);
 });
-Object.defineProperty(AV, "NonNull_", { value: (value) => AVWrapper.generic.NonNull_(value) });
-Object.defineProperty(AV, "NonNull", { set: (value) => AVWrapper.generic.NonNull = value });
+Object.defineProperty(AV, "NonNull_", { configurable: true, value: (value) => AVWrapper.generic.NonNull_(value) });
+Object.defineProperty(AV, "NonNull", { configurable: true, set: (value) => AVWrapper.generic.NonNull = value });
 class AVWrapper {
     constructor(propName) {
         Object.defineProperty(this, "propName", {

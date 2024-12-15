@@ -12,7 +12,7 @@ export function MobX_GetGlobalState() {
 }
 
 export function RunInAction(name: string, action: ()=>any) {
-	Object.defineProperty(action, "name", {value: name});
+	Object.defineProperty(action, "name", {configurable: true, value: name});
 	return runInAction(action);
 }
 

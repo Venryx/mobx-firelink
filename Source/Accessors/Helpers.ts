@@ -185,8 +185,8 @@ export const AV = ((propName: string)=> {
 	NonNull_<T>(value: T): T,
 	NonNull: any,
 };
-Object.defineProperty(AV, "NonNull_", {value: (value)=>AVWrapper.generic.NonNull_(value)});
-Object.defineProperty(AV, "NonNull", {set: (value)=>AVWrapper.generic.NonNull = value});
+Object.defineProperty(AV, "NonNull_", {configurable: true, value: (value)=>AVWrapper.generic.NonNull_(value)});
+Object.defineProperty(AV, "NonNull", {configurable: true, set: (value)=>AVWrapper.generic.NonNull = value});
 
 class AVWrapper {
 	static generic = new AVWrapper("");

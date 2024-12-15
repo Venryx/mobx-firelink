@@ -87,13 +87,13 @@ export function ProcessDBData(data, addHelpers, rootKey = "_root") {
             if (IsNumberString(key)) {
                 //treeNode.Value._id = parseInt(key);
                 //treeNode.Value._Set("_id", parseInt(key));
-                Object.defineProperty(treeNode.Value, "_id", { enumerable: false, value: parseInt(key) });
+                Object.defineProperty(treeNode.Value, "_id", { configurable: true, enumerable: false, value: parseInt(key) });
             }
             // actually, always set "_key" (in case it's a "_key" that also happens to look like an "_id"/integer)
             //else {
             //treeNode.Value._key = key;
             //treeNode.Value._Set("_key", key);
-            Object.defineProperty(treeNode.Value, "_key", { enumerable: false, value: key });
+            Object.defineProperty(treeNode.Value, "_key", { configurable: true, enumerable: false, value: key });
         }
     }
     return treeNodes[0].Value; // get possibly-modified wrapper.data

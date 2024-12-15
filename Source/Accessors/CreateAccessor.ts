@@ -206,7 +206,7 @@ export const StoreAccessor: StoreAccessorFunc = (...args)=> {
 	};
 
 	//if (name) wrapperAccessor["displayName"] = name;
-	//if (name) Object.defineProperty(wrapperAccessor, "name", {value: name});
+	//if (name) Object.defineProperty(wrapperAccessor, "name", {configurable: true, value: name});
 	if (name) CE(wrapperAccessor).SetName(name);
 	return wrapperAccessor as any;
 };

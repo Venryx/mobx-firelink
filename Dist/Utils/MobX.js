@@ -8,7 +8,7 @@ export function MobX_GetGlobalState() {
     return _getGlobalState();
 }
 export function RunInAction(name, action) {
-    Object.defineProperty(action, "name", { value: name });
+    Object.defineProperty(action, "name", { configurable: true, value: name });
     return runInAction(action);
 }
 export function MobX_AllowStateChanges() {
